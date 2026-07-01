@@ -1,6 +1,0 @@
-@PitchLine.API_HostAddress = http://localhost:5173
-
-GET {{PitchLine.API_HostAddress}}/swagger/v1/swagger.json
-Accept: application/json
-
-###
