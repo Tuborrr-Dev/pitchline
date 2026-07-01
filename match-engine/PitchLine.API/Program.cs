@@ -5,14 +5,13 @@ using PitchLine.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ── Serilog ───────────────────────────────────────────────────────────────
 builder.Host.UseSerilog((context, configuration) =>
-{
     configuration
         .ReadFrom.Configuration(context.Configuration)
         .Enrich.FromLogContext()
         .WriteTo.Console()
-        .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day);
-});
+        .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -38,5 +37,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+// Basic health endpoint — required for Fly.io / Railway deployment
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok", time = DateTimeOffset.UtcNow }));
 
 app.Run();
