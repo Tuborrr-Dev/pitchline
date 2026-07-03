@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+:root {
+  --background: #05070a;
+  --foreground: #e5edf7;
+  --card: #0d1319;
+  --card-foreground: #e5edf7;
+  --popover: #0d1319;
+  --popover-foreground: #e5edf7;
+  --primary: #19ef8c;
+  --primary-foreground: #041009;
+  --secondary: #20262d;
+  --secondary-foreground: #dbe5ed;
+  --muted: #7d8993;
+  --muted-foreground: #9fb0bc;
+  --accent: #7faeca;
+  --accent-foreground: #071018;
+  --destructive: #e8355e;
+  --destructive-foreground: #ffffff;
+  --border: #20262d;
+  --input: #273039;
+  --ring: #19ef8c;
+  --radius: 0.25rem;
+
+  --terminal-bg: #090d12;
+  --terminal-bg-strong: #080c11;
+  --terminal-panel: #0d1319;
+  --terminal-surface: #10171d;
+  --terminal-border: #20262d;
+  --terminal-line: #1e252c;
+  --terminal-green: #19ef8c;
+  --terminal-blue: #7faeca;
+  --terminal-pink: #bf8694;
+  --logo-cream: #fff8db;
+  --prob-home: #1ed884;
+  --prob-draw: #7faeca;
+  --prob-away: #bf8694;
+  --line-home: #00ff87;
+  --line-away: #ff4b6e;
+  --line-draw: #718096;
+  --signal: #ffd700;
+  --danger: #e8355e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-rajdhani);
+  --font-display: var(--font-barlow-condensed);
+  --font-mono: var(--font-ibm-plex-mono);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-rajdhani), sans-serif;
+  background-image: linear-gradient(180deg, #05070a 0%, #080c11 100%);
+  min-height: 100vh;
+  font-size: 16px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a,
+[role="button"],
+input[type="button"],
+input[type="submit"] {
+  cursor: pointer;
+}
+
+input,
+textarea {
+  cursor: text;
+}
+
+::selection {
+  background: rgba(0, 198, 255, 0.28);
+  color: white;
+}
+
+.font-display {
+  font-family: var(--font-barlow-condensed), sans-serif;
+}
