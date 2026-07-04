@@ -7,3 +7,4 @@ upstash-redis
 python-dotenv
 pydantic
 requests
+google-genai
