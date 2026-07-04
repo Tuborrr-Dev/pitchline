@@ -122,14 +122,14 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
         var key = $"fixture:{enriched.Score.FixtureId}:events";
         var payload = JsonSerializer.Serialize(new
         {
-            action    = enriched.Score.Action,
-            homeName  = enriched.Fixture.HomeName,
-            awayName  = enriched.Fixture.AwayName,
+            action = enriched.Score.Action,
+            homeName = enriched.Fixture.HomeName,
+            awayName = enriched.Fixture.AwayName,
             homeScore = enriched.Score.HomeScore,
             awayScore = enriched.Score.AwayScore,
-            minute    = enriched.Score.Minute,
+            minute = enriched.Score.Minute,
             gameState = enriched.Score.Phase,
-            ts        = enriched.Score.Ts,
+            ts = enriched.Score.Ts,
         });
 
         await _db.ListRightPushAsync(key, payload);

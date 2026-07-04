@@ -28,17 +28,23 @@ public record ScoreUpdate(
     // Minute from clock seconds, capped display at 90+
     public string Minute => Clock is null ? "" : $"{(int)(Clock.Seconds / 60)}";
 
-    // Phase derived from StatusId: 1=scheduled, 2=inprogress, 3=HT, 4=FT, 5=ET, 6=penalties
-    public string Phase => StatusId switch
-    {
-        1 => "scheduled",
-        2 => "inprogress",
-        3 => "HT",
-        4 => "FT",
-        5 => "ET",
-        6 => "penalties",
-        _ => GameState ?? ""
-    };
+    // Terminal actions take precedence over StatusId — the API can send StatusId=1
+    // (scheduled) alongside a finalisation action for pre-tournament fixtures.
+    private static readonly HashSet<string> TerminalActions =
+        ["game_finalised", "fullTime", "game_abandoned", "game_cancelled"];
+
+    public string Phase => Action is not null && TerminalActions.Contains(Action)
+        ? "FT"
+        : StatusId switch
+        {
+            1 => "scheduled",
+            2 => "inprogress",
+            3 => "HT",
+            4 => "FT",
+            5 => "ET",
+            6 => "penalties",
+            _ => GameState ?? ""
+        };
 
     // Participant 1 = home, 2 = away — normalise to string for matchContext helpers
     public string? TeamId => Participant?.ToString();
