@@ -2,10 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Activity, AlertTriangle, Grid3X3, List, Settings } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useAnimationFrame } from "motion/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { fetchMarketOverviewRows, type MarketOverviewRow } from "@/lib/market-service";
@@ -13,6 +13,14 @@ import { cn } from "@/lib/utils";
 
 type ViewMode = "list" | "grid";
 type MarketTab = "markets" | "history" | "settings";
+
+const tickerItems = [
+  { label: "BTC/USD", value: "$64,210.42 (+1.2%)", tone: "up" },
+  { label: "SOL/USD", value: "$145.12 (+4.8%)", tone: "up" },
+  { label: "ETH/USD", value: "$3,421.10 (-0.4%)", tone: "down" },
+  { label: "BTC/USD", value: "$64,210.42 (+1.2%)", tone: "up" },
+  { label: "SOL/USD", value: "$145.12 (+4.8%)", tone: "up" },
+] as const;
 
 const panelMotion = {
   initial: { opacity: 0, y: 10 },
@@ -139,7 +147,7 @@ function MarketRow({ row }: { row: MarketOverviewRow }) {
 
 function MarketGrid({ rows }: { rows: MarketOverviewRow[] }) {
   return (
-    <motion.div layout className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-3">
+    <motion.div layout className="grid gap-3 p-3 sm:grid-cols-2 2xl:grid-cols-3">
       <AnimatePresence mode="popLayout">
         {rows.map((row) => (
           <motion.div
@@ -192,9 +200,77 @@ function MarketGrid({ rows }: { rows: MarketOverviewRow[] }) {
   );
 }
 
+function MarketCompactListRow({ row }: { row: MarketOverviewRow }) {
+  const href = rowHref(row);
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.18 }}
+      className="border-t border-[var(--terminal-line)] px-4 py-4 transition hover:bg-[#101820]"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <StatusBadge row={row} />
+            <Link
+              href={href}
+              className="cursor-pointer font-display text-[1.55rem] font-bold uppercase leading-none text-white transition hover:text-[var(--terminal-green)]"
+            >
+              {row.eventPair}
+            </Link>
+          </div>
+          <p className="mt-2 font-mono text-[0.72rem] uppercase text-[var(--muted)]">
+            {cleanLabel(row.eventSubLabel)}
+          </p>
+        </div>
+
+        <div className="shrink-0 text-right">
+          <p className="font-display text-[1.8rem] font-bold leading-none text-white">{row.scoreLine}</p>
+          <p className="mt-1 font-mono text-[0.72rem] uppercase text-[#9fb0bc]">{row.timeLabel}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+        <OutcomeBar
+          home={row.probabilities.home}
+          draw={row.probabilities.draw}
+          away={row.probabilities.away}
+        />
+        <div className="sm:text-right">
+          <p className="font-display text-[1.45rem] font-bold leading-none text-white">{row.liquidity}</p>
+          <p className="mt-1 font-mono text-[0.72rem] uppercase text-[var(--terminal-green)]">
+            Depth {row.depth}
+          </p>
+        </div>
+        <div className="sm:justify-self-end">
+          <Button
+            asChild
+            className={cn(
+              "h-9 min-w-[5rem] cursor-pointer rounded-none border px-4 font-mono text-[0.72rem] font-semibold uppercase shadow-none",
+              row.actionTone === "primary"
+                ? "border-[var(--terminal-green)] bg-[var(--terminal-green)] text-[#07110b] hover:bg-[#7affba]"
+                : "border-[#3e5a6f] bg-transparent text-[#a6bfd0] hover:border-[#7fb8d8] hover:bg-transparent hover:text-white",
+            )}
+          >
+            <Link href={href}>{row.action}</Link>
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow[] }) {
   const [activeTab, setActiveTab] = useState<MarketTab>("markets");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [isMobile, setIsMobile] = useState(false);
+  const [isDesktopTable, setIsDesktopTable] = useState(false);
+  const tickerRef = useRef<HTMLDivElement | null>(null);
+  const tickerPauseUntilRef = useRef(0);
   const searchParams = useSearchParams();
   const deferredQuery = useDeferredValue(searchParams.get("q") ?? "");
 
@@ -215,6 +291,62 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
         .includes(normalizedQuery),
     );
   }, [deferredQuery, rows]);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+    const desktopTableQuery = window.matchMedia("(min-width: 1280px)");
+
+    const syncBreakpoints = () => {
+      setIsMobile(mobileQuery.matches);
+      setIsDesktopTable(desktopTableQuery.matches);
+    };
+
+    syncBreakpoints();
+    mobileQuery.addEventListener("change", syncBreakpoints);
+    desktopTableQuery.addEventListener("change", syncBreakpoints);
+
+    return () => {
+      mobileQuery.removeEventListener("change", syncBreakpoints);
+      desktopTableQuery.removeEventListener("change", syncBreakpoints);
+    };
+  }, []);
+
+  useEffect(() => {
+    const ticker = tickerRef.current;
+    if (!ticker || !isMobile) return;
+
+    const pauseAutoScroll = () => {
+      tickerPauseUntilRef.current = window.performance.now() + 1800;
+    };
+
+    ticker.addEventListener("touchstart", pauseAutoScroll, { passive: true });
+    ticker.addEventListener("touchmove", pauseAutoScroll, { passive: true });
+    ticker.addEventListener("pointerdown", pauseAutoScroll, { passive: true });
+    ticker.addEventListener("wheel", pauseAutoScroll, { passive: true });
+
+    return () => {
+      ticker.removeEventListener("touchstart", pauseAutoScroll);
+      ticker.removeEventListener("touchmove", pauseAutoScroll);
+      ticker.removeEventListener("pointerdown", pauseAutoScroll);
+      ticker.removeEventListener("wheel", pauseAutoScroll);
+    };
+  }, [isMobile]);
+
+  useAnimationFrame((time, delta) => {
+    const ticker = tickerRef.current;
+    if (!ticker || !isMobile) return;
+
+    const halfWidth = ticker.scrollWidth / 2;
+    if (halfWidth <= 0) return;
+    if (time < tickerPauseUntilRef.current) return;
+
+    ticker.scrollLeft += delta * 0.1;
+    if (ticker.scrollLeft >= halfWidth) {
+      ticker.scrollLeft -= halfWidth;
+    }
+  });
+
+  const effectiveViewMode = isMobile ? "grid" : viewMode;
 
   return (
     <div className="h-full overflow-y-auto bg-[var(--background)] pb-20 text-white">
@@ -259,7 +391,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.16 }}
-                    className="font-display text-[2.25rem] font-bold uppercase leading-none text-[#dde4ea] sm:text-[2.45rem]"
+                    className="font-display text-[2rem] font-bold uppercase leading-none text-[#dde4ea] sm:text-[2.45rem] lg:text-[2.75rem]"
                   >
                     {activeTab === "markets" && "World Cup: Market Overview (F-07)"}
                     {activeTab === "history" && "Market History"}
@@ -278,38 +410,42 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-4 lg:justify-end">
-              <div className="text-right">
-                <p className="flex items-center justify-end gap-2 font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-green)]">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:justify-end">
+              <div className="text-left sm:text-right">
+                <p className="flex items-center gap-2 font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-green)] sm:justify-end">
                   <Activity className="h-4 w-4" aria-hidden="true" />
                   System Live
                 </p>
                 <p className="font-mono text-[0.68rem] uppercase text-[#91a0ab]">Latency: 12ms</p>
               </div>
-              <div className="flex border border-[var(--terminal-border)] bg-[var(--terminal-surface)]">
-                <Button
-                  type="button"
-                  onClick={() => setViewMode("list")}
-                  className={cn(
-                    "h-9 cursor-pointer rounded-none border-0 border-r border-[var(--terminal-border)] px-3 font-mono text-[0.7rem] font-semibold uppercase shadow-none",
-                    viewMode === "list" ? "bg-[#242b33] text-[#dbe2e8]" : "bg-transparent text-[#8997a3] hover:bg-transparent hover:text-white",
-                  )}
-                >
-                  <List className="h-4 w-4" aria-hidden="true" />
-                  List
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setViewMode("grid")}
-                  className={cn(
-                    "h-9 cursor-pointer rounded-none border-0 px-3 font-mono text-[0.7rem] font-semibold uppercase shadow-none",
-                    viewMode === "grid" ? "bg-[#242b33] text-[#dbe2e8]" : "bg-transparent text-[#8997a3] hover:bg-transparent hover:text-white",
-                  )}
-                >
-                  <Grid3X3 className="h-4 w-4" aria-hidden="true" />
-                  Grid
-                </Button>
-              </div>
+              {!isMobile ? (
+                <div className="flex border border-[var(--terminal-border)] bg-[var(--terminal-surface)]">
+                  <Button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    className={cn(
+                      "h-9 cursor-pointer rounded-none border-0 border-r border-[var(--terminal-border)] px-3 font-mono text-[0.7rem] font-semibold uppercase shadow-none",
+                      effectiveViewMode === "list"
+                        ? "bg-[#242b33] text-[#dbe2e8]"
+                        : "bg-transparent text-[#8997a3] hover:bg-transparent hover:text-white",
+                    )}
+                  >
+                    <List className="h-4 w-4" aria-hidden="true" />
+                    List
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setViewMode("grid")}
+                    className={cn(
+                      "h-9 cursor-pointer rounded-none border-0 px-3 font-mono text-[0.7rem] font-semibold uppercase shadow-none",
+                      viewMode === "grid" ? "bg-[#242b33] text-[#dbe2e8]" : "bg-transparent text-[#8997a3] hover:bg-transparent hover:text-white",
+                    )}
+                  >
+                    <Grid3X3 className="h-4 w-4" aria-hidden="true" />
+                    Grid
+                  </Button>
+                </div>
+              ) : null}
             </div>
           </div>
         </motion.section>
@@ -367,9 +503,22 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                     </motion.div>
                   ))}
                 </motion.div>
-              ) : viewMode === "grid" ? (
+              ) : effectiveViewMode === "grid" ? (
                 <motion.div key="grid" {...panelMotion}>
                   <MarketGrid rows={filteredRows} />
+                </motion.div>
+              ) : !isDesktopTable ? (
+                <motion.div key="compact-list" {...panelMotion}>
+                  <div className="grid grid-cols-[5.5rem_1fr_5.5rem] items-center border-b border-[var(--terminal-border)] bg-[#20262d] px-4 py-3 font-mono text-[0.68rem] font-semibold uppercase text-[#b4bec8]">
+                    <div>Status</div>
+                    <div>Event / Market</div>
+                    <div className="text-right">Score</div>
+                  </div>
+                  <AnimatePresence mode="popLayout">
+                    {filteredRows.map((row) => (
+                      <MarketCompactListRow key={row.fixture.fixtureId} row={row} />
+                    ))}
+                  </AnimatePresence>
                 </motion.div>
               ) : (
                 <motion.div key="list" {...panelMotion}>
@@ -406,7 +555,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
           </div>
         </section>
 
-        <section className="fixed inset-x-0 bottom-8 z-40 flex flex-col gap-3 border-y border-[var(--terminal-border)] bg-[#070b10] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <section className="fixed inset-x-0 bottom-8 z-40 hidden flex-col gap-3 border-y border-[var(--terminal-border)] bg-[#070b10] px-4 py-3 md:flex md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[0.68rem] font-semibold uppercase">
             <span className="text-[#b7c0c7]">Streaming 24 data feeds</span>
             <span className="text-[var(--terminal-green)]">Secure p2p orderbook active</span>
@@ -417,12 +566,24 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
         </section>
 
         <section className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--terminal-border)] bg-[#05080c] px-3 py-2">
-          <div className="flex flex-wrap gap-x-5 gap-y-2 font-mono text-[0.68rem] font-semibold uppercase">
-            <span className="text-[#aeb8bf]">BTC/USD <span className="text-[var(--terminal-green)]">$64,210.42 (+1.2%)</span></span>
-            <span className="text-[#aeb8bf]">SOL/USD <span className="text-[var(--terminal-green)]">$145.12 (+4.8%)</span></span>
-            <span className="text-[#aeb8bf]">ETH/USD <span className="text-[#ea8a9f]">$3,421.10 (-0.4%)</span></span>
-            <span className="text-[#aeb8bf]">BTC/USD <span className="text-[var(--terminal-green)]">$64,210.42 (+1.2%)</span></span>
-            <span className="text-[#aeb8bf]">SOL/USD <span className="text-[var(--terminal-green)]">$145.12 (+4.8%)</span></span>
+          <div
+            ref={tickerRef}
+            className="overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div className="flex min-w-max gap-x-5 gap-y-2 font-mono text-[0.68rem] font-semibold uppercase">
+              {[...tickerItems, ...tickerItems].map((item, index) => (
+                <span
+                  key={`${item.label}-${index}`}
+                  aria-hidden={index >= tickerItems.length}
+                  className="text-[#aeb8bf]"
+                >
+                  {item.label}{" "}
+                  <span className={item.tone === "up" ? "text-[var(--terminal-green)]" : "text-[#ea8a9f]"}>
+                    {item.value}
+                  </span>
+                </span>
+              ))}
+            </div>
           </div>
         </section>
       </main>

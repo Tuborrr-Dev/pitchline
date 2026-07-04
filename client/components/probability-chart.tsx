@@ -435,53 +435,53 @@ export function ProbabilityChart({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="flex h-full min-h-0 w-full flex-col border border-[var(--terminal-border)] bg-[#080d12] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+      className="flex h-[calc(100dvh-19rem)] min-h-[26rem] w-full flex-col border border-[var(--terminal-border)] bg-[#080d12] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] sm:h-[calc(100dvh-20rem)] sm:min-h-[30rem] xl:h-full xl:min-h-0"
     >
       <div className="grid gap-0 border-b border-[var(--terminal-border)] bg-[#0a1117] md:grid-cols-[1fr_auto]">
-        <div className="grid grid-cols-2 border-b border-[var(--terminal-border)] md:grid-cols-4 md:border-b-0">
-          <div className="border-r border-[var(--terminal-border)] px-3 py-2">
-            <p className="font-mono text-[0.64rem] font-semibold uppercase text-[#6f7b84]">Focus</p>
-            <p className="font-display text-[1.45rem] font-bold uppercase text-white">
+        <div className="flex overflow-x-auto border-b border-[var(--terminal-border)] [scrollbar-width:none] [-ms-overflow-style:none] md:grid md:grid-cols-4 md:overflow-visible md:border-b-0 [&::-webkit-scrollbar]:hidden">
+          <div className="min-w-[7rem] border-r border-[var(--terminal-border)] px-2 py-1.5 sm:min-w-[8.5rem] sm:px-3 sm:py-2 md:min-w-0">
+            <p className="font-mono text-[0.56rem] font-semibold uppercase text-[#6f7b84] sm:text-[0.64rem]">Focus</p>
+            <p className="font-display text-[1.05rem] font-bold uppercase text-white sm:text-[1.45rem]">
               {inspectedPoint?.minuteLabel ?? "--"}
             </p>
-            <p className="font-mono text-[0.68rem] uppercase text-[#8795a0]">
+            <p className="font-mono text-[0.58rem] uppercase text-[#8795a0] sm:text-[0.68rem]">
               {inspectedPoint ? formatTimestamp(inspectedPoint.timestamp) : "Waiting"}
             </p>
           </div>
-          <div className="border-r border-[var(--terminal-border)] px-3 py-2">
-            <p className="font-mono text-[0.64rem] font-semibold uppercase text-[var(--terminal-green)]">
+          <div className="min-w-[7rem] border-r border-[var(--terminal-border)] px-2 py-1.5 sm:min-w-[8.5rem] sm:px-3 sm:py-2 md:min-w-0">
+            <p className="font-mono text-[0.56rem] font-semibold uppercase text-[var(--terminal-green)] sm:text-[0.64rem]">
               {teamACode} Equity
             </p>
-            <p className="font-display text-[1.45rem] font-bold uppercase text-white">
+            <p className="font-display text-[1.05rem] font-bold uppercase text-white sm:text-[1.45rem]">
               {inspectedPoint ? `${inspectedPoint.teamA.toFixed(1)}%` : "--"}
             </p>
-            <p className="font-mono text-[0.68rem] uppercase text-[var(--terminal-green)]">
+            <p className="font-mono text-[0.58rem] uppercase text-[var(--terminal-green)] sm:text-[0.68rem]">
               Live move {teamADelta >= 0 ? "+" : ""}
               {teamADelta.toFixed(1)}%
             </p>
           </div>
-          <div className="border-r border-[var(--terminal-border)] px-3 py-2">
-            <p className="font-mono text-[0.64rem] font-semibold uppercase text-[#ff4b6e]">
+          <div className="min-w-[7rem] border-r border-[var(--terminal-border)] px-2 py-1.5 sm:min-w-[8.5rem] sm:px-3 sm:py-2 md:min-w-0">
+            <p className="font-mono text-[0.56rem] font-semibold uppercase text-[#ff4b6e] sm:text-[0.64rem]">
               {teamBCode} Equity
             </p>
-            <p className="font-display text-[1.45rem] font-bold uppercase text-white">
+            <p className="font-display text-[1.05rem] font-bold uppercase text-white sm:text-[1.45rem]">
               {inspectedPoint ? `${inspectedPoint.teamB.toFixed(1)}%` : "--"}
             </p>
-            <p className="font-mono text-[0.68rem] uppercase text-[#ff8aa2]">
+            <p className="font-mono text-[0.58rem] uppercase text-[#ff8aa2] sm:text-[0.68rem]">
               Live move {teamBDelta >= 0 ? "+" : ""}
               {teamBDelta.toFixed(1)}%
             </p>
           </div>
-          <div className="px-3 py-2">
-            <p className="font-mono text-[0.64rem] font-semibold uppercase text-[#7faeca]">Draw / Parity</p>
-            <p className="font-display text-[1.45rem] font-bold uppercase text-white">
+          <div className="min-w-[7rem] px-2 py-1.5 sm:min-w-[8.5rem] sm:px-3 sm:py-2 md:min-w-0">
+            <p className="font-mono text-[0.56rem] font-semibold uppercase text-[#7faeca] sm:text-[0.64rem]">Draw / Parity</p>
+            <p className="font-display text-[1.05rem] font-bold uppercase text-white sm:text-[1.45rem]">
               {inspectedPoint ? `${inspectedPoint.draw.toFixed(1)}%` : "--"}
             </p>
-            <p className="font-mono text-[0.68rem] uppercase text-[#9ed2ef]">Market reserve</p>
+            <p className="font-mono text-[0.58rem] uppercase text-[#9ed2ef] sm:text-[0.68rem]">Market reserve</p>
           </div>
         </div>
 
-        <div className="flex min-w-[16rem] items-center justify-between gap-4 px-3 py-2 font-mono text-[0.68rem] font-semibold uppercase">
+        <div className="hidden flex-wrap items-center justify-between gap-3 px-3 py-2 font-mono text-[0.68rem] font-semibold uppercase md:flex md:min-w-[16rem]">
           <span className="text-[var(--terminal-green)]">ARG Equity</span>
           <span className="text-[#ff4b6e]">FRA Equity</span>
           <span className="text-[#10a2cc]">VIX</span>
@@ -489,9 +489,9 @@ export function ProbabilityChart({
       </div>
 
       <div className="relative min-h-0 flex-1 overflow-hidden bg-[linear-gradient(90deg,rgba(127,174,202,0.07)_1px,transparent_1px),linear-gradient(rgba(127,174,202,0.07)_1px,transparent_1px)] bg-[size:32px_32px]">
-        <div ref={containerRef} className="h-[calc(100%-8rem)] min-h-[18rem] w-full" />
+        <div ref={containerRef} className="h-[calc(100%-5.5rem)] min-h-[17rem] w-full sm:h-[calc(100%-8rem)] sm:min-h-[22rem]" />
 
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[calc(100%-8rem)] min-h-[18rem] items-stretch justify-between px-[5.5%]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[calc(100%-5.5rem)] min-h-[17rem] items-stretch justify-between px-[5.5%] sm:h-[calc(100%-8rem)] sm:min-h-[22rem]">
           {["23'", "36'", "HT", "58'", "90'", "108'", "118'", "PEN"].map((label) => (
             <div key={label} className="relative h-full border-l border-dashed border-[#28404a]/70">
               <span className="absolute -bottom-5 -translate-x-1/2 font-mono text-[0.62rem] font-semibold uppercase text-[#78858f]">
@@ -522,7 +522,7 @@ export function ProbabilityChart({
               transition={{ duration: 0.18, delay: index * 0.03 }}
               whileHover={{ scale: 1.04 }}
               className={cn(
-                "absolute z-20 max-w-[11rem] -translate-x-1/2 border px-2 py-1 text-left font-mono text-[0.62rem] font-semibold uppercase leading-4 transition-colors hover:z-30",
+                "absolute z-20 max-w-[7.5rem] -translate-x-1/2 border px-1.5 py-1 text-left font-mono text-[0.52rem] font-semibold uppercase leading-3 transition-colors hover:z-30 sm:max-w-[11rem] sm:px-2 sm:text-[0.62rem] sm:leading-4",
                 eventColor(event),
                 selectedEvent?.eventId === event.eventId && "ring-1 ring-white/80",
               )}
@@ -533,7 +533,7 @@ export function ProbabilityChart({
           );
         })}
 
-        <div className="absolute inset-x-0 bottom-0 h-[8rem] border-t border-[var(--terminal-border)] bg-[#071018] px-4 py-3">
+        <div className="absolute inset-x-0 bottom-0 h-[5.5rem] border-t border-[var(--terminal-border)] bg-[#071018] px-3 py-2 sm:h-[8rem] sm:px-4 sm:py-3">
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full overflow-visible">
             <defs>
               <linearGradient id="vix-fill" x1="0" x2="0" y1="0" y2="1">
@@ -553,11 +553,11 @@ export function ProbabilityChart({
               points={`0,100 ${visibleVixPoints.map((point) => `${point.x},${point.y}`).join(" ")} 100,100`}
             />
           </svg>
-          <div className="pointer-events-none absolute inset-x-4 top-2 flex justify-between font-mono text-[0.62rem] font-semibold uppercase text-[#0f9ac3]">
+          <div className="pointer-events-none absolute inset-x-3 top-2 flex justify-between font-mono text-[0.54rem] font-semibold uppercase text-[#0f9ac3] sm:inset-x-4 sm:text-[0.62rem]">
             <span>VIX Max</span>
             <span>Volatility shock index</span>
           </div>
-          <div className="pointer-events-none absolute inset-x-4 bottom-2 flex justify-between font-mono text-[0.62rem] font-semibold uppercase text-[#0f6c87]">
+          <div className="pointer-events-none absolute inset-x-3 bottom-2 flex justify-between font-mono text-[0.54rem] font-semibold uppercase text-[#0f6c87] sm:inset-x-4 sm:text-[0.62rem]">
             <span>VIX Min</span>
             <span>{connectionState === "live" ? "Live feed stable" : connectionState}</span>
           </div>

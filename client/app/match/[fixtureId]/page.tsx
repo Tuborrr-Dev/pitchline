@@ -16,7 +16,7 @@ export default async function MatchPage({
   }
 
   return (
-    <div className="h-full overflow-hidden">
+    <div className="h-full overflow-y-auto xl:overflow-hidden">
       <LiveMatchTerminal initialState={state} />
     </div>
   );
