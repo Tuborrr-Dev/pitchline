@@ -111,7 +111,9 @@ public class TxLineStreamService(
     private async Task HandleScoreEventAsync(SseEvent evt, CancellationToken ct)
     {
         if (evt.EventType == "heartbeat") return;
-        
+
+        _logger.LogDebug("[SCORE] Received event: {Data}", evt.Data);
+
         var update = JsonSerializer.Deserialize<ScoreUpdate>(evt.Data, JsonOptions);
         if (update is null) return;
 

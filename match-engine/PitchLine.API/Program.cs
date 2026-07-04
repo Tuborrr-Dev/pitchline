@@ -14,6 +14,12 @@ builder.Host.UseSerilog((context, configuration) =>
         .WriteTo.Console()
         .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day));
 
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+    policy.WithOrigins("http://localhost:3000", "null")
+          .AllowAnyHeader()
+          .AllowAnyMethod()
+          .AllowCredentials()));
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -35,6 +41,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthorization();
 

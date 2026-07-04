@@ -34,6 +34,7 @@ public class SignalREventBus : IMatchEventBus
         var prevState = await _repo.GetStateAsync(fixtureId);
 
         // 2. Write new state to Redis
+        _logger.LogInformation("[REDIS] Writing score state — fixture={FixtureId}", fixtureId);
         await _repo.UpdateStateFromScoreAsync(enriched);
         await _repo.AppendScoreEventAsync(enriched);
 
@@ -48,8 +49,8 @@ public class SignalREventBus : IMatchEventBus
         {
             isComeback = IsComeback(homeBefore, awayBefore, homeAfter, awayAfter, enriched.Score.TeamId,
                                        enriched.Fixture.HomeId),
-            isLateGoal    = minute >= 80,
-            isEqualiser   = homeAfter == awayAfter,
+            isLateGoal = minute >= 80,
+            isEqualiser = homeAfter == awayAfter,
             isWinningGoal = IsWinningGoal(homeAfter, awayAfter, enriched.Score.TeamId, enriched.Fixture.HomeId),
             redCardActive = prevState?.RedCardActive ?? false,
         };
@@ -57,12 +58,12 @@ public class SignalREventBus : IMatchEventBus
         var payload = new
         {
             fixtureId,
-            homeName  = enriched.Fixture.HomeName,
-            awayName  = enriched.Fixture.AwayName,
+            homeName = enriched.Fixture.HomeName,
+            awayName = enriched.Fixture.AwayName,
             homeScore = homeAfter,
             awayScore = awayAfter,
-            action    = enriched.Score.Action,
-            minute    = enriched.Score.Minute,
+            action = enriched.Score.Action,
+            minute = enriched.Score.Minute,
             gameState = enriched.Score.Phase,
             scoreBefore,
             matchContext,
@@ -90,12 +91,13 @@ public class SignalREventBus : IMatchEventBus
         var delta = Math.Abs(home - prevHomePct);
 
         // 2. Write to Redis
+        _logger.LogInformation("[REDIS] Writing odds state — fixture={FixtureId}", fixtureId);
         await _repo.UpdateStateFromOddsAsync(enriched, home, draw, away);
         await _repo.AppendOddsSnapshotAsync(enriched, home, draw, away);
 
         var payload = new
         {
-            fixtureId = fixtureId,
+            fixtureId,
             homeName = enriched.Fixture.HomeName,
             awayName = enriched.Fixture.AwayName,
             homePct = home,
