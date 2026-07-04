@@ -2,6 +2,7 @@ using Serilog;
 using PitchLine.Application;
 using PitchLine.Infrastructure;
 using PitchLine.API.Extensions;
+using Pitchline.Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Host.UseSerilog((context, configuration) =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -37,6 +39,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<MatchHub>("/hubs/match");
 // Basic health endpoint — required for Fly.io / Railway deployment
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok", time = DateTimeOffset.UtcNow }));
 

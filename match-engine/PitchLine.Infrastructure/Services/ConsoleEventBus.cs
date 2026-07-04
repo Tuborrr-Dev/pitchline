@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
 namespace Pitchline.Infrastructure.TxLine;
@@ -11,26 +10,28 @@ public class ConsoleEventBus(ILogger<ConsoleEventBus> logger) : IMatchEventBus
 {
     private readonly ILogger<ConsoleEventBus> _logger = logger;
 
-    public Task PublishScoreUpdateAsync(ScoreUpdate update, CancellationToken ct = default)
+    public Task PublishScoreUpdateAsync(EnrichedScoreUpdate update, CancellationToken ct = default)
     {
         _logger.LogInformation(
-            "[SCORE ⚽] fixture={FixtureId} event={EventType} score={Home}-{Away} min={Minute} phase={Phase}",
-            update.FixtureId, update.EventType,
-            update.HomeScore, update.AwayScore,
-            update.Minute, update.Phase);
+            "[SCORE ⚽] fixture={FixtureId} {Home} vs {Away} | action={Action} score={HomeScore}-{AwayScore} min={Minute} state={GameState}",
+            update.Score.FixtureId, update.Fixture.HomeName, update.Fixture.AwayName,
+            update.Score.Action, update.Score.HomeScore, update.Score.AwayScore,
+            update.Score.Minute, update.Score.Phase);
 
         return Task.CompletedTask;
     }
 
-    public Task PublishOddsUpdateAsync(OddsUpdate update, CancellationToken ct = default)
+    public Task PublishOddsUpdateAsync(EnrichedOddsUpdate update, CancellationToken ct = default)
     {
-        var (home, draw, away) = update.ToImpliedProbabilities();
+        var (home, draw, away) = update.Odds.ToImpliedProbabilities();
 
         _logger.LogInformation(
-            "[ODDS 📊] fixture={FixtureId} home={Home}% draw={Draw}% away={Away}%  (raw: {RawHome}/{RawDraw}/{RawAway})",
-            update.FixtureId,
-            home, draw, away,
-            update.HomeDecimalOdds, update.DrawDecimalOdds, update.AwayDecimalOdds);
+            "[ODDS 📊] fixture={FixtureId} {Home} vs {Away} | odds H={HomeOdds} D={DrawOdds} A={AwayOdds} | prob H={HomePct}% D={DrawPct}% A={AwayPct}%",
+            update.Odds.FixtureId, update.Fixture.HomeName, update.Fixture.AwayName,
+            update.Odds.HomeDecimalOdds.ToString("F2"),
+            update.Odds.DrawDecimalOdds.ToString("F2"),
+            update.Odds.AwayDecimalOdds.ToString("F2"),
+            home, draw, away);
 
         return Task.CompletedTask;
     }
