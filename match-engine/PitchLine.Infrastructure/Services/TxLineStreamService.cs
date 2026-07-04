@@ -14,19 +14,24 @@ namespace Pitchline.Infrastructure.TxLine;
 public class TxLineStreamService(
     SseClient sse,
     IMatchEventBus bus,
+    FixtureMetadataService fixtures,
     ILogger<TxLineStreamService> logger,
     IConfiguration config) : BackgroundService
 {
     // ── Verify these paths against your API reference dashboard ───────────
     private const string ScoresStreamPath = "/api/scores/stream";
-    private const string OddsStreamPath   = "/api/odds/stream";
+    private const string OddsStreamPath = "/api/odds/stream";
     // ───────────────────────────────────────────────────────────────────────
 
     private readonly SseClient _sse = sse;
     private readonly IMatchEventBus _bus = bus;
+    private readonly FixtureMetadataService _fixtures = fixtures;
     private readonly ILogger<TxLineStreamService> _logger = logger;
     private readonly string _apiToken = config["TxLine:ApiToken"]
                     ?? throw new InvalidOperationException("TxLine:ApiToken is not configured.");
+    private readonly string _jwt = config["TxLine:Jwt"]
+                    ?? throw new InvalidOperationException("TxLine:Jwt is not configured.");
+
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -58,7 +63,7 @@ public class TxLineStreamService(
         {
             try
             {
-                await foreach (var evt in _sse.StreamAsync(path, _apiToken, ct))
+                await foreach (var evt in _sse.StreamAsync(path, _jwt, _apiToken, ct))
                 {
                     attempt = 0; // successful message → reset backoff counter
 
@@ -105,22 +110,33 @@ public class TxLineStreamService(
 
     private async Task HandleScoreEventAsync(SseEvent evt, CancellationToken ct)
     {
-        _logger.LogDebug("[SCORES] Raw event type={Type} data={Data}", evt.EventType, evt.Data);
-
+        if (evt.EventType == "heartbeat") return;
+        
         var update = JsonSerializer.Deserialize<ScoreUpdate>(evt.Data, JsonOptions);
         if (update is null) return;
 
-        await _bus.PublishScoreUpdateAsync(update, ct);
+        var fixture = _fixtures.Get(update.FixtureId);
+        if (fixture is null)
+        {
+            _logger.LogWarning("Unknown fixtureId {Id}, refreshing metadata", update.FixtureId);
+            await _fixtures.RefreshAsync(ct);
+            fixture = _fixtures.Get(update.FixtureId);
+        }
+
+        await _bus.PublishScoreUpdateAsync(new EnrichedScoreUpdate(update, fixture!), ct);
     }
 
     private async Task HandleOddsEventAsync(SseEvent evt, CancellationToken ct)
     {
-        _logger.LogDebug("[ODDS] Raw event type={Type} data={Data}", evt.EventType, evt.Data);
+        if (evt.EventType == "heartbeat") return;
 
         var update = JsonSerializer.Deserialize<OddsUpdate>(evt.Data, JsonOptions);
-        if (update is null) return;
+        if (update is null || !update.IsFullMatchResult) return;
 
-        await _bus.PublishOddsUpdateAsync(update, ct);
+        var fixture = _fixtures.Get(update.FixtureId);
+        if (fixture is null) return; // not our fixture, ignore silently
+
+        await _bus.PublishOddsUpdateAsync(new EnrichedOddsUpdate(update, fixture), ct);
     }
 
     // ── JSON options ──────────────────────────────────────────────────────
@@ -128,7 +144,7 @@ public class TxLineStreamService(
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition  = JsonIgnoreCondition.WhenWritingNull,
-        NumberHandling  = JsonNumberHandling.AllowReadingFromString,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
     };
 }
