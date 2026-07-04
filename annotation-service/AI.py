@@ -10,6 +10,7 @@ load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 
+# now we create the function that will generate the annotation using the gemini API
 def generate_annotation(prompt: str):
 
     response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)

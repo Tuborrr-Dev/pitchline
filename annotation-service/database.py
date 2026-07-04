@@ -14,5 +14,3 @@ engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # the above is how we connect to the database and create a session to interact with it.
-
-print(DATABASE_URL)

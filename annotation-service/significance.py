@@ -24,8 +24,6 @@ def is_significant(request):
         return True
     if request.matchContext.isWinningGoal:
         return True
-    if request.eventType == "penalty":
-        return True
     if request.eventType in AI_EVENTS:
         return True
     return False
