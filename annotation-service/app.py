@@ -37,6 +37,7 @@ Event Details:
 - scoreBefore: {request.scoreBefore}
 - scoreAfter: {request.scoreAfter}
 - matchContext: {request.matchContext}
+- matchPhase: {request.matchPhase}
 - Probability Swing: {request.probability_delta:+.1f}%
 
 Rules:
@@ -67,11 +68,11 @@ def annotate(request: AnnotationRequest):
                 "Event %s classified as significant. Using Gemini.",
                 request.eventId,
             )
-            model = "gemini-2.5-flash"
+            annotationType = "gemini-2.5-flash"
         else:
             annotation = generate_rule_annotation(request)
             logger.info("Using Rule Engine")
-            model = "rule-engine"
+            annotationType = "rule-engine"
         latency_ms = int((time.time() - start) * 1000)
         new_annotation = Annotation(
             event_id=request.eventId,
@@ -85,7 +86,7 @@ def annotate(request: AnnotationRequest):
             probability_delta=request.probability_delta,
             narrative_text=annotation,
             latency_ms=latency_ms,
-            model=model,
+            annotationType=annotationType,
         )
         db.add(new_annotation)
         db.commit()

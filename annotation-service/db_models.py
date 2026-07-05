@@ -35,7 +35,7 @@ class Annotation(Base):
 
     latency_ms = Column(Integer)
 
-    model = Column(String)
+    annotationType = Column(String)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
