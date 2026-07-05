@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pitchline SignalR Test</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <style>
+    body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
+    #log { white-space: pre-wrap; }
+    .odds { color: #0af; }
+    .error { color: #f44; }
+  </style>
+</head>
+<body>
+  <h3>Pitchline — SignalR Live Feed</h3>
+  <div>Status: <span id="status">connecting...</span></div>
+  <hr>
+  <div id="log"></div>
+
+  <script>
+    const log = document.getElementById('log');
+    const status = document.getElementById('status');
+
+    function print(msg, cls = '') {
+      const line = document.createElement('div');
+      if (cls) line.className = cls;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      log.prepend(line);
+    }
+
+    const s = new signalR.HubConnectionBuilder()
+      .withUrl("http://localhost:5050/hubs/match")
+      .withAutomaticReconnect()
+      .build();
+
+    s.on("ScoreUpdate", d => {
+      print(`[SCORE] ${d.homeName} ${d.homeScore}-${d.awayScore} ${d.awayName} | action=${d.action} min=${d.minute}`);
+    });
+
+    s.on("OddsUpdate", d => {
+      print(`[ODDS]  ${d.homeName} H=${d.homePct}% D=${d.drawPct}% A=${d.awayPct}% | Δ${d.probabilityDelta}`, 'odds');
+    });
+
+    s.start()
+      .then(() => {
+        status.textContent = '✅ connected';
+        return s.invoke("JoinFixture", "18185036");
+      })
+      .then(() => print('Joined fixture 18185036'))
+      .catch(e => {
+        status.textContent = '❌ failed';
+        print('Error: ' + e.message, 'error');
+      });
+  </script>
+</body>
+</html>
