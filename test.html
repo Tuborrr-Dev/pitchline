@@ -40,12 +40,14 @@
       print(`[ODDS]  ${d.homeName} H=${d.homePct}% D=${d.drawPct}% A=${d.awayPct}% | Δ${d.probabilityDelta}`, 'odds');
     });
 
+    const fixtureIds = ['18218149', '18213979', '18222446'];
+
     s.start()
       .then(() => {
         status.textContent = '✅ connected';
-        return s.invoke("JoinFixture", "18185036");
+        return Promise.all(fixtureIds.map(id => s.invoke('JoinFixture', id)));
       })
-      .then(() => print('Joined fixture 18185036'))
+      .then(() => fixtureIds.forEach(id => print(`Joined fixture ${id}`)))
       .catch(e => {
         status.textContent = '❌ failed';
         print('Error: ' + e.message, 'error');
