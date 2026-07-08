@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using PitchLine.Application.Common.Interfaces;
 using Pitchline.Infrastructure.TxLine;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -13,10 +14,30 @@ namespace Pitchline.Infrastructure.Redis;
 ///   fixture:{id}:events        List  — append-only score event log
 ///   fixture:{id}:odds-history  List  — append-only probability snapshots (chart points)
 /// </summary>
-public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchStateRepository> logger)
+public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchStateRepository> logger) : IMatchStateRepository
 {
+    private readonly IConnectionMultiplexer _redis = redis;
     private readonly IDatabase _db = redis.GetDatabase();
     private readonly ILogger<MatchStateRepository> _logger = logger;
+    public async Task<IReadOnlyList<string>> GetAllFixtureIdsAsync(CancellationToken cancellationToken = default)
+    {
+        var fixtureIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var endpoint in _redis.GetEndPoints())
+        {
+            var server = _redis.GetServer(endpoint);
+            foreach (var key in server.Keys(pattern: "fixture:*:meta"))
+            {
+                var parts = key.ToString().Split(':', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 2 && parts[0].Equals("fixture", StringComparison.OrdinalIgnoreCase))
+                {
+                    fixtureIds.Add(parts[1]);
+                }
+            }
+        }
+
+        return fixtureIds.OrderBy(id => id).ToList();
+    }
 
     // ── Fixture metadata (written by FixtureMetadataService every 5 min) ────
     public async Task SaveFixtureMetaAsync(FixtureInfo fixture)
@@ -39,21 +60,36 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
         _logger.LogDebug("[REDIS] Saved fixture meta for {FixtureId}", fixture.FixtureId);
     }
 
-    public async Task<FixtureInfo?> GetFixtureMetaAsync(int fixtureId)
+    public async Task<FixtureMetaSummary?> GetFixtureMetaAsync(string fixtureId, CancellationToken cancellationToken = default)
     {
         var key = $"fixture:{fixtureId}:meta";
         var fields = await _db.HashGetAllAsync(key);
         if (fields.Length == 0) return null;
 
         var map = fields.ToDictionary(f => f.Name.ToString(), f => f.Value.ToString());
-        return new FixtureInfo(
-            FixtureId: int.Parse(map["fixtureId"]),
+        return new FixtureMetaSummary(
+            FixtureId: fixtureId,
             HomeName: map["homeName"],
             AwayName: map["awayName"],
-            HomeId: int.Parse(map["homeId"]),
-            AwayId: int.Parse(map["awayId"]),
+            HomeId: map["homeId"],
+            AwayId: map["awayId"],
             KickOff: DateTimeOffset.Parse(map["kickOff"])
         );
+    }
+
+    public async Task<FixtureInfo?> GetFixtureMetaAsync(int fixtureId)
+    {
+        var meta = await GetFixtureMetaAsync(fixtureId.ToString());
+        return meta is null
+            ? null
+            : new FixtureInfo(
+                FixtureId: int.Parse(meta.FixtureId),
+                HomeName: meta.HomeName,
+                AwayName: meta.AwayName,
+                HomeId: int.Parse(meta.HomeId),
+                AwayId: int.Parse(meta.AwayId),
+                KickOff: meta.KickOff
+            );
     }
 
     public async Task SaveAllFixturesAsync(IEnumerable<FixtureInfo> fixtures)
@@ -64,14 +100,14 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
 
     // ── Current match state (overwritten on every event) ─────────────────────
 
-    public async Task<MatchState?> GetStateAsync(int fixtureId)
+    public async Task<MatchStateSummary?> GetStateAsync(string fixtureId, CancellationToken cancellationToken = default)
     {
         var key = $"fixture:{fixtureId}:state";
         var fields = await _db.HashGetAllAsync(key);
         if (fields.Length == 0) return null;
 
         var map = fields.ToDictionary(f => f.Name.ToString(), f => f.Value.ToString());
-        return new MatchState(
+        return new MatchStateSummary(
             FixtureId: fixtureId,
             HomeName: map.GetValueOrDefault("homeName", ""),
             AwayName: map.GetValueOrDefault("awayName", ""),
@@ -84,6 +120,26 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
             AwayPct: decimal.Parse(map.GetValueOrDefault("awayPct", "0")),
             RedCardActive: bool.Parse(map.GetValueOrDefault("redCardActive", "false"))
         );
+    }
+
+    public async Task<MatchState?> GetStateAsync(int fixtureId)
+    {
+        var state = await GetStateAsync(fixtureId.ToString());
+        return state is null
+            ? null
+            : new MatchState(
+                FixtureId: fixtureId,
+                HomeName: state.HomeName,
+                AwayName: state.AwayName,
+                HomeScore: state.HomeScore,
+                AwayScore: state.AwayScore,
+                Phase: state.Phase,
+                Minute: state.Minute,
+                HomePct: state.HomePct,
+                DrawPct: state.DrawPct,
+                AwayPct: state.AwayPct,
+                RedCardActive: state.RedCardActive
+            );
     }
 
     public async Task UpdateStateFromScoreAsync(EnrichedScoreUpdate enriched)
@@ -114,6 +170,18 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
             new("awayPct", awayPct.ToString()),
         });
     }
+    public async Task<decimal?> GetOpeningHomePctAsync(string fixtureId, CancellationToken cancellationToken = default)
+    {
+        var key = $"fixture:{fixtureId}:state";
+        var value = await _db.HashGetAsync(key, "openingHomePct");
+        return value.HasValue && decimal.TryParse(value!, out var opening) ? opening : null;
+    }
+
+    public async Task SaveOpeningHomePctAsync(string fixtureId, decimal homePct, CancellationToken cancellationToken = default)
+    {
+        var key = $"fixture:{fixtureId}:state";
+        await _db.HashSetAsync(key, "openingHomePct", homePct.ToString());
+    }
 
     // ── Event log (append-only, powers history scrub) ─────────────────────────
 
@@ -136,11 +204,16 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
         await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
     }
 
-    public async Task<IEnumerable<string>> GetEventLogAsync(int fixtureId)
+    public async Task<IEnumerable<string>> GetEventLogAsync(string fixtureId, CancellationToken cancellationToken = default)
     {
         var key = $"fixture:{fixtureId}:events";
         var values = await _db.ListRangeAsync(key, 0, -1); // all items
         return values.Select(v => v.ToString());
+    }
+
+    public async Task<IEnumerable<string>> GetEventLogAsync(int fixtureId)
+    {
+        return await GetEventLogAsync(fixtureId.ToString());
     }
 
     // ── Odds history (append-only, powers the chart line) ─────────────────────
@@ -160,11 +233,15 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
         await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
     }
 
-    public async Task<IEnumerable<string>> GetOddsHistoryAsync(int fixtureId)
+    public async Task<IEnumerable<string>> GetOddsHistoryAsync(string fixtureId, CancellationToken cancellationToken = default)
     {
         var key = $"fixture:{fixtureId}:odds-history";
         var values = await _db.ListRangeAsync(key, 0, -1);
         return values.Select(v => v.ToString());
+    }
+    public async Task<IEnumerable<string>> GetOddsHistoryAsync(int fixtureId)
+    {
+        return await GetOddsHistoryAsync(fixtureId.ToString());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

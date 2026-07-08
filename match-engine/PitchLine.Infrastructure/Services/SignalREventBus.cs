@@ -9,18 +9,18 @@ public class SignalREventBus : IMatchEventBus
 {
     private readonly IHubContext<MatchHub> _hub;
     private readonly MatchStateRepository _repo;
-    // private readonly AnnotationWebhookClient _annotation;
+    private readonly AnnotationWebhookClient _annotation;
     private readonly ILogger<SignalREventBus> _logger;
 
     public SignalREventBus(
         IHubContext<MatchHub> hub,
         MatchStateRepository repo,
-        // AnnotationWebhookClient annotation,
+        AnnotationWebhookClient annotation,
         ILogger<SignalREventBus> logger)
     {
         _hub = hub;
         _repo = repo;
-        // _annotation = annotation;
+        _annotation = annotation;
         _logger = logger;
     }
 
@@ -73,8 +73,19 @@ public class SignalREventBus : IMatchEventBus
         // 4. Push to frontend via SignalR
         await _hub.Clients.Group(group).SendAsync("ScoreUpdate", payload, ct);
 
-        // // 5. POST to annotation service — fire and forget
-        // _ = _annotation.SendScoreAsync(enriched, scoreBefore, matchContext);
+        // 5. POST to annotation service — fire and forget
+        var homePct = await _repo.GetPreviousHomePctAsync(fixtureId);
+        var prevHomePct2 = prevState?.HomePct ?? 0m;
+        var annotationDelta = Math.Abs(homePct - prevHomePct2);
+        var annotationContext = new MatchContextPayload
+        {
+            IsComeback   = matchContext.isComeback,
+            IsLateGoal   = matchContext.isLateGoal,
+            IsEqualiser  = matchContext.isEqualiser,
+            IsWinningGoal = matchContext.isWinningGoal,
+            RedCardActive = matchContext.redCardActive,
+        };
+        _ = _annotation.SendScoreEventAsync(enriched, scoreBefore, annotationDelta, annotationContext);
 
         _logger.LogInformation("[BUS] ScoreUpdate published — {Home} {HS}-{AS} {Away} min={Min}",
             enriched.Fixture.HomeName, homeAfter, awayAfter, enriched.Fixture.AwayName, enriched.Score.Minute);
@@ -110,8 +121,7 @@ public class SignalREventBus : IMatchEventBus
         // 3. Push to frontend via SignalR
         await _hub.Clients.Group(group).SendAsync("OddsUpdate", payload, ct);
 
-        // // 4. POST to annotation service — fire and forget
-        // _ = _annotation.SendOddsAsync(enriched, home, draw, away, delta);
+        // Annotation service only handles score events — odds delta tracked via score handler
 
         _logger.LogInformation("[BUS] OddsUpdate published — {Home} {H}% draw {D}% {Away} {A}% Δ{Delta}",
             enriched.Fixture.HomeName, home, draw, enriched.Fixture.AwayName, away, delta);

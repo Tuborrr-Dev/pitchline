@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using PitchLine.Application.Common.Interfaces;
 
 namespace Pitchline.Infrastructure.TxLine;
 
@@ -15,6 +16,8 @@ public class TxLineStreamService(
     SseClient sse,
     IMatchEventBus bus,
     FixtureMetadataService fixtures,
+    TxLineSnapshotService snapshot,
+    IMatchStateRepository repo,
     ILogger<TxLineStreamService> logger,
     IConfiguration config) : BackgroundService
 {
@@ -26,6 +29,8 @@ public class TxLineStreamService(
     private readonly SseClient _sse = sse;
     private readonly IMatchEventBus _bus = bus;
     private readonly FixtureMetadataService _fixtures = fixtures;
+    private readonly TxLineSnapshotService _snapshot = snapshot;
+    private readonly IMatchStateRepository _repo = repo;
     private readonly ILogger<TxLineStreamService> _logger = logger;
     private readonly string _apiToken = config["TxLine:ApiToken"]
                     ?? throw new InvalidOperationException("TxLine:ApiToken is not configured.");
@@ -100,6 +105,23 @@ public class TxLineStreamService(
             }
 
             attempt++;
+            if (path == OddsStreamPath)
+            {
+                try
+                {
+                    _logger.LogInformation("[{Path}] Reconnected — resyncing odds snapshot", path);
+                    var ids = await _repo.GetAllFixtureIdsAsync(ct);
+                    foreach (var id in ids)
+                    {
+                        await _snapshot.SeedFromSnapshotAsync(id, ct);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[{Path}] Snapshot resync failed", path);
+                }
+            }
+
             var delaySeconds = Math.Min(30, Math.Pow(2, attempt)); // 2s, 4s, 8s … capped at 30s
             _logger.LogInformation("[{Path}] Reconnecting in {Delay}s", path, delaySeconds);
             await Task.Delay(TimeSpan.FromSeconds(delaySeconds), ct);
@@ -136,7 +158,13 @@ public class TxLineStreamService(
         if (update is null || !update.IsFullMatchResult) return;
 
         var fixture = _fixtures.Get(update.FixtureId);
-        if (fixture is null) return; // not our fixture, ignore silently
+        if (fixture is null)
+        {
+            await _fixtures.RefreshAsync(ct);
+            fixture = _fixtures.Get(update.FixtureId);
+        }
+
+        if (fixture is null) return;
 
         await _bus.PublishOddsUpdateAsync(new EnrichedOddsUpdate(update, fixture), ct);
     }
