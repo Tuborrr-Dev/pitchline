@@ -26,6 +26,7 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Redis connection string is not configured.");
         services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
         services.AddSingleton<MatchStateRepository>();
+        services.AddSingleton<IMatchStateRepository, MatchStateRepository>();
 
         // ── SignalR ──────────────────────────────────────────────────────────────────
         // Registered in Program.cs — AddSignalR() requires the ASP.NET Core web SDK
@@ -45,11 +46,22 @@ public static class DependencyInjection
             c.DefaultRequestHeaders.Add("User-Agent", "Pitchline/1.0");
         });
 
+        services.AddHttpClient<TxLineSnapshotService>(c =>
+        {
+            c.BaseAddress = new Uri("https://txline.txodds.com");
+            c.Timeout = TimeSpan.FromSeconds(10);
+            c.DefaultRequestHeaders.Add("User-Agent", "Pitchline/1.0");
+        });
+
+        services.AddHttpClient<AnnotationWebhookClient>(c =>
+        {
+            c.BaseAddress = new Uri(configuration["Annotation:BaseUrl"] ?? "http://localhost:8000");
+            c.Timeout = TimeSpan.FromSeconds(5);
+        });
+
         services.AddHostedService<FixturePollingService>();
 
-        // Swap ConsoleEventBus → SignalREventBus once AnnotationWebhookClient is built
         services.AddSingleton<IMatchEventBus, SignalREventBus>();
-        services.AddSingleton<IMatchEventBus, ConsoleEventBus>();
         services.AddHostedService<TxLineStreamService>();
 
         return services;

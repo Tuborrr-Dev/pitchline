@@ -25,7 +25,7 @@ public class FixtureMetadataService(
 
     public async Task RefreshAsync(CancellationToken ct = default)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, "/api/fixtures/snapshot");
+        using var req = new HttpRequestMessage(HttpMethod.Get, "/api/fixtures/snapshot?competitionId=72");
         req.Headers.Authorization = new("Bearer", _jwt);
         req.Headers.Add("X-Api-Token", _apiToken);
 
@@ -45,6 +45,9 @@ public class FixtureMetadataService(
             {
                 try
                 {
+                    var competitionId = fixture.GetProperty("CompetitionId").GetInt32();
+                    if (competitionId != 72) continue;
+
                     var id = fixture.GetProperty("FixtureId").GetInt32();
                     var isP1Home = fixture.GetProperty("Participant1IsHome").GetBoolean();
                     var p1Name = fixture.GetProperty("Participant1").GetString()!;

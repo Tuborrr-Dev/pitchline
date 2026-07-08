@@ -34,16 +34,28 @@ public record ScoreUpdate(
         ["game_finalised", "fullTime", "game_abandoned", "game_cancelled"];
 
     public string Phase => Action is not null && TerminalActions.Contains(Action)
-        ? "FT"
+        ? "Finished"
         : StatusId switch
         {
-            1 => "scheduled",
-            2 => "inprogress",
-            3 => "HT",
-            4 => "FT",
-            5 => "ET",
-            6 => "penalties",
-            _ => GameState ?? ""
+            1  => "Scheduled",
+            2  => "1st Half",
+            3  => "Half Time",
+            4  => "2nd Half",
+            5  => "Finished",
+            6  => "Waiting for Extra Time",
+            7  => "Extra Time 1st Half",
+            8  => "Extra Time Half Time",
+            9  => "Extra Time 2nd Half",
+            10 => "Finished After Extra Time",
+            11 => "Waiting for Penalties",
+            12 => "Penalty Shootout",
+            13 => "Finished After Penalties",
+            14 => "Interrupted",
+            15 => "Abandoned",
+            16 => "Cancelled",
+            17 => "Coverage Cancelled",
+            18 => "Coverage Suspended",
+            _  => GameState ?? ""
         };
 
     // Participant 1 = home, 2 = away — normalise to string for matchContext helpers
@@ -66,29 +78,34 @@ public record OddsUpdate(
     [property: JsonPropertyName("MarketPeriod")] string? MarketPeriod,
     [property: JsonPropertyName("PriceNames")] string[] PriceNames,
     [property: JsonPropertyName("Prices")] int[] Prices,
+    [property: JsonPropertyName("Pct")] string[] Pct,
     [property: JsonPropertyName("Ts")] long Ts
 )
 {
     private const string FullMatchResult = "1X2_PARTICIPANT_RESULT";
 
-    /// <summary>True only for full-match 1X2 — the market we use for win probability.</summary>
     public bool IsFullMatchResult =>
-        SuperOddsType == FullMatchResult && MarketPeriod is null;
+        SuperOddsType == FullMatchResult && MarketPeriod is null
+        && Prices.Length == PriceNames.Length && Prices.Length > 0;
 
-    /// <summary>
-    /// Decimal odds from the Prices array (thousandths → decimal, e.g. 5582 → 5.582).
-    /// PriceNames order is ["part1", "draw", "part2"].
-    /// </summary>
     public decimal HomeDecimalOdds => Prices[Array.IndexOf(PriceNames, "part1")] / 1000m;
     public decimal DrawDecimalOdds => Prices[Array.IndexOf(PriceNames, "draw")] / 1000m;
     public decimal AwayDecimalOdds => Prices[Array.IndexOf(PriceNames, "part2")] / 1000m;
 
     /// <summary>
-    /// De-margined implied probabilities (PRD §10).
-    /// Raw = 1/odds; normalise by sum to strip bookmaker margin.
+    /// Use Pct from the API when available (already de-margined).
+    /// Falls back to calculating from Prices if Pct is missing or incomplete.
     /// </summary>
     public (decimal Home, decimal Draw, decimal Away) ToImpliedProbabilities()
     {
+        if (Pct is { Length: 3 } &&
+            decimal.TryParse(Pct[0], out var h) &&
+            decimal.TryParse(Pct[1], out var d) &&
+            decimal.TryParse(Pct[2], out var a))
+        {
+            return (Math.Round(h, 1), Math.Round(d, 1), Math.Round(a, 1));
+        }
+
         var rawHome = 1m / HomeDecimalOdds;
         var rawDraw = 1m / DrawDecimalOdds;
         var rawAway = 1m / AwayDecimalOdds;
@@ -96,7 +113,7 @@ public record OddsUpdate(
 
         var home = Math.Round(rawHome / sum * 100, 1);
         var away = Math.Round(rawAway / sum * 100, 1);
-        var draw = Math.Round(100m - home - away, 1); // residual keeps sum == 100.0
+        var draw = Math.Round(100m - home - away, 1);
 
         return (home, draw, away);
     }
