@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Pitchline.Infrastructure.Postgres;
 using Pitchline.Infrastructure.Redis;
 
 namespace Pitchline.Infrastructure.TxLine;
@@ -8,11 +9,13 @@ namespace Pitchline.Infrastructure.TxLine;
 public class FixtureMetadataService(
     HttpClient http,
     MatchStateRepository repo,
+    PostgresRepository pg,
     ILogger<FixtureMetadataService> logger,
     IConfiguration config)
 {
     private readonly HttpClient _http = http;
     private readonly MatchStateRepository _repo = repo;
+    private readonly PostgresRepository _pg = pg;
     private readonly ILogger<FixtureMetadataService> _logger = logger;
     private readonly string _apiToken = config["TxLine:ApiToken"]
                     ?? throw new InvalidOperationException("TxLine:ApiToken is not configured.");
@@ -72,8 +75,10 @@ public class FixtureMetadataService(
                 }
             }
 
-            // Persist to Redis so state survives restarts
+            // Persist to Redis + Postgres
             await _repo.SaveAllFixturesAsync(_cache.Values);
+            foreach (var f in _cache.Values)
+                _ = _pg.UpsertFixtureMetaAsync(f);
             _logger.LogInformation("[FIXTURES] persisted {Count} fixtures to Redis", _cache.Count);
 
             _logger.LogInformation("Fixture cache refreshed — {Count} fixtures loaded", _cache.Count);
