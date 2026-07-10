@@ -5,24 +5,16 @@ using Pitchline.Infrastructure.Redis;
 
 namespace Pitchline.Infrastructure.TxLine;
 
-public class SignalREventBus : IMatchEventBus
+public class SignalREventBus(
+    IHubContext<MatchHub> hub,
+    MatchStateRepository repo,
+    AnnotationWebhookClient annotation,
+    ILogger<SignalREventBus> logger) : IMatchEventBus
 {
-    private readonly IHubContext<MatchHub> _hub;
-    private readonly MatchStateRepository _repo;
-    private readonly AnnotationWebhookClient _annotation;
-    private readonly ILogger<SignalREventBus> _logger;
-
-    public SignalREventBus(
-        IHubContext<MatchHub> hub,
-        MatchStateRepository repo,
-        AnnotationWebhookClient annotation,
-        ILogger<SignalREventBus> logger)
-    {
-        _hub = hub;
-        _repo = repo;
-        _annotation = annotation;
-        _logger = logger;
-    }
+    private readonly IHubContext<MatchHub> _hub = hub;
+    private readonly MatchStateRepository _repo = repo;
+    private readonly AnnotationWebhookClient _annotation = annotation;
+    private readonly ILogger<SignalREventBus> _logger = logger;
 
     public async Task PublishScoreUpdateAsync(EnrichedScoreUpdate enriched, CancellationToken ct = default)
     {
