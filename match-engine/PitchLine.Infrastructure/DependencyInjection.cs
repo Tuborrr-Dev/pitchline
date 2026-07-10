@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using PitchLine.Application.Common.Interfaces;
 using PitchLine.Infrastructure.Persistence;
+using Pitchline.Infrastructure.Postgres;
 using Pitchline.Infrastructure.Redis;
 using Pitchline.Infrastructure.TxLine;
 using StackExchange.Redis;
@@ -20,6 +22,19 @@ public static class DependencyInjection
 
         services.AddScoped<IApplicationDbContext>(provider =>
             provider.GetRequiredService<ApplicationDbContext>());
+
+        // ── Postgres (raw SQL via Npgsql) ───────────────────────────────────────────
+        var pgConn = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("DefaultConnection is not configured.");
+        services.AddSingleton(_ =>
+        {
+            // NpgsqlDataSourceBuilder requires key=value format, not postgresql:// URL
+            var connStr = pgConn.StartsWith("postgresql://") || pgConn.StartsWith("postgres://")
+                ? ConvertPostgresUrl(pgConn)
+                : pgConn;
+            return new NpgsqlDataSourceBuilder(connStr).Build();
+        });
+        services.AddSingleton<PostgresRepository>();
 
         // ── Redis ───────────────────────────────────────────────────────────────────
         var redisConn = configuration.GetConnectionString("Redis")
@@ -65,5 +80,17 @@ public static class DependencyInjection
         services.AddHostedService<TxLineStreamService>();
 
         return services;
+    }
+
+    private static string ConvertPostgresUrl(string url)
+    {
+        var uri = new Uri(url);
+        var userInfo = uri.UserInfo.Split(':');
+        var user = userInfo[0];
+        var password = userInfo.Length > 1 ? userInfo[1] : "";
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+        return $"Host={host};Port={port};Database={database};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true";
     }
 }

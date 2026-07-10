@@ -3,6 +3,7 @@ using PitchLine.Application;
 using PitchLine.Infrastructure;
 using PitchLine.API.Extensions;
 using Pitchline.Api.Hubs;
+using Pitchline.Infrastructure.Postgres;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,13 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 var app = builder.Build();
+
+// Bootstrap Postgres tables
+using (var scope = app.Services.CreateScope())
+{
+    var pg = scope.ServiceProvider.GetRequiredService<PostgresRepository>();
+    await pg.EnsureTablesAsync();
+}
 
 app.ConfigureExceptionHandler();
 
