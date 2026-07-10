@@ -70,19 +70,22 @@ public class SignalREventBus(
         // 4. Push to frontend via SignalR
         await _hub.Clients.Group(group).SendAsync("ScoreUpdate", payload, ct);
 
-        // 5. POST to annotation service — fire and forget
-        var homePct = await _repo.GetPreviousHomePctAsync(fixtureId);
-        var prevHomePct2 = prevState?.HomePct ?? 0m;
-        var annotationDelta = Math.Abs(homePct - prevHomePct2);
-        var annotationContext = new MatchContextPayload
+        // 5. POST to annotation service — fire and forget (significant actions only)
+        if (IsAnnotatable(enriched.Score.Action))
         {
-            IsComeback   = matchContext.isComeback,
-            IsLateGoal   = matchContext.isLateGoal,
-            IsEqualiser  = matchContext.isEqualiser,
-            IsWinningGoal = matchContext.isWinningGoal,
-            RedCardActive = matchContext.redCardActive,
-        };
-        _ = _annotation.SendScoreEventAsync(enriched, scoreBefore, annotationDelta, annotationContext);
+            var homePct = await _repo.GetPreviousHomePctAsync(fixtureId);
+            var prevHomePct2 = prevState?.HomePct ?? 0m;
+            var annotationDelta = Math.Abs(homePct - prevHomePct2);
+            var annotationContext = new MatchContextPayload
+            {
+                IsComeback    = matchContext.isComeback,
+                IsLateGoal    = matchContext.isLateGoal,
+                IsEqualiser   = matchContext.isEqualiser,
+                IsWinningGoal = matchContext.isWinningGoal,
+                RedCardActive = matchContext.redCardActive,
+            };
+            _ = _annotation.SendScoreEventAsync(enriched, scoreBefore, annotationDelta, annotationContext);
+        }
 
         _logger.LogInformation("[BUS] ScoreUpdate published — {Home} {HS}-{AS} {Away} min={Min}",
             enriched.Fixture.HomeName, homeAfter, awayAfter, enriched.Fixture.AwayName, enriched.Score.Minute);
@@ -143,4 +146,9 @@ public class SignalREventBus(
         var scoringTeamIsHome = scoringTeamId == homeId.ToString();
         return scoringTeamIsHome ? homeAfter > awayAfter : awayAfter > homeAfter;
     }
+    private static readonly HashSet<string> AnnotatableActions =
+        ["goal", "ownGoal", "redCard", "yellowRedCard", "penaltyAwarded", "freeKick"];
+
+    private static bool IsAnnotatable(string? action)
+        => action is not null && AnnotatableActions.Contains(action);
 }
