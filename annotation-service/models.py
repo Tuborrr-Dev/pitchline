@@ -21,3 +21,4 @@ class AnnotationRequest(BaseModel):
     scoreBefore: str
     scoreAfter: str
     matchContext: MatchContext
+    matchPhase: str
