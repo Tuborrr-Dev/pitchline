@@ -51,6 +51,7 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
             new("awayName",  fixture.AwayName),
             new("homeId",    fixture.HomeId),
             new("awayId",    fixture.AwayId),
+            new("participant1IsHome", fixture.Participant1IsHome),
             new("kickOff",   fixture.KickOff.ToString("O")),
         ]);
 
@@ -73,6 +74,7 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
             AwayName: map["awayName"],
             HomeId: map["homeId"],
             AwayId: map["awayId"],
+            Participant1IsHome: ParseBool(map.GetValueOrDefault("participant1IsHome", "true")),
             KickOff: DateTimeOffset.Parse(map["kickOff"])
         );
     }
@@ -88,14 +90,35 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
                 AwayName: meta.AwayName,
                 HomeId: int.Parse(meta.HomeId),
                 AwayId: int.Parse(meta.AwayId),
+                Participant1IsHome: meta.Participant1IsHome,
                 KickOff: meta.KickOff
             );
     }
 
     public async Task SaveAllFixturesAsync(IEnumerable<FixtureInfo> fixtures)
     {
-        foreach (var f in fixtures)
-            await SaveFixtureMetaAsync(f);
+        var batch = _db.CreateBatch();
+        var tasks = fixtures.SelectMany(f =>
+        {
+            var key = $"fixture:{f.FixtureId}:meta";
+            return new Task[]
+            {
+                batch.HashSetAsync(key,
+                [
+                    new("fixtureId",           f.FixtureId),
+                    new("homeName",            f.HomeName),
+                    new("awayName",            f.AwayName),
+                    new("homeId",              f.HomeId),
+                    new("awayId",              f.AwayId),
+                    new("participant1IsHome",  f.Participant1IsHome),
+                    new("kickOff",             f.KickOff.ToString("O")),
+                ]),
+                batch.KeyExpireAsync(key, TimeSpan.FromHours(6))
+            };
+        }).ToList();
+
+        batch.Execute();
+        await Task.WhenAll(tasks);
     }
 
     // ── Current match state (overwritten on every event) ─────────────────────
@@ -150,11 +173,11 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
         {
             new("homeName",      enriched.Fixture.HomeName),
             new("awayName",      enriched.Fixture.AwayName),
-            new("homeScore",     enriched.Score.HomeScore),
-            new("awayScore",     enriched.Score.AwayScore),
+            new("homeScore",     enriched.HomeScore),
+            new("awayScore",     enriched.AwayScore),
             new("phase",         enriched.Score.Phase),
             new("minute",        enriched.Score.Minute),
-            new("redCardActive", enriched.Score.Action == "redCard" ? "true" :
+            new("redCardActive", enriched.Score.Action == "red_card" ? "true" :
                                  await GetRedCardStateAsync(enriched.Score.FixtureId)),
         });
     }
@@ -190,14 +213,14 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
         var key = $"fixture:{enriched.Score.FixtureId}:events";
         var payload = JsonSerializer.Serialize(new
         {
-            action = enriched.Score.Action,
-            homeName = enriched.Fixture.HomeName,
-            awayName = enriched.Fixture.AwayName,
-            homeScore = enriched.Score.HomeScore,
-            awayScore = enriched.Score.AwayScore,
-            minute = enriched.Score.Minute,
-            gameState = enriched.Score.Phase,
-            ts = enriched.Score.Ts,
+            eventType = enriched.Score.Action,
+            homeName  = enriched.Fixture.HomeName,
+            awayName  = enriched.Fixture.AwayName,
+            homeScore = enriched.HomeScore,
+            awayScore = enriched.AwayScore,
+            minute    = enriched.Score.Minute,
+            phase     = enriched.Score.Phase,
+            timestamp = DateTimeOffset.FromUnixTimeMilliseconds(enriched.Score.Ts),
         });
 
         await _db.ListRightPushAsync(key, payload);
@@ -268,6 +291,9 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
         var val = await _db.HashGetAsync(key, "homePct");
         return val.HasValue ? decimal.Parse(val!) : 0m;
     }
+
+    private static bool ParseBool(string value) =>
+        value == "1" || value.Equals("true", StringComparison.OrdinalIgnoreCase);
 
     private async Task<string> GetRedCardStateAsync(int fixtureId)
     {

@@ -37,7 +37,7 @@ public class AnnotationWebhookClient(HttpClient http, ILogger<AnnotationWebhookC
             PlayerName = "",
             ProbabilityDelta = probabilityDelta,
             ScoreBefore = scoreBefore,
-            ScoreAfter = $"{score.HomeScore}-{score.AwayScore}",
+            ScoreAfter = $"{enriched.HomeScore}-{enriched.AwayScore}",
             MatchContext = matchContext,
         };
 

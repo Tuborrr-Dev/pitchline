@@ -17,35 +17,32 @@ public record ScoreUpdate(
     [property: JsonPropertyName("Participant")] int? Participant,
     [property: JsonPropertyName("Confirmed")] bool Confirmed,
     [property: JsonPropertyName("Clock")] ScoreClock? Clock,
-    [property: JsonPropertyName("Stats")] Dictionary<string, int>? Stats,
+    [property: JsonPropertyName("Score")] ScoreBlock? Score,   // was Stats
     [property: JsonPropertyName("Ts")] long Ts
 )
 {
-    // Goals are stat keys "1" (home) and "2" (away)
-    public int HomeScore => Stats?.GetValueOrDefault("1", 0) ?? 0;
-    public int AwayScore => Stats?.GetValueOrDefault("2", 0) ?? 0;
+    // Explicit, sport-agnostic — no reliance on opaque stat codes
+    public int Participant1Goals => Score?.Participant1?.Total?.Goals ?? 0;
+    public int Participant2Goals => Score?.Participant2?.Total?.Goals ?? 0;
 
-    // Minute from clock seconds, capped display at 90+
     public string Minute => Clock is null ? "" : $"{(int)(Clock.Seconds / 60)}";
 
-    // Terminal actions take precedence over StatusId — the API can send StatusId=1
-    // (scheduled) alongside a finalisation action for pre-tournament fixtures.
     private static readonly HashSet<string> TerminalActions =
-        ["game_finalised", "fullTime", "game_abandoned", "game_cancelled"];
+        ["game_finalised", "game_abandoned", "game_cancelled"];
 
     public string Phase => Action is not null && TerminalActions.Contains(Action)
         ? "Finished"
         : StatusId switch
         {
-            1  => "Scheduled",
-            2  => "1st Half",
-            3  => "Half Time",
-            4  => "2nd Half",
-            5  => "Finished",
-            6  => "Waiting for Extra Time",
-            7  => "Extra Time 1st Half",
-            8  => "Extra Time Half Time",
-            9  => "Extra Time 2nd Half",
+            1 => "Scheduled",
+            2 => "1st Half",
+            3 => "Half Time",
+            4 => "2nd Half",
+            5 => "Finished",
+            6 => "Waiting for Extra Time",
+            7 => "Extra Time 1st Half",
+            8 => "Extra Time Half Time",
+            9 => "Extra Time 2nd Half",
             10 => "Finished After Extra Time",
             11 => "Waiting for Penalties",
             12 => "Penalty Shootout",
@@ -55,13 +52,19 @@ public record ScoreUpdate(
             16 => "Cancelled",
             17 => "Coverage Cancelled",
             18 => "Coverage Suspended",
-            _  => GameState ?? ""
+            100 => "Finished",              // <- added, covers bare status events
+            _ => GameState ?? ""
         };
 
-    // Participant 1 = home, 2 = away — normalise to string for matchContext helpers
     public string? TeamId => Participant?.ToString();
 }
 
+public record ScoreBlock(
+    [property: JsonPropertyName("Participant1")] ParticipantTotals? Participant1,
+    [property: JsonPropertyName("Participant2")] ParticipantTotals? Participant2
+);
+public record ParticipantTotals([property: JsonPropertyName("Total")] TotalsBlock? Total);
+public record TotalsBlock([property: JsonPropertyName("Goals")] int Goals);
 public record ScoreClock(
     [property: JsonPropertyName("Running")] bool Running,
     [property: JsonPropertyName("Seconds")] int Seconds
@@ -125,11 +128,16 @@ public record FixtureInfo(
     string AwayName,
     int HomeId,
     int AwayId,
+    bool Participant1IsHome,
     DateTimeOffset KickOff
 );
 
 public record EnrichedOddsUpdate(OddsUpdate Odds, FixtureInfo Fixture);
-public record EnrichedScoreUpdate(ScoreUpdate Score, FixtureInfo Fixture);
+public record EnrichedScoreUpdate(ScoreUpdate Score, FixtureInfo Fixture)
+{
+    public int HomeScore => Fixture.Participant1IsHome ? Score.Participant1Goals : Score.Participant2Goals;
+    public int AwayScore => Fixture.Participant1IsHome ? Score.Participant2Goals : Score.Participant1Goals;
+}
 
 /// <summary>Contract between ingestion layer and the rest of the app.</summary>
 public interface IMatchEventBus

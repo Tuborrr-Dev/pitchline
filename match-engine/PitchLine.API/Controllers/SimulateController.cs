@@ -1,70 +1,29 @@
 using Microsoft.AspNetCore.Mvc;
-using Pitchline.Infrastructure.Redis;
 using Pitchline.Infrastructure.TxLine;
 
 namespace PitchLine.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class SimulateController(
-    IMatchEventBus bus,
-    FixtureMetadataService fixtures,
-    MatchStateRepository repo) : ControllerBase
+public class SimulateController(MatchReplayService replay) : ControllerBase
 {
-    private readonly IMatchEventBus _bus = bus;
-    private readonly FixtureMetadataService _fixtures = fixtures;
-    private readonly MatchStateRepository _repo = repo;
+    private readonly MatchReplayService _replay = replay;
 
     /// <summary>
-    /// POST /api/simulate/score
-    /// Fires a fake goal event through the full pipeline:
-    /// Redis → SignalR → Annotation service
+    /// POST /api/simulate/replay
+    /// Streams a saved match JSON through the live event pipeline.
+    /// speed=10 means 10x faster than real time. speed=0 = no delay.
     /// </summary>
-    [HttpPost("score")]
-    public async Task<IActionResult> SimulateScore([FromBody] SimulateScoreRequest req, CancellationToken ct)
+    [HttpPost("replay")]
+    public async Task<IActionResult> Replay([FromBody] ReplayRequest req, CancellationToken ct)
     {
-        var fixture = _fixtures.Get(req.FixtureId)
-                   ?? await _repo.GetFixtureMetaAsync(req.FixtureId);
+        if (!System.IO.File.Exists(req.FilePath))
+            return NotFound(new { message = $"File not found: {req.FilePath}" });
 
-        if (fixture is null)
-            return NotFound(new { message = $"Fixture {req.FixtureId} not in cache or Redis." });
+        _ = Task.Run(() => _replay.ReplayAsync(req.FilePath, req.Speed, ct), ct);
 
-        var score = new ScoreUpdate(
-            FixtureId: req.FixtureId,
-            Action: req.Action ?? "goal",
-            GameState: null,
-            StatusId: req.StatusId ?? 2,
-            Participant: req.Participant ?? 1,
-            Confirmed: true,
-            Clock: new ScoreClock(Running: true, Seconds: (req.Minute ?? 35) * 60),
-            Stats: new Dictionary<string, int>
-            {
-                ["1"] = req.HomeScore ?? 1,
-                ["2"] = req.AwayScore ?? 0,
-            },
-            Ts: DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-        );
-
-        await _bus.PublishScoreUpdateAsync(new EnrichedScoreUpdate(score, fixture), ct);
-
-        return Ok(new
-        {
-            message = "Score event fired",
-            fixture = $"{fixture.HomeName} vs {fixture.AwayName}",
-            action = score.Action,
-            score = $"{score.HomeScore}-{score.AwayScore}",
-            minute = score.Minute,
-            phase = score.Phase,
-        });
+        return Accepted(new { message = "Replay started", file = req.FilePath, speed = req.Speed });
     }
 }
 
-public record SimulateScoreRequest(
-    int FixtureId,
-    string? Action,
-    int? StatusId,
-    int? Participant,
-    int? Minute,
-    int? HomeScore,
-    int? AwayScore
-);
+public record ReplayRequest(string FilePath, double Speed = 10);
