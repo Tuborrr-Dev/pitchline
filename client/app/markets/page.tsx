@@ -1,11 +1,13 @@
 import { Suspense } from "react";
 import { MarketOverview } from "@/components/market-overview";
-import { getMarketOverviewRows } from "@/lib/mock-data";
+import { fetchMarketOverviewRows } from "@/lib/market-service";
 
-export default function MarketsPage() {
+export default async function MarketsPage() {
+  const initialRows = await fetchMarketOverviewRows();
+
   return (
     <Suspense fallback={<div className="min-h-screen bg-[var(--background)]" />}>
-      <MarketOverview initialRows={getMarketOverviewRows()} />
+      <MarketOverview initialRows={initialRows} />
     </Suspense>
   );
 }

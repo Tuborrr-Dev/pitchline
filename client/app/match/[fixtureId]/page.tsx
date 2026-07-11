@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { LiveMatchTerminal } from "@/components/live-match-terminal";
-import { getLiveMatchState } from "@/lib/mock-data";
+import { fetchInitialLiveMatchState } from "@/lib/pitchline-service";
 
 export default async function MatchPage({
   params,
@@ -9,7 +9,7 @@ export default async function MatchPage({
   params: Promise<{ fixtureId: string }>;
 }) {
   const { fixtureId } = await params;
-  const state = getLiveMatchState(fixtureId);
+  const state = await fetchInitialLiveMatchState(fixtureId);
 
   if (!state) {
     notFound();

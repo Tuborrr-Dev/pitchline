@@ -153,7 +153,7 @@ function eventColor(event: MatchEvent) {
 }
 
 function eventShortLabel(event: MatchEvent) {
-  const side = event.side === "teamB" ? "FRA" : event.side === "teamA" ? "ARG" : "MKT";
+  const side = event.teamCode ?? (event.side === "draw" ? "MKT" : "LIVE");
   const delta = event.delta ? `${event.delta > 0 ? "+" : ""}${event.delta.toFixed(1)}%` : "Market";
   return `${event.minuteLabel} ${event.label} ${delta} ${side}`;
 }
@@ -482,8 +482,8 @@ export function ProbabilityChart({
         </div>
 
         <div className="hidden flex-wrap items-center justify-between gap-3 px-3 py-2 font-mono text-[0.68rem] font-semibold uppercase md:flex md:min-w-[16rem]">
-          <span className="text-[var(--terminal-green)]">ARG Equity</span>
-          <span className="text-[#ff4b6e]">FRA Equity</span>
+          <span className="text-[var(--terminal-green)]">{teamACode} Equity</span>
+          <span className="text-[#ff4b6e]">{teamBCode} Equity</span>
           <span className="text-[#10a2cc]">VIX</span>
         </div>
       </div>

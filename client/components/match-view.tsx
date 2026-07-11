@@ -37,7 +37,7 @@ function eventTone(event: MatchEvent) {
 
 function eventDeltaLabel(event: MatchEvent) {
   if (!event.delta) return "Volatility low";
-  const side = event.side === "teamB" ? "FRA" : event.side === "teamA" ? "ARG" : "MKT";
+  const side = event.teamCode ?? (event.side === "draw" ? "MKT" : "LIVE");
   return `${event.delta > 0 ? "+" : ""}${event.delta.toFixed(1)}% ${side} equity`;
 }
 
@@ -52,11 +52,6 @@ function TeamPlate({
   probability: number;
   align?: "left" | "right";
 }) {
-  const flagClass =
-    code === "ARG"
-      ? "bg-[linear-gradient(180deg,#80c7ff_0_33%,#fff_33%_66%,#80c7ff_66%)]"
-      : "bg-[linear-gradient(90deg,#1f4fd8_0_33%,#fff_33%_66%,#ef3b4d_66%)]";
-
   return (
     <div
       className={cn(
@@ -65,16 +60,24 @@ function TeamPlate({
         align !== "right" && "justify-start",
       )}
     >
-      {align === "left" ? <span className={cn("h-7 w-10 shrink-0 border border-[#52606d] sm:h-12 sm:w-16", flagClass)} /> : null}
+      {align === "left" ? (
+        <span className="flex h-7 w-10 shrink-0 items-center justify-center border border-[#52606d] bg-[#111820] font-mono text-[0.62rem] font-semibold text-[#d5dde4] sm:h-12 sm:w-16 sm:text-sm">
+          {code}
+        </span>
+      ) : null}
       <div>
         <p className="font-display text-[1rem] font-bold uppercase leading-none text-[#e7edf2] sm:text-[2.15rem]">
           {name}
         </p>
         <p className={cn("mt-1 font-mono text-[0.56rem] font-semibold uppercase sm:text-[0.72rem]", probability > 0 ? "text-[var(--terminal-green)]" : "text-[#9aa7b2]")}>
-          W {probability.toFixed(1)}% (Final)
+          Win {probability.toFixed(1)}%
         </p>
       </div>
-      {align === "right" ? <span className={cn("h-7 w-10 shrink-0 border border-[#52606d] sm:h-12 sm:w-16", flagClass)} /> : null}
+      {align === "right" ? (
+        <span className="flex h-7 w-10 shrink-0 items-center justify-center border border-[#52606d] bg-[#111820] font-mono text-[0.62rem] font-semibold text-[#d5dde4] sm:h-12 sm:w-16 sm:text-sm">
+          {code}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -366,7 +369,7 @@ export function MatchView({
                 {fixture.scoreA} : {fixture.scoreB}
               </div>
               <div className="mx-auto mt-1 w-fit border border-[var(--terminal-green)] bg-[#0b291e] px-2 py-1 font-mono text-[0.5rem] font-semibold uppercase text-[var(--terminal-green)] sm:mt-2 sm:px-3 sm:text-[0.72rem]">
-                {fixture.teamACode} wins {Math.max(currentProbabilities.teamA - currentProbabilities.teamB, 0).toFixed(1)} on penalties
+                Market edge {Math.abs(currentProbabilities.teamA - currentProbabilities.teamB).toFixed(1)} pts
               </div>
             </div>
 
@@ -400,8 +403,8 @@ export function MatchView({
               ) : null}
             </div>
             <div className="flex shrink-0 items-center gap-3 font-mono text-[0.62rem] font-semibold uppercase sm:gap-4 sm:text-[0.72rem]">
-              <span className="text-[var(--terminal-green)]">ARG</span>
-              <span className="text-[#ff4b6e]">FRA</span>
+              <span className="text-[var(--terminal-green)]">{fixture.teamACode}</span>
+              <span className="text-[#ff4b6e]">{fixture.teamBCode}</span>
               <span className="text-[#10a2cc]">VIX</span>
               <Button
                 type="button"

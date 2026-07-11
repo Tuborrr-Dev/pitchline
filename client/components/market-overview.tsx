@@ -30,8 +30,6 @@ const panelMotion = {
 } as const;
 
 function rowHref(row: MarketOverviewRow) {
-  if (row.fixture.fixtureId === "bra-cro-pre") return "/match/bra-esp-live";
-  if (row.fixture.fixtureId === "eng-sen-live") return "/match/arg-fra-live";
   return `/match/${row.fixture.fixtureId}`;
 }
 
