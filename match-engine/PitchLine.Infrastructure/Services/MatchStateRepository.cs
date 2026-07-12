@@ -30,57 +30,78 @@ public class MatchStateRepository(IConnectionMultiplexer redis, PostgresReposito
     // ── Fixture metadata (written by FixtureMetadataService every 5 min) ────
     public async Task SaveFixtureMetaAsync(FixtureInfo fixture)
     {
-        var key = $"fixture:{fixture.FixtureId}:meta";
+        try
+        {
+            var key = $"fixture:{fixture.FixtureId}:meta";
 
-        await _db.HashSetAsync(key,
-        [
-            new("fixtureId", fixture.FixtureId),
-            new("homeName",  fixture.HomeName),
-            new("awayName",  fixture.AwayName),
-            new("homeId",    fixture.HomeId),
-            new("awayId",    fixture.AwayId),
-            new("participant1IsHome", fixture.Participant1IsHome),
-            new("kickOff",   fixture.KickOff.ToString("O")),
-        ]);
+            await _db.HashSetAsync(key,
+            [
+                new("fixtureId", fixture.FixtureId),
+                new("homeName",  fixture.HomeName),
+                new("awayName",  fixture.AwayName),
+                new("homeId",    fixture.HomeId),
+                new("awayId",    fixture.AwayId),
+                new("participant1IsHome", fixture.Participant1IsHome),
+                new("kickOff",   fixture.KickOff.ToString("O")),
+            ]);
 
-        // Expire metadata 6 hours after kickoff — keeps Redis clean
-        await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
+            // Expire metadata 6 hours after kickoff — keeps Redis clean
+            await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
 
-        _logger.LogDebug("[REDIS] Saved fixture meta for {FixtureId}", fixture.FixtureId);
+            _logger.LogDebug("[REDIS] Saved fixture meta for {FixtureId}", fixture.FixtureId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Failed to save fixture meta for {FixtureId}", fixture.FixtureId);
+        }
     }
 
     public async Task<FixtureMetaSummary?> GetFixtureMetaAsync(string fixtureId, CancellationToken cancellationToken = default)
     {
         var key = $"fixture:{fixtureId}:meta";
-        var fields = await _db.HashGetAllAsync(key);
-        if (fields.Length > 0)
+        try
         {
-            var map = fields.ToDictionary(f => f.Name.ToString(), f => f.Value.ToString());
-            return new FixtureMetaSummary(
-                FixtureId: fixtureId,
-                HomeName: map["homeName"],
-                AwayName: map["awayName"],
-                HomeId: map["homeId"],
-                AwayId: map["awayId"],
-                Participant1IsHome: ParseBool(map.GetValueOrDefault("participant1IsHome", "true")),
-                KickOff: DateTimeOffset.Parse(map["kickOff"])
-            );
+            var fields = await _db.HashGetAllAsync(key);
+            if (fields.Length > 0)
+            {
+                var map = fields.ToDictionary(f => f.Name.ToString(), f => f.Value.ToString());
+                return new FixtureMetaSummary(
+                    FixtureId: fixtureId,
+                    HomeName: map["homeName"],
+                    AwayName: map["awayName"],
+                    HomeId: map["homeId"],
+                    AwayId: map["awayId"],
+                    Participant1IsHome: ParseBool(map.GetValueOrDefault("participant1IsHome", "true")),
+                    KickOff: DateTimeOffset.Parse(map["kickOff"])
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Timeout/error querying meta for {FixtureId}. Falling back to PostgreSQL.", fixtureId);
         }
 
-        // Cache miss: load from Postgres
+        // Cache miss or Redis failure: load from Postgres
         var pgMeta = await _pg.GetFixtureMetaAsync(fixtureId, cancellationToken);
         if (pgMeta is not null)
         {
-            // Populate cache
-            await SaveFixtureMetaAsync(new FixtureInfo(
-                FixtureId: int.Parse(pgMeta.FixtureId),
-                HomeName: pgMeta.HomeName,
-                AwayName: pgMeta.AwayName,
-                HomeId: int.Parse(pgMeta.HomeId),
-                AwayId: int.Parse(pgMeta.AwayId),
-                Participant1IsHome: pgMeta.Participant1IsHome,
-                KickOff: pgMeta.KickOff
-            ));
+            // Populate cache (safe write)
+            try
+            {
+                await SaveFixtureMetaAsync(new FixtureInfo(
+                    FixtureId: int.Parse(pgMeta.FixtureId),
+                    HomeName: pgMeta.HomeName,
+                    AwayName: pgMeta.AwayName,
+                    HomeId: int.Parse(pgMeta.HomeId),
+                    AwayId: int.Parse(pgMeta.AwayId),
+                    Participant1IsHome: pgMeta.Participant1IsHome,
+                    KickOff: pgMeta.KickOff
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[REDIS] Failed to populate meta cache for {FixtureId} after Postgres load.", fixtureId);
+            }
             return pgMeta;
         }
 
@@ -105,28 +126,35 @@ public class MatchStateRepository(IConnectionMultiplexer redis, PostgresReposito
 
     public async Task SaveAllFixturesAsync(IEnumerable<FixtureInfo> fixtures)
     {
-        var batch = _db.CreateBatch();
-        var tasks = fixtures.SelectMany(f =>
+        try
         {
-            var key = $"fixture:{f.FixtureId}:meta";
-            return new Task[]
+            var batch = _db.CreateBatch();
+            var tasks = fixtures.SelectMany(f =>
             {
-                batch.HashSetAsync(key,
-                [
-                    new("fixtureId",           f.FixtureId),
-                    new("homeName",            f.HomeName),
-                    new("awayName",            f.AwayName),
-                    new("homeId",              f.HomeId),
-                    new("awayId",              f.AwayId),
-                    new("participant1IsHome",  f.Participant1IsHome),
-                    new("kickOff",             f.KickOff.ToString("O")),
-                ]),
-                batch.KeyExpireAsync(key, TimeSpan.FromHours(6))
-            };
-        }).ToList();
+                var key = $"fixture:{f.FixtureId}:meta";
+                return new Task[]
+                {
+                    batch.HashSetAsync(key,
+                    [
+                        new("fixtureId",           f.FixtureId),
+                        new("homeName",            f.HomeName),
+                        new("awayName",            f.AwayName),
+                        new("homeId",              f.HomeId),
+                        new("awayId",              f.AwayId),
+                        new("participant1IsHome",  f.Participant1IsHome),
+                        new("kickOff",             f.KickOff.ToString("O")),
+                    ]),
+                    batch.KeyExpireAsync(key, TimeSpan.FromHours(6))
+                };
+            }).ToList();
 
-        batch.Execute();
-        await Task.WhenAll(tasks);
+            batch.Execute();
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Failed to save all fixtures batch");
+        }
     }
 
     // ── Current match state (overwritten on every event) ─────────────────────
@@ -134,31 +162,45 @@ public class MatchStateRepository(IConnectionMultiplexer redis, PostgresReposito
     public async Task<MatchStateSummary?> GetStateAsync(string fixtureId, CancellationToken cancellationToken = default)
     {
         var key = $"fixture:{fixtureId}:state";
-        var fields = await _db.HashGetAllAsync(key);
-        if (fields.Length > 0)
+        try
         {
-            var map = fields.ToDictionary(f => f.Name.ToString(), f => f.Value.ToString());
-            return new MatchStateSummary(
-                FixtureId: fixtureId,
-                HomeName: map.GetValueOrDefault("homeName", ""),
-                AwayName: map.GetValueOrDefault("awayName", ""),
-                HomeScore: int.Parse(map.GetValueOrDefault("homeScore", "0")),
-                AwayScore: int.Parse(map.GetValueOrDefault("awayScore", "0")),
-                Phase: map.GetValueOrDefault("phase", ""),
-                Minute: map.GetValueOrDefault("minute", ""),
-                HomePct: decimal.Parse(map.GetValueOrDefault("homePct", "0")),
-                DrawPct: decimal.Parse(map.GetValueOrDefault("drawPct", "0")),
-                AwayPct: decimal.Parse(map.GetValueOrDefault("awayPct", "0")),
-                RedCardActive: bool.Parse(map.GetValueOrDefault("redCardActive", "false"))
-            );
+            var fields = await _db.HashGetAllAsync(key);
+            if (fields.Length > 0)
+            {
+                var map = fields.ToDictionary(f => f.Name.ToString(), f => f.Value.ToString());
+                return new MatchStateSummary(
+                    FixtureId: fixtureId,
+                    HomeName: map.GetValueOrDefault("homeName", ""),
+                    AwayName: map.GetValueOrDefault("awayName", ""),
+                    HomeScore: int.Parse(map.GetValueOrDefault("homeScore", "0")),
+                    AwayScore: int.Parse(map.GetValueOrDefault("awayScore", "0")),
+                    Phase: map.GetValueOrDefault("phase", ""),
+                    Minute: map.GetValueOrDefault("minute", ""),
+                    HomePct: decimal.Parse(map.GetValueOrDefault("homePct", "0")),
+                    DrawPct: decimal.Parse(map.GetValueOrDefault("drawPct", "0")),
+                    AwayPct: decimal.Parse(map.GetValueOrDefault("awayPct", "0")),
+                    RedCardActive: bool.Parse(map.GetValueOrDefault("redCardActive", "false"))
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Timeout/error querying state for {FixtureId}. Falling back to PostgreSQL.", fixtureId);
         }
 
-        // Cache miss: load from Postgres
+        // Cache miss or Redis failure: load from Postgres
         var pgState = await _pg.GetStateAsync(fixtureId, cancellationToken);
         if (pgState is not null)
         {
-            // Populate cache
-            await UpdateRedisStateAsync(pgState);
+            // Populate cache (safe write)
+            try
+            {
+                await UpdateRedisStateAsync(pgState);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[REDIS] Failed to populate state cache for {FixtureId} after Postgres load.", fixtureId);
+            }
             return pgState;
         }
 
@@ -186,50 +228,71 @@ public class MatchStateRepository(IConnectionMultiplexer redis, PostgresReposito
     }
     private async Task UpdateRedisStateAsync(MatchStateSummary state)
     {
-        var key = $"fixture:{state.FixtureId}:state";
-        await _db.HashSetAsync(key, new HashEntry[]
+        try
         {
-            new("homeName",      state.HomeName),
-            new("awayName",      state.AwayName),
-            new("homeScore",     state.HomeScore),
-            new("awayScore",     state.AwayScore),
-            new("phase",         state.Phase),
-            new("minute",        state.Minute),
-            new("homePct",       state.HomePct.ToString()),
-            new("drawPct",       state.DrawPct.ToString()),
-            new("awayPct",       state.AwayPct.ToString()),
-            new("redCardActive", state.RedCardActive.ToString().ToLowerInvariant()),
-        });
-        await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
+            var key = $"fixture:{state.FixtureId}:state";
+            await _db.HashSetAsync(key, new HashEntry[]
+            {
+                new("homeName",      state.HomeName),
+                new("awayName",      state.AwayName),
+                new("homeScore",     state.HomeScore),
+                new("awayScore",     state.AwayScore),
+                new("phase",         state.Phase),
+                new("minute",        state.Minute),
+                new("homePct",       state.HomePct.ToString()),
+                new("drawPct",       state.DrawPct.ToString()),
+                new("awayPct",       state.AwayPct.ToString()),
+                new("redCardActive", state.RedCardActive.ToString().ToLowerInvariant()),
+            });
+            await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Failed to update state cache for {FixtureId}", state.FixtureId);
+        }
     }
 
     public async Task UpdateStateFromScoreAsync(EnrichedScoreUpdate enriched)
     {
-        var key = $"fixture:{enriched.Score.FixtureId}:state";
-
-        await _db.HashSetAsync(key, new HashEntry[]
+        try
         {
-            new("homeName",      enriched.Fixture.HomeName),
-            new("awayName",      enriched.Fixture.AwayName),
-            new("homeScore",     enriched.HomeScore),
-            new("awayScore",     enriched.AwayScore),
-            new("phase",         enriched.Score.Phase),
-            new("minute",        enriched.Score.Minute),
-            new("redCardActive", enriched.Score.Action == "red_card" ? "true" :
-                                 await GetRedCardStateAsync(enriched.Score.FixtureId)),
-        });
+            var key = $"fixture:{enriched.Score.FixtureId}:state";
+
+            await _db.HashSetAsync(key, new HashEntry[]
+            {
+                new("homeName",      enriched.Fixture.HomeName),
+                new("awayName",      enriched.Fixture.AwayName),
+                new("homeScore",     enriched.HomeScore),
+                new("awayScore",     enriched.AwayScore),
+                new("phase",         enriched.Score.Phase),
+                new("minute",        enriched.Score.Minute),
+                new("redCardActive", enriched.Score.Action == "red_card" ? "true" :
+                                     await GetRedCardStateAsync(enriched.Score.FixtureId)),
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Failed to update state from score for {FixtureId}", enriched.Score.FixtureId);
+        }
     }
 
     public async Task UpdateStateFromOddsAsync(EnrichedOddsUpdate enriched, decimal homePct, decimal drawPct, decimal awayPct)
     {
-        var key = $"fixture:{enriched.Odds.FixtureId}:state";
-
-        await _db.HashSetAsync(key, new HashEntry[]
+        try
         {
-            new("homePct", homePct.ToString()),
-            new("drawPct", drawPct.ToString()),
-            new("awayPct", awayPct.ToString()),
-        });
+            var key = $"fixture:{enriched.Odds.FixtureId}:state";
+
+            await _db.HashSetAsync(key, new HashEntry[]
+            {
+                new("homePct", homePct.ToString()),
+                new("drawPct", drawPct.ToString()),
+                new("awayPct", awayPct.ToString()),
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Failed to update state from odds for {FixtureId}", enriched.Odds.FixtureId);
+        }
     }
     public async Task<decimal?> GetOpeningHomePctAsync(string fixtureId, CancellationToken cancellationToken = default)
     {
@@ -240,29 +303,43 @@ public class MatchStateRepository(IConnectionMultiplexer redis, PostgresReposito
 
     public async Task SaveOpeningHomePctAsync(string fixtureId, decimal homePct, CancellationToken cancellationToken = default)
     {
-        var key = $"fixture:{fixtureId}:state";
-        await _db.HashSetAsync(key, "openingHomePct", homePct.ToString());
+        try
+        {
+            var key = $"fixture:{fixtureId}:state";
+            await _db.HashSetAsync(key, "openingHomePct", homePct.ToString());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Failed to save opening home percentage for {FixtureId}", fixtureId);
+        }
     }
 
     // ── Event log (append-only, powers history scrub) ─────────────────────────
 
     public async Task AppendScoreEventAsync(EnrichedScoreUpdate enriched)
     {
-        var key = $"fixture:{enriched.Score.FixtureId}:events";
-        var payload = JsonSerializer.Serialize(new
+        try
         {
-            eventType = enriched.Score.Action,
-            homeName  = enriched.Fixture.HomeName,
-            awayName  = enriched.Fixture.AwayName,
-            homeScore = enriched.HomeScore,
-            awayScore = enriched.AwayScore,
-            minute    = enriched.Score.Minute,
-            phase     = enriched.Score.Phase,
-            timestamp = DateTimeOffset.FromUnixTimeMilliseconds(enriched.Score.Ts),
-        });
+            var key = $"fixture:{enriched.Score.FixtureId}:events";
+            var payload = JsonSerializer.Serialize(new
+            {
+                eventType = enriched.Score.Action,
+                homeName  = enriched.Fixture.HomeName,
+                awayName  = enriched.Fixture.AwayName,
+                homeScore = enriched.HomeScore,
+                awayScore = enriched.AwayScore,
+                minute    = enriched.Score.Minute,
+                phase     = enriched.Score.Phase,
+                timestamp = DateTimeOffset.FromUnixTimeMilliseconds(enriched.Score.Ts),
+            });
 
-        await _db.ListRightPushAsync(key, payload);
-        await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
+            await _db.ListRightPushAsync(key, payload);
+            await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Failed to append score event for {FixtureId}", enriched.Score.FixtureId);
+        }
     }
 
     public async Task<IEnumerable<string>> GetEventLogAsync(string fixtureId, CancellationToken cancellationToken = default)
@@ -316,17 +393,24 @@ public class MatchStateRepository(IConnectionMultiplexer redis, PostgresReposito
 
     public async Task AppendOddsSnapshotAsync(EnrichedOddsUpdate enriched, decimal homePct, decimal drawPct, decimal awayPct)
     {
-        var key = $"fixture:{enriched.Odds.FixtureId}:odds-history";
-        var payload = JsonSerializer.Serialize(new
+        try
         {
-            homePct,
-            drawPct,
-            awayPct,
-            ts = enriched.Odds.Ts,
-        });
+            var key = $"fixture:{enriched.Odds.FixtureId}:odds-history";
+            var payload = JsonSerializer.Serialize(new
+            {
+                homePct,
+                drawPct,
+                awayPct,
+                ts = enriched.Odds.Ts,
+            });
 
-        await _db.ListRightPushAsync(key, payload);
-        await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
+            await _db.ListRightPushAsync(key, payload);
+            await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Failed to append odds snapshot for {FixtureId}", enriched.Odds.FixtureId);
+        }
     }
 
     public async Task<IEnumerable<string>> GetOddsHistoryAsync(string fixtureId, CancellationToken cancellationToken = default)
@@ -446,6 +530,60 @@ public class MatchStateRepository(IConnectionMultiplexer redis, PostgresReposito
         }
 
         return list;
+    }
+
+    // ── Analytics support reads ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns last N homePct values from odds-history for momentum + volatility calc.
+    /// </summary>
+    public async Task<List<decimal>> GetRecentHomePctHistoryAsync(int fixtureId, int count = 11)
+    {
+        var key = $"fixture:{fixtureId}:odds-history";
+        var values = await _db.ListRangeAsync(key, -count, -1);
+
+        return values
+            .Select(v =>
+            {
+                var doc = JsonSerializer.Deserialize<JsonElement>(v.ToString());
+                return doc.TryGetProperty("homePct", out var p) ? p.GetDecimal() : 0m;
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Reads current peak swing from state hash.
+    /// </summary>
+    public async Task<(decimal Delta, string Minute)> GetPeakSwingAsync(int fixtureId)
+    {
+        var key = $"fixture:{fixtureId}:state";
+        var delta = await _db.HashGetAsync(key, "peakSwingDelta");
+        var minute = await _db.HashGetAsync(key, "peakSwingMinute");
+
+        return (
+            delta.HasValue ? decimal.Parse(delta!) : 0m,
+            minute.HasValue ? minute.ToString() : "0"
+        );
+    }
+
+    /// <summary>
+    /// Persists new peak swing to state hash when a new record is set.
+    /// </summary>
+    public async Task UpdatePeakSwingAsync(int fixtureId, decimal delta, string minute)
+    {
+        try
+        {
+            var key = $"fixture:{fixtureId}:state";
+            await _db.HashSetAsync(key, new HashEntry[]
+            {
+                new("peakSwingDelta",  delta.ToString()),
+                new("peakSwingMinute", minute),
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Failed to update peak swing for {FixtureId}", fixtureId);
+        }
     }
 }
 

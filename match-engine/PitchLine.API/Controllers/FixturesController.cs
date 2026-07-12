@@ -19,6 +19,13 @@ public class FixturesController(IMediator mediator, FixtureMetadataService fixtu
         return Ok(result);
     }
 
+    [HttpGet("finished")]
+    public async Task<ActionResult<GetFixturesResult>> GetFinished(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetFinishedFixturesQuery(), cancellationToken);
+        return Ok(result);
+    }
+
     [HttpGet("debug/cache/{fixtureId}")]
     public async Task<ActionResult> DebugCache(int fixtureId, CancellationToken cancellationToken)
     {

@@ -37,7 +37,20 @@
     });
 
     s.on("OddsUpdate", d => {
-      print(`[ODDS]  ${d.homeName} H=${d.homePct}% D=${d.drawPct}% A=${d.awayPct}% | Δ${d.probabilityDelta}`, 'odds');
+      let msg = `[ODDS]  ${d.homeName} H=${d.homePct}% D=${d.drawPct}% A=${d.awayPct}% | Δ${d.probabilityDelta}`;
+      if (d.momentum) {
+        msg += ` | Momentum: ${d.momentum.direction} (${d.momentum.slope > 0 ? '+' : ''}${d.momentum.slope})`;
+      }
+      if (d.volatility) {
+        msg += ` | Volatility: ${d.volatility.level} (${d.volatility.stdDev})`;
+      }
+      if (d.marketFreeze && d.marketFreeze.isFrozen) {
+        msg += ` | ⚠️ FROZEN (${d.marketFreeze.secondsSinceUpdate}s)`;
+      }
+      if (d.peakSwing) {
+        msg += ` | ⚡ Peak Swing: ${d.peakSwing.delta}% @ ${d.peakSwing.minute}'`;
+      }
+      print(msg, 'odds');
     });
 
     const fixtureIds = ['18218149', '18241006', '18237038'];
