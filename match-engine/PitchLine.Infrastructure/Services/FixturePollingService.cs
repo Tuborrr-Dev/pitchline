@@ -25,18 +25,11 @@ public class FixturePollingService : BackgroundService
         // Load immediately on startup so cache is warm before streams start
         await _metadata.RefreshAsync(ct);
 
-        // Then immediately seed odds from snapshot
-        await _snapshot.SeedAllFixturesAsync(ct);
-
         // Then refresh every 5 minutes (matches PRD Section 10)
-        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(5));
+        using var timer = new PeriodicTimer(TimeSpan.FromHours(24));
         while (await timer.WaitForNextTickAsync(ct))
         {
-            try
-            {
-                await _metadata.RefreshAsync(ct);
-                await _snapshot.SeedAllFixturesAsync(ct);
-            }
+            try { await _metadata.RefreshAsync(ct); }
             catch (Exception ex) { _logger.LogError(ex, "Fixture refresh failed"); }
         }
     }

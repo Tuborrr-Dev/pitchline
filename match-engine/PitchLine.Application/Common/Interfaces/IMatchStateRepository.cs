@@ -14,6 +14,7 @@ public record FixtureMetaSummary(
     string AwayName,
     string HomeId,
     string AwayId,
+    bool Participant1IsHome,
     DateTimeOffset KickOff);
 public record MatchStateSummary(
     string FixtureId,

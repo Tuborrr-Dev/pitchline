@@ -15,7 +15,7 @@ public class ConsoleEventBus(ILogger<ConsoleEventBus> logger) : IMatchEventBus
         _logger.LogInformation(
             "[SCORE ⚽] fixture={FixtureId} {Home} vs {Away} | action={Action} score={HomeScore}-{AwayScore} min={Minute} state={GameState}",
             update.Score.FixtureId, update.Fixture.HomeName, update.Fixture.AwayName,
-            update.Score.Action, update.Score.HomeScore, update.Score.AwayScore,
+            update.Score.Action, update.HomeScore, update.AwayScore,
             update.Score.Minute, update.Score.Phase);
 
         return Task.CompletedTask;

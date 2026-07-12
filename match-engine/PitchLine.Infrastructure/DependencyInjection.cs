@@ -76,6 +76,8 @@ public static class DependencyInjection
 
         services.AddHostedService<FixturePollingService>();
 
+        services.AddSingleton<MatchReplayService>();
+
         services.AddSingleton<IMatchEventBus, SignalREventBus>();
         services.AddHostedService<TxLineStreamService>();
 
