@@ -47,9 +47,13 @@ public class GetMatchHistoryHandler : IRequestHandler<GetMatchHistoryQuery, GetM
         var meta = await _repo.GetFixtureMetaAsync(request.FixtureId, ct);
         if (meta is null) return null;
 
-        // Read raw JSON strings from Redis lists
-        var rawOdds = await _repo.GetOddsHistoryAsync(request.FixtureId, ct);
-        var rawEvents = await _repo.GetEventLogAsync(request.FixtureId, ct);
+        // Read raw JSON strings concurrently (independent queries)
+        var rawOddsTask = _repo.GetOddsHistoryAsync(request.FixtureId, ct);
+        var rawEventsTask = _repo.GetEventLogAsync(request.FixtureId, ct);
+        await Task.WhenAll(rawOddsTask, rawEventsTask);
+
+        var rawOdds = await rawOddsTask;
+        var rawEvents = await rawEventsTask;
 
         // Deserialize odds snapshots
         var oddsHistory = rawOdds

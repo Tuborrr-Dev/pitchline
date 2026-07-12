@@ -24,20 +24,33 @@ public class SignalREventBus(
         var fixtureId = enriched.Score.FixtureId;
         var group = $"fixture:{fixtureId}";
 
-        // 1. Read previous state BEFORE writing (needed for scoreBefore + matchContext)
-        var scoreBefore = await _repo.GetScoreBeforeAsync(fixtureId);
-        var prevState = await _repo.GetStateAsync(fixtureId);
+        // 1. Read previous state BEFORE writing from PostgreSQL
+        var scoreBefore = await _pg.GetScoreBeforeAsync(fixtureId, ct);
+        var prevState = await _pg.GetStateAsync(fixtureId, ct);
 
-        // 2. Write to Redis + Postgres
+        // Guard: drop events where score goes backwards (bad TxLine corrections)
+        if (prevState is not null &&
+            (enriched.HomeScore < prevState.HomeScore || enriched.AwayScore < prevState.AwayScore))
+        {
+            _logger.LogWarning("[BUS] Score rollback dropped — fixture={FixtureId} prev={PH}-{PA} incoming={IH}-{IA}",
+                fixtureId, prevState.HomeScore, prevState.AwayScore, enriched.HomeScore, enriched.AwayScore);
+            return;
+        }
+
+        // 2. Write to Postgres FIRST (awaited)
+        _logger.LogInformation("[POSTGRES] Writing score state — fixture={FixtureId}", fixtureId);
+        await _pg.UpsertStateFromScoreAsync(enriched);
+        if (IsGoal(enriched.Score.Action))
+        {
+            await _pg.AppendScoreEventAsync(enriched);
+        }
+
+        // 3. Write to Redis Cache SECOND (awaited)
         _logger.LogInformation("[REDIS] Writing score state — fixture={FixtureId}", fixtureId);
         await _repo.UpdateStateFromScoreAsync(enriched);
-        _ = _pg.UpsertStateFromScoreAsync(enriched);
-
-        // Only persist goal events to history
         if (IsGoal(enriched.Score.Action))
         {
             await _repo.AppendScoreEventAsync(enriched);
-            _ = _pg.AppendScoreEventAsync(enriched);
         }
 
         // 3. Build matchContext booleans
@@ -91,7 +104,6 @@ public class SignalREventBus(
     //         };
     //         _ = _annotation.SendScoreEventAsync(enriched, scoreBefore, annotationDelta, annotationContext);
     //     }
-
     //     _logger.LogInformation("[BUS] ScoreUpdate published — {Home} {HS}-{AS} {Away} min={Min}",
     //         enriched.Fixture.HomeName, homeAfter, awayAfter, enriched.Fixture.AwayName, enriched.Score.Minute);
     }
@@ -102,16 +114,19 @@ public class SignalREventBus(
         var group = $"fixture:{fixtureId}";
         var (home, draw, away) = enriched.Odds.ToImpliedProbabilities();
 
-        // 1. Read previous probability BEFORE writing (needed for probabilityDelta)
-        var prevHomePct = await _repo.GetPreviousHomePctAsync(fixtureId);
+        // 1. Read previous probability BEFORE writing from PostgreSQL
+        var prevHomePct = await _pg.GetPreviousHomePctAsync(fixtureId, ct);
         var delta = Math.Abs(home - prevHomePct);
 
-        // 2. Write to Redis + Postgres
+        // 2. Write to Postgres FIRST (awaited)
+        _logger.LogInformation("[POSTGRES] Writing odds state — fixture={FixtureId}", fixtureId);
+        await _pg.UpsertStateFromOddsAsync(fixtureId, home, draw, away);
+        await _pg.AppendOddsSnapshotAsync(fixtureId, home, draw, away, enriched.Odds.Ts);
+
+        // 3. Write to Redis Cache SECOND (awaited)
         _logger.LogInformation("[REDIS] Writing odds state — fixture={FixtureId}", fixtureId);
         await _repo.UpdateStateFromOddsAsync(enriched, home, draw, away);
         await _repo.AppendOddsSnapshotAsync(enriched, home, draw, away);
-        _ = _pg.UpsertStateFromOddsAsync(fixtureId, home, draw, away);
-        _ = _pg.AppendOddsSnapshotAsync(fixtureId, home, draw, away, enriched.Odds.Ts);
 
         var payload = new
         {

@@ -17,13 +17,22 @@ public record ScoreUpdate(
     [property: JsonPropertyName("Participant")] int? Participant,
     [property: JsonPropertyName("Confirmed")] bool Confirmed,
     [property: JsonPropertyName("Clock")] ScoreClock? Clock,
-    [property: JsonPropertyName("Score")] ScoreBlock? Score,   // was Stats
+    [property: JsonPropertyName("Score")] ScoreBlock? Score,
+    [property: JsonPropertyName("Stats")] Dictionary<string, int>? Stats,
     [property: JsonPropertyName("Ts")] long Ts
 )
 {
-    // Explicit, sport-agnostic — no reliance on opaque stat codes
-    public int Participant1Goals => Score?.Participant1?.Total?.Goals ?? 0;
-    public int Participant2Goals => Score?.Participant2?.Total?.Goals ?? 0;
+    // Score.Participant1.Total.Goals is only present on goal events.
+    // Stats["1"] / Stats["2"] are the running cumulative goal totals on all events.
+    public int Participant1Goals =>
+        Score?.Participant1?.Total?.Goals is int g1 and > 0 ? g1
+        : Stats is not null && Stats.TryGetValue("1", out var s1) ? s1
+        : 0;
+
+    public int Participant2Goals =>
+        Score?.Participant2?.Total?.Goals is int g2 and > 0 ? g2
+        : Stats is not null && Stats.TryGetValue("2", out var s2) ? s2
+        : 0;
 
     public string Minute => Clock is null ? "" : $"{(int)(Clock.Seconds / 60)}";
 

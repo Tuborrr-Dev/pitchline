@@ -104,6 +104,11 @@ public class TxLineStreamService(
                 _logger.LogError(ex, "[{Path}] Stream error (attempt {Attempt})", path, attempt + 1);
             }
 
+            if (ct.IsCancellationRequested)
+            {
+                break;
+            }
+
             attempt++;
             if (path == OddsStreamPath)
             {
@@ -139,15 +144,21 @@ public class TxLineStreamService(
         var update = JsonSerializer.Deserialize<ScoreUpdate>(evt.Data, JsonOptions);
         if (update is null) return;
 
-        var fixture = _fixtures.Get(update.FixtureId);
-        if (fixture is null)
+        var fixture = await _fixtures.GetAsync(update.FixtureId, ct);
+        if (fixture is null && _fixtures.CanRefresh)
         {
             _logger.LogWarning("Unknown fixtureId {Id}, refreshing metadata", update.FixtureId);
             await _fixtures.RefreshAsync(ct);
-            fixture = _fixtures.Get(update.FixtureId);
+            fixture = await _fixtures.GetAsync(update.FixtureId, ct);
         }
 
-        await _bus.PublishScoreUpdateAsync(new EnrichedScoreUpdate(update, fixture!), ct);
+        if (fixture is null)
+        {
+            _logger.LogWarning("Skipping score event for unknown fixtureId {Id}", update.FixtureId);
+            return;
+        }
+
+        await _bus.PublishScoreUpdateAsync(new EnrichedScoreUpdate(update, fixture), ct);
     }
 
     private async Task HandleOddsEventAsync(SseEvent evt, CancellationToken ct)
@@ -157,11 +168,12 @@ public class TxLineStreamService(
         var update = JsonSerializer.Deserialize<OddsUpdate>(evt.Data, JsonOptions);
         if (update is null || !update.IsFullMatchResult) return;
 
-        var fixture = _fixtures.Get(update.FixtureId);
-        if (fixture is null)
+        var fixture = await _fixtures.GetAsync(update.FixtureId, ct);
+        if (fixture is null && _fixtures.CanRefresh)
         {
+            _logger.LogWarning("Unknown fixtureId {Id}, refreshing metadata for odds", update.FixtureId);
             await _fixtures.RefreshAsync(ct);
-            fixture = _fixtures.Get(update.FixtureId);
+            fixture = await _fixtures.GetAsync(update.FixtureId, ct);
         }
 
         if (fixture is null) return;
