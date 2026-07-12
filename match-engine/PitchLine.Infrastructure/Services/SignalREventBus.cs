@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Pitchline.Api.Hubs;
 using Pitchline.Infrastructure.Postgres;
 using Pitchline.Infrastructure.Redis;
+using PitchLine.Domain.Analytics;
 
 namespace Pitchline.Infrastructure.TxLine;
 
@@ -28,14 +29,7 @@ public class SignalREventBus(
         var scoreBefore = await _pg.GetScoreBeforeAsync(fixtureId, ct);
         var prevState = await _pg.GetStateAsync(fixtureId, ct);
 
-        // Guard: drop events where score goes backwards (bad TxLine corrections)
-        if (prevState is not null &&
-            (enriched.HomeScore < prevState.HomeScore || enriched.AwayScore < prevState.AwayScore))
-        {
-            _logger.LogWarning("[BUS] Score rollback dropped — fixture={FixtureId} prev={PH}-{PA} incoming={IH}-{IA}",
-                fixtureId, prevState.HomeScore, prevState.AwayScore, enriched.HomeScore, enriched.AwayScore);
-            return;
-        }
+
 
         // 2. Write to Postgres FIRST (awaited)
         _logger.LogInformation("[POSTGRES] Writing score state — fixture={FixtureId}", fixtureId);
@@ -128,6 +122,27 @@ public class SignalREventBus(
         await _repo.UpdateStateFromOddsAsync(enriched, home, draw, away);
         await _repo.AppendOddsSnapshotAsync(enriched, home, draw, away);
 
+        // 4. Retrieve state and history for enrichment
+        var state = await _repo.GetStateAsync(fixtureId);
+        var phase = state?.Phase ?? "";
+        var minute = state?.Minute ?? "0";
+
+        var history = await _repo.GetRecentHomePctHistoryAsync(fixtureId, 11);
+        var momentum = MarketAnalytics.CalculateMomentum(history);
+        var volatility = MarketAnalytics.CalculateVolatility(history);
+
+        // Convert timestamp from Unix milliseconds to DateTimeOffset for freeze detection
+        var lastOddsTimestamp = DateTimeOffset.FromUnixTimeMilliseconds(enriched.Odds.Ts);
+        var freeze = MarketAnalytics.DetectMarketFreeze(lastOddsTimestamp, phase);
+
+        var (existingPeak, existingMinute) = await _repo.GetPeakSwingAsync(fixtureId);
+        var peakResult = MarketAnalytics.EvaluatePeakSwing(delta, minute, existingPeak, existingMinute);
+
+        if (peakResult.IsNewPeak)
+        {
+            await _repo.UpdatePeakSwingAsync(fixtureId, peakResult.Delta, minute);
+        }
+
         var payload = new
         {
             fixtureId,
@@ -138,9 +153,13 @@ public class SignalREventBus(
             awayPct = away,
             probabilityDelta = delta,
             timestamp = enriched.Odds.Ts,
+            momentum = new { slope = momentum.Slope, direction = momentum.Direction.ToString() },
+            volatility = new { stdDev = volatility.StdDev, level = volatility.Level.ToString() },
+            marketFreeze = new { isFrozen = freeze.IsFrozen, secondsSinceUpdate = freeze.SecondsSinceUpdate },
+            peakSwing = new { delta = peakResult.Delta, minute = peakResult.Minute }
         };
 
-        // 3. Push to frontend via SignalR
+        // 5. Push to frontend via SignalR
         await _hub.Clients.Group(group).SendAsync("OddsUpdate", payload, ct);
 
         // Annotation service only handles score events — odds delta tracked via score handler

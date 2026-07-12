@@ -76,7 +76,15 @@ public static class DependencyInjection
 
         services.AddHostedService<FixturePollingService>();
 
-        // services.AddSingleton<MatchReplayService>();
+        services.AddSingleton<MatchReplayService>();
+
+        services.AddHttpClient<HistoricalScoreReplayService>(c =>
+        {
+            c.BaseAddress = new Uri("https://txline.txodds.com");
+            c.Timeout = TimeSpan.FromSeconds(30);
+            c.DefaultRequestHeaders.Add("User-Agent", "Pitchline/1.0");
+        });
+        services.AddSingleton<HistoricalScoreReplayService>();
 
         services.AddSingleton<IMatchEventBus, SignalREventBus>();
         services.AddHostedService<TxLineStreamService>();
