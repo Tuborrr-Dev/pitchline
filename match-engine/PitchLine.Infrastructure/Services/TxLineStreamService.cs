@@ -139,12 +139,12 @@ public class TxLineStreamService(
         var update = JsonSerializer.Deserialize<ScoreUpdate>(evt.Data, JsonOptions);
         if (update is null) return;
 
-        var fixture = _fixtures.Get(update.FixtureId);
-        if (fixture is null)
+        var fixture = await _fixtures.GetAsync(update.FixtureId, ct);
+        if (fixture is null && !_fixtures.Refreshed)
         {
             _logger.LogWarning("Unknown fixtureId {Id}, refreshing metadata", update.FixtureId);
             await _fixtures.RefreshAsync(ct);
-            fixture = _fixtures.Get(update.FixtureId);
+            fixture = await _fixtures.GetAsync(update.FixtureId, ct);
         }
 
         await _bus.PublishScoreUpdateAsync(new EnrichedScoreUpdate(update, fixture!), ct);
@@ -157,11 +157,11 @@ public class TxLineStreamService(
         var update = JsonSerializer.Deserialize<OddsUpdate>(evt.Data, JsonOptions);
         if (update is null || !update.IsFullMatchResult) return;
 
-        var fixture = _fixtures.Get(update.FixtureId);
-        if (fixture is null)
+        var fixture = await _fixtures.GetAsync(update.FixtureId, ct);
+        if (fixture is null && !_fixtures.Refreshed)
         {
             await _fixtures.RefreshAsync(ct);
-            fixture = _fixtures.Get(update.FixtureId);
+            fixture = await _fixtures.GetAsync(update.FixtureId, ct);
         }
 
         if (fixture is null) return;

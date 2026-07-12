@@ -28,6 +28,15 @@ public class SignalREventBus(
         var scoreBefore = await _repo.GetScoreBeforeAsync(fixtureId);
         var prevState = await _repo.GetStateAsync(fixtureId);
 
+        // Guard: drop events where score goes backwards (bad TxLine corrections)
+        if (prevState is not null &&
+            (enriched.HomeScore < prevState.HomeScore || enriched.AwayScore < prevState.AwayScore))
+        {
+            _logger.LogWarning("[BUS] Score rollback dropped — fixture={FixtureId} prev={PH}-{PA} incoming={IH}-{IA}",
+                fixtureId, prevState.HomeScore, prevState.AwayScore, enriched.HomeScore, enriched.AwayScore);
+            return;
+        }
+
         // 2. Write to Redis + Postgres
         _logger.LogInformation("[REDIS] Writing score state — fixture={FixtureId}", fixtureId);
         await _repo.UpdateStateFromScoreAsync(enriched);
