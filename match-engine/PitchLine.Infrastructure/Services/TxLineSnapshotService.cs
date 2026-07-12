@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Pitchline.Infrastructure.Redis;
+using Pitchline.Infrastructure.Postgres;
 
 namespace Pitchline.Infrastructure.TxLine;
 
@@ -9,6 +10,7 @@ public class TxLineSnapshotService
 {
     private readonly HttpClient _http;
     private readonly MatchStateRepository _repo;
+    private readonly PostgresRepository _pg;
     private readonly ILogger<TxLineSnapshotService> _logger;
     private readonly string _apiToken;
     private readonly string _jwt;
@@ -16,11 +18,13 @@ public class TxLineSnapshotService
     public TxLineSnapshotService(
         HttpClient http,
         MatchStateRepository repo,
+        PostgresRepository pg,
         ILogger<TxLineSnapshotService> logger,
         IConfiguration config)
     {
         _http = http;
         _repo = repo;
+        _pg = pg;
         _logger = logger;
         _apiToken = config["TxLine:ApiToken"]
             ?? throw new InvalidOperationException("TxLine:ApiToken is not configured.");
@@ -80,9 +84,9 @@ public class TxLineSnapshotService
                 return;
             }
 
-            // Don't fetch odds for finished matches
-            var state = await _repo.GetStateAsync(fixtureNumber);
-            if (state?.Phase?.Equals("Finished", StringComparison.OrdinalIgnoreCase) == true)
+            // Don't fetch odds for finished matches (check Postgres)
+            var state = await _pg.GetStateAsync(fixtureNumber, ct);
+            if (state?.Phase?.Contains("Finished", StringComparison.OrdinalIgnoreCase) == true)
             {
                 _logger.LogDebug("[SNAPSHOT] Skipping finished fixture {FixtureId}", fixtureId);
                 return;
@@ -91,13 +95,20 @@ public class TxLineSnapshotService
             var enriched = new EnrichedOddsUpdate(oddsUpdate, fixture);
             var (home, draw, away) = oddsUpdate.ToImpliedProbabilities();
 
+            // 1. Write to Postgres FIRST (awaited)
+            await _pg.UpsertStateFromOddsAsync(fixtureNumber, home, draw, away);
+            await _pg.AppendOddsSnapshotAsync(fixtureNumber, home, draw, away, oddsUpdate.Ts);
+
+            // 2. Write to Redis SECOND (awaited)
             await _repo.UpdateStateFromOddsAsync(enriched, home, draw, away);
             await _repo.AppendOddsSnapshotAsync(enriched, home, draw, away);
 
-            var openingHomePct = await _repo.GetOpeningHomePctAsync(fixtureId);
+            // 3. Opening percentage check and save
+            var openingHomePct = await _pg.GetOpeningHomePctAsync(fixtureId, ct);
             if (!openingHomePct.HasValue)
             {
-                await _repo.SaveOpeningHomePctAsync(fixtureId, home);
+                await _pg.UpsertOpeningHomePctAsync(fixtureId, home);
+                await _repo.SaveOpeningHomePctAsync(fixtureId, home, ct);
             }
 
             _logger.LogInformation(

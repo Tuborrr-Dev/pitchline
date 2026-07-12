@@ -24,12 +24,12 @@ public class FixtureMetadataService(
     private readonly string _jwt = config["TxLine:Jwt"]
                     ?? throw new InvalidOperationException("TxLine:Jwt is not configured.");
 
-    private bool _refreshed = false;
-    public bool Refreshed => _refreshed;
+    private DateTimeOffset _lastRefreshedAt = DateTimeOffset.MinValue;
+    public bool CanRefresh => DateTimeOffset.UtcNow - _lastRefreshedAt > TimeSpan.FromMinutes(5);
 
     public async Task RefreshAsync(CancellationToken ct = default)
     {
-        _refreshed = true;
+        _lastRefreshedAt = DateTimeOffset.UtcNow;
         using var req = new HttpRequestMessage(HttpMethod.Get, "/api/fixtures/snapshot?startEpochDay=20615&competitionId=72");
         req.Headers.Authorization = new("Bearer", _jwt);
         req.Headers.Add("X-Api-Token", _apiToken);
@@ -51,7 +51,7 @@ public class FixtureMetadataService(
 
                 var id = fixture.GetProperty("FixtureId").GetInt32();
 
-                var existing = await _repo.GetFixtureMetaAsync(id.ToString(), ct);
+                var existing = await _pg.GetFixtureMetaAsync(id.ToString(), ct);
                 if (existing is not null) continue;
 
                 var isP1Home = fixture.GetProperty("Participant1IsHome").GetBoolean();
@@ -71,8 +71,8 @@ public class FixtureMetadataService(
                     KickOff: kickOff
                 );
 
-                await _repo.SaveFixtureMetaAsync(info);
                 await _pg.UpsertFixtureMetaAsync(info);
+                await _repo.SaveFixtureMetaAsync(info);
                 await _snapshot.SeedFromSnapshotAsync(id.ToString(), ct);
 
                 _logger.LogInformation("[FIXTURES] new fixture seeded {FixtureId}", id);

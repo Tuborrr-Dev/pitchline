@@ -38,18 +38,15 @@ public class GetFixturesHandler : IRequestHandler<GetFixturesQuery, GetFixturesR
 
     public async Task<GetFixturesResult> Handle(GetFixturesQuery request, CancellationToken ct)
     {
-        // Get all fixture IDs from Redis
-        var fixtureIds = await _repo.GetAllFixtureIdsAsync(ct);
+        // Get all fixtures with state in a single bulk query
+        var fixturesWithState = await _repo.GetFixturesWithStateAsync(ct);
 
         var dtos = new List<FixtureDto>();
 
-        foreach (var id in fixtureIds)
+        foreach (var item in fixturesWithState)
         {
-            var meta = await _repo.GetFixtureMetaAsync(id, ct);
-            if (meta is null) continue;
-
-            // Enrich with live state if match is in progress
-            var state = await _repo.GetStateAsync(id, ct);
+            var meta = item.Meta;
+            var state = item.State;
 
             dtos.Add(new FixtureDto(
                 FixtureId: meta.FixtureId,

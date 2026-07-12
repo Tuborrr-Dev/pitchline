@@ -3,6 +3,8 @@ using PitchLine.Application.Common.Interfaces;
 using Pitchline.Infrastructure.TxLine;
 using StackExchange.Redis;
 using System.Text.Json;
+using Pitchline.Infrastructure.Postgres;
+using System.Linq;
 
 namespace Pitchline.Infrastructure.Redis;
 
@@ -14,29 +16,15 @@ namespace Pitchline.Infrastructure.Redis;
 ///   fixture:{id}:events        List  — append-only score event log
 ///   fixture:{id}:odds-history  List  — append-only probability snapshots (chart points)
 /// </summary>
-public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchStateRepository> logger) : IMatchStateRepository
+public class MatchStateRepository(IConnectionMultiplexer redis, PostgresRepository pg, ILogger<MatchStateRepository> logger) : IMatchStateRepository
 {
     private readonly IConnectionMultiplexer _redis = redis;
     private readonly IDatabase _db = redis.GetDatabase();
+    private readonly PostgresRepository _pg = pg;
     private readonly ILogger<MatchStateRepository> _logger = logger;
     public async Task<IReadOnlyList<string>> GetAllFixtureIdsAsync(CancellationToken cancellationToken = default)
     {
-        var fixtureIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var endpoint in _redis.GetEndPoints())
-        {
-            var server = _redis.GetServer(endpoint);
-            foreach (var key in server.Keys(pattern: "fixture:*:meta"))
-            {
-                var parts = key.ToString().Split(':', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length >= 2 && parts[0].Equals("fixture", StringComparison.OrdinalIgnoreCase))
-                {
-                    fixtureIds.Add(parts[1]);
-                }
-            }
-        }
-
-        return fixtureIds.OrderBy(id => id).ToList();
+        return await _pg.GetAllFixtureIdsAsync(cancellationToken);
     }
 
     // ── Fixture metadata (written by FixtureMetadataService every 5 min) ────
@@ -65,18 +53,38 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
     {
         var key = $"fixture:{fixtureId}:meta";
         var fields = await _db.HashGetAllAsync(key);
-        if (fields.Length == 0) return null;
+        if (fields.Length > 0)
+        {
+            var map = fields.ToDictionary(f => f.Name.ToString(), f => f.Value.ToString());
+            return new FixtureMetaSummary(
+                FixtureId: fixtureId,
+                HomeName: map["homeName"],
+                AwayName: map["awayName"],
+                HomeId: map["homeId"],
+                AwayId: map["awayId"],
+                Participant1IsHome: ParseBool(map.GetValueOrDefault("participant1IsHome", "true")),
+                KickOff: DateTimeOffset.Parse(map["kickOff"])
+            );
+        }
 
-        var map = fields.ToDictionary(f => f.Name.ToString(), f => f.Value.ToString());
-        return new FixtureMetaSummary(
-            FixtureId: fixtureId,
-            HomeName: map["homeName"],
-            AwayName: map["awayName"],
-            HomeId: map["homeId"],
-            AwayId: map["awayId"],
-            Participant1IsHome: ParseBool(map.GetValueOrDefault("participant1IsHome", "true")),
-            KickOff: DateTimeOffset.Parse(map["kickOff"])
-        );
+        // Cache miss: load from Postgres
+        var pgMeta = await _pg.GetFixtureMetaAsync(fixtureId, cancellationToken);
+        if (pgMeta is not null)
+        {
+            // Populate cache
+            await SaveFixtureMetaAsync(new FixtureInfo(
+                FixtureId: int.Parse(pgMeta.FixtureId),
+                HomeName: pgMeta.HomeName,
+                AwayName: pgMeta.AwayName,
+                HomeId: int.Parse(pgMeta.HomeId),
+                AwayId: int.Parse(pgMeta.AwayId),
+                Participant1IsHome: pgMeta.Participant1IsHome,
+                KickOff: pgMeta.KickOff
+            ));
+            return pgMeta;
+        }
+
+        return null;
     }
 
     public async Task<FixtureInfo?> GetFixtureMetaAsync(int fixtureId)
@@ -127,22 +135,34 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
     {
         var key = $"fixture:{fixtureId}:state";
         var fields = await _db.HashGetAllAsync(key);
-        if (fields.Length == 0) return null;
+        if (fields.Length > 0)
+        {
+            var map = fields.ToDictionary(f => f.Name.ToString(), f => f.Value.ToString());
+            return new MatchStateSummary(
+                FixtureId: fixtureId,
+                HomeName: map.GetValueOrDefault("homeName", ""),
+                AwayName: map.GetValueOrDefault("awayName", ""),
+                HomeScore: int.Parse(map.GetValueOrDefault("homeScore", "0")),
+                AwayScore: int.Parse(map.GetValueOrDefault("awayScore", "0")),
+                Phase: map.GetValueOrDefault("phase", ""),
+                Minute: map.GetValueOrDefault("minute", ""),
+                HomePct: decimal.Parse(map.GetValueOrDefault("homePct", "0")),
+                DrawPct: decimal.Parse(map.GetValueOrDefault("drawPct", "0")),
+                AwayPct: decimal.Parse(map.GetValueOrDefault("awayPct", "0")),
+                RedCardActive: bool.Parse(map.GetValueOrDefault("redCardActive", "false"))
+            );
+        }
 
-        var map = fields.ToDictionary(f => f.Name.ToString(), f => f.Value.ToString());
-        return new MatchStateSummary(
-            FixtureId: fixtureId,
-            HomeName: map.GetValueOrDefault("homeName", ""),
-            AwayName: map.GetValueOrDefault("awayName", ""),
-            HomeScore: int.Parse(map.GetValueOrDefault("homeScore", "0")),
-            AwayScore: int.Parse(map.GetValueOrDefault("awayScore", "0")),
-            Phase: map.GetValueOrDefault("phase", ""),
-            Minute: map.GetValueOrDefault("minute", ""),
-            HomePct: decimal.Parse(map.GetValueOrDefault("homePct", "0")),
-            DrawPct: decimal.Parse(map.GetValueOrDefault("drawPct", "0")),
-            AwayPct: decimal.Parse(map.GetValueOrDefault("awayPct", "0")),
-            RedCardActive: bool.Parse(map.GetValueOrDefault("redCardActive", "false"))
-        );
+        // Cache miss: load from Postgres
+        var pgState = await _pg.GetStateAsync(fixtureId, cancellationToken);
+        if (pgState is not null)
+        {
+            // Populate cache
+            await UpdateRedisStateAsync(pgState);
+            return pgState;
+        }
+
+        return null;
     }
 
     public async Task<MatchState?> GetStateAsync(int fixtureId)
@@ -163,6 +183,24 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
                 AwayPct: state.AwayPct,
                 RedCardActive: state.RedCardActive
             );
+    }
+    private async Task UpdateRedisStateAsync(MatchStateSummary state)
+    {
+        var key = $"fixture:{state.FixtureId}:state";
+        await _db.HashSetAsync(key, new HashEntry[]
+        {
+            new("homeName",      state.HomeName),
+            new("awayName",      state.AwayName),
+            new("homeScore",     state.HomeScore),
+            new("awayScore",     state.AwayScore),
+            new("phase",         state.Phase),
+            new("minute",        state.Minute),
+            new("homePct",       state.HomePct.ToString()),
+            new("drawPct",       state.DrawPct.ToString()),
+            new("awayPct",       state.AwayPct.ToString()),
+            new("redCardActive", state.RedCardActive.ToString().ToLowerInvariant()),
+        });
+        await _db.KeyExpireAsync(key, TimeSpan.FromHours(6));
     }
 
     public async Task UpdateStateFromScoreAsync(EnrichedScoreUpdate enriched)
@@ -231,7 +269,42 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
     {
         var key = $"fixture:{fixtureId}:events";
         var values = await _db.ListRangeAsync(key, 0, -1); // all items
-        return values.Select(v => v.ToString());
+        if (values.Length > 0)
+        {
+            return values.Select(v => v.ToString());
+        }
+
+        // Cache miss: load from Postgres
+        var pgEvents = await _pg.GetScoreHistoryAsync(fixtureId, cancellationToken);
+        if (pgEvents.Any())
+        {
+            var serialized = pgEvents.Select(e => JsonSerializer.Serialize(new
+            {
+                eventType = e.EventType,
+                homeName  = e.HomeName,
+                awayName  = e.AwayName,
+                homeScore = e.HomeScore,
+                awayScore = e.AwayScore,
+                minute    = e.Minute,
+                phase     = e.Phase,
+                timestamp = DateTimeOffset.FromUnixTimeMilliseconds(e.Ts)
+            })).ToList();
+
+            // Populate Redis cache
+            var batch = _db.CreateBatch();
+            var tasks = new List<Task>();
+            foreach (var payload in serialized)
+            {
+                tasks.Add(batch.ListRightPushAsync(key, payload));
+            }
+            tasks.Add(batch.KeyExpireAsync(key, TimeSpan.FromHours(6)));
+            batch.Execute();
+            await Task.WhenAll(tasks);
+
+            return serialized;
+        }
+
+        return [];
     }
 
     public async Task<IEnumerable<string>> GetEventLogAsync(int fixtureId)
@@ -260,7 +333,38 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
     {
         var key = $"fixture:{fixtureId}:odds-history";
         var values = await _db.ListRangeAsync(key, 0, -1);
-        return values.Select(v => v.ToString());
+        if (values.Length > 0)
+        {
+            return values.Select(v => v.ToString());
+        }
+
+        // Cache miss: load from Postgres
+        var pgOdds = await _pg.GetOddsHistoryAsync(fixtureId, cancellationToken);
+        if (pgOdds.Any())
+        {
+            var serialized = pgOdds.Select(o => JsonSerializer.Serialize(new
+            {
+                homePct = o.HomePct,
+                drawPct = o.DrawPct,
+                awayPct = o.AwayPct,
+                ts = o.Ts
+            })).ToList();
+
+            // Populate Redis cache
+            var batch = _db.CreateBatch();
+            var tasks = new List<Task>();
+            foreach (var payload in serialized)
+            {
+                tasks.Add(batch.ListRightPushAsync(key, payload));
+            }
+            tasks.Add(batch.KeyExpireAsync(key, TimeSpan.FromHours(6)));
+            batch.Execute();
+            await Task.WhenAll(tasks);
+
+            return serialized;
+        }
+
+        return [];
     }
     public async Task<IEnumerable<string>> GetOddsHistoryAsync(int fixtureId)
     {
@@ -300,6 +404,48 @@ public class MatchStateRepository(IConnectionMultiplexer redis, ILogger<MatchSta
         var key = $"fixture:{fixtureId}:state";
         var val = await _db.HashGetAsync(key, "redCardActive");
         return val.HasValue ? val.ToString() : "false";
+    }
+
+    private static readonly JsonSerializerOptions LobbyJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    public async Task<IReadOnlyList<FixtureMetaAndState>> GetFixturesWithStateAsync(CancellationToken cancellationToken = default)
+    {
+        var key = "lobby:fixtures";
+        var cachedJson = await _db.StringGetAsync(key);
+        if (cachedJson.HasValue)
+        {
+            try
+            {
+                var cachedList = JsonSerializer.Deserialize<IReadOnlyList<FixtureMetaAndState>>(cachedJson!, LobbyJsonOptions);
+                if (cachedList is not null)
+                {
+                    return cachedList;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[REDIS] Failed to deserialize cached lobby fixtures.");
+            }
+        }
+
+        // Cache miss: load from Postgres in a single query
+        var list = await _pg.GetFixturesWithStateAsync(cancellationToken);
+
+        // Serialize and save to Redis with 5s TTL
+        try
+        {
+            var serialized = JsonSerializer.Serialize(list, LobbyJsonOptions);
+            await _db.StringSetAsync(key, serialized, TimeSpan.FromSeconds(5));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[REDIS] Failed to cache lobby fixtures.");
+        }
+
+        return list;
     }
 }
 
