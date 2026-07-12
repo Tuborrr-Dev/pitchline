@@ -31,13 +31,18 @@ public class SignalREventBus(
         // 2. Write to Redis + Postgres
         _logger.LogInformation("[REDIS] Writing score state — fixture={FixtureId}", fixtureId);
         await _repo.UpdateStateFromScoreAsync(enriched);
-        await _repo.AppendScoreEventAsync(enriched);
         _ = _pg.UpsertStateFromScoreAsync(enriched);
-        _ = _pg.AppendScoreEventAsync(enriched);
+
+        // Only persist goal events to history
+        if (IsGoal(enriched.Score.Action))
+        {
+            await _repo.AppendScoreEventAsync(enriched);
+            _ = _pg.AppendScoreEventAsync(enriched);
+        }
 
         // 3. Build matchContext booleans
-        var homeAfter = enriched.Score.HomeScore;
-        var awayAfter = enriched.Score.AwayScore;
+        var homeAfter = enriched.HomeScore;
+        var awayAfter = enriched.AwayScore;
         var homeBefore = prevState?.HomeScore ?? 0;
         var awayBefore = prevState?.AwayScore ?? 0;
         var minute = int.TryParse(enriched.Score.Minute, out var m) ? m : 0;
@@ -70,25 +75,25 @@ public class SignalREventBus(
         // 4. Push to frontend via SignalR
         await _hub.Clients.Group(group).SendAsync("ScoreUpdate", payload, ct);
 
-        // 5. POST to annotation service — fire and forget (significant actions only)
-        if (IsAnnotatable(enriched.Score.Action))
-        {
-            var homePct = await _repo.GetPreviousHomePctAsync(fixtureId);
-            var prevHomePct2 = prevState?.HomePct ?? 0m;
-            var annotationDelta = Math.Abs(homePct - prevHomePct2);
-            var annotationContext = new MatchContextPayload
-            {
-                IsComeback    = matchContext.isComeback,
-                IsLateGoal    = matchContext.isLateGoal,
-                IsEqualiser   = matchContext.isEqualiser,
-                IsWinningGoal = matchContext.isWinningGoal,
-                RedCardActive = matchContext.redCardActive,
-            };
-            _ = _annotation.SendScoreEventAsync(enriched, scoreBefore, annotationDelta, annotationContext);
-        }
+    //     // 5. POST to annotation service — fire and forget (significant actions only)
+    //     if (IsAnnotatable(enriched.Score.Action))
+    //     {
+    //         var homePct = await _repo.GetPreviousHomePctAsync(fixtureId);
+    //         var prevHomePct2 = prevState?.HomePct ?? 0m;
+    //         var annotationDelta = Math.Abs(homePct - prevHomePct2);
+    //         var annotationContext = new MatchContextPayload
+    //         {
+    //             IsComeback    = matchContext.isComeback,
+    //             IsLateGoal    = matchContext.isLateGoal,
+    //             IsEqualiser   = matchContext.isEqualiser,
+    //             IsWinningGoal = matchContext.isWinningGoal,
+    //             RedCardActive = matchContext.redCardActive,
+    //         };
+    //         _ = _annotation.SendScoreEventAsync(enriched, scoreBefore, annotationDelta, annotationContext);
+    //     }
 
-        _logger.LogInformation("[BUS] ScoreUpdate published — {Home} {HS}-{AS} {Away} min={Min}",
-            enriched.Fixture.HomeName, homeAfter, awayAfter, enriched.Fixture.AwayName, enriched.Score.Minute);
+    //     _logger.LogInformation("[BUS] ScoreUpdate published — {Home} {HS}-{AS} {Away} min={Min}",
+    //         enriched.Fixture.HomeName, homeAfter, awayAfter, enriched.Fixture.AwayName, enriched.Score.Minute);
     }
 
     public async Task PublishOddsUpdateAsync(EnrichedOddsUpdate enriched, CancellationToken ct = default)
@@ -146,6 +151,9 @@ public class SignalREventBus(
         var scoringTeamIsHome = scoringTeamId == homeId.ToString();
         return scoringTeamIsHome ? homeAfter > awayAfter : awayAfter > homeAfter;
     }
+    private static readonly HashSet<string> GoalActions = ["goal", "ownGoal"];
+    private static bool IsGoal(string? action) => action is not null && GoalActions.Contains(action);
+
     private static readonly HashSet<string> AnnotatableActions =
         ["goal", "ownGoal", "redCard", "yellowRedCard", "penaltyAwarded", "freeKick"];
 

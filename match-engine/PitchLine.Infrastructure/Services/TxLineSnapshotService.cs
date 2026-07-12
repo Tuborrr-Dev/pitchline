@@ -9,7 +9,6 @@ public class TxLineSnapshotService
 {
     private readonly HttpClient _http;
     private readonly MatchStateRepository _repo;
-    private readonly FixtureMetadataService _fixtures;
     private readonly ILogger<TxLineSnapshotService> _logger;
     private readonly string _apiToken;
     private readonly string _jwt;
@@ -17,13 +16,11 @@ public class TxLineSnapshotService
     public TxLineSnapshotService(
         HttpClient http,
         MatchStateRepository repo,
-        FixtureMetadataService fixtures,
         ILogger<TxLineSnapshotService> logger,
         IConfiguration config)
     {
         _http = http;
         _repo = repo;
-        _fixtures = fixtures;
         _logger = logger;
         _apiToken = config["TxLine:ApiToken"]
             ?? throw new InvalidOperationException("TxLine:ApiToken is not configured.");
@@ -76,10 +73,18 @@ public class TxLineSnapshotService
                 Ts: DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             );
 
-            var fixture = _fixtures.Get(fixtureNumber) ?? await _repo.GetFixtureMetaAsync(fixtureNumber);
+            var fixture = await _repo.GetFixtureMetaAsync(fixtureNumber);
             if (fixture is null)
             {
                 _logger.LogWarning("[SNAPSHOT] No fixture meta for {FixtureId} — skipping seed", fixtureId);
+                return;
+            }
+
+            // Don't fetch odds for finished matches
+            var state = await _repo.GetStateAsync(fixtureNumber);
+            if (state?.Phase?.Equals("Finished", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                _logger.LogDebug("[SNAPSHOT] Skipping finished fixture {FixtureId}", fixtureId);
                 return;
             }
 

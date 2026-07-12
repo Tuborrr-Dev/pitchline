@@ -130,8 +130,8 @@ public class PostgresRepository(NpgsqlDataSource db, ILogger<PostgresRepository>
             cmd.Parameters.AddWithValue(enriched.Score.FixtureId.ToString());
             cmd.Parameters.AddWithValue(enriched.Fixture.HomeName);
             cmd.Parameters.AddWithValue(enriched.Fixture.AwayName);
-            cmd.Parameters.AddWithValue(enriched.Score.HomeScore);
-            cmd.Parameters.AddWithValue(enriched.Score.AwayScore);
+            cmd.Parameters.AddWithValue(enriched.HomeScore);
+            cmd.Parameters.AddWithValue(enriched.AwayScore);
             cmd.Parameters.AddWithValue(enriched.Score.Phase);
             cmd.Parameters.AddWithValue(enriched.Score.Minute);
             cmd.Parameters.AddWithValue(enriched.Score.Action == "redCard");
@@ -205,8 +205,8 @@ public class PostgresRepository(NpgsqlDataSource db, ILogger<PostgresRepository>
             cmd.Parameters.AddWithValue((object?)enriched.Score.Action ?? DBNull.Value);
             cmd.Parameters.AddWithValue(enriched.Fixture.HomeName);
             cmd.Parameters.AddWithValue(enriched.Fixture.AwayName);
-            cmd.Parameters.AddWithValue(enriched.Score.HomeScore);
-            cmd.Parameters.AddWithValue(enriched.Score.AwayScore);
+            cmd.Parameters.AddWithValue(enriched.HomeScore);
+            cmd.Parameters.AddWithValue(enriched.AwayScore);
             cmd.Parameters.AddWithValue(enriched.Score.Minute);
             cmd.Parameters.AddWithValue(enriched.Score.Phase);
             cmd.Parameters.AddWithValue(enriched.Score.Ts);
