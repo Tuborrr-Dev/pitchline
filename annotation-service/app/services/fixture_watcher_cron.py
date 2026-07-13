@@ -13,6 +13,17 @@ MAX_WATCH_DURATION_SECONDS = (
 MAIN_APP_URL = settings.MAIN_APP_URL
 
 
+async def get_with_wake_retry(client, url, **kwargs):
+    """First hit to a sleeping Railway service can 502 while it cold-boots."""
+    for attempt in range(3):
+        resp = await client.get(url, **kwargs)
+        if resp.status_code != 502:
+            return resp
+        await asyncio.sleep(2)
+    resp.raise_for_status()
+    return resp
+
+
 async def run_once():
     async with httpx.AsyncClient() as client:
         fx_resp = await client.get(
