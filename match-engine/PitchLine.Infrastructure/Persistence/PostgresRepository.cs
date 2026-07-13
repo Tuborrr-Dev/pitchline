@@ -252,7 +252,8 @@ public class PostgresRepository(NpgsqlDataSource db, ILogger<PostgresRepository>
         {
             await using var cmd = _db.CreateCommand("""
                 INSERT INTO odds_history (fixture_id, home_pct, draw_pct, away_pct, ts)
-                VALUES ($1, $2, $3, $4, $5);
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (fixture_id, ts) DO NOTHING;
             """);
             cmd.Parameters.AddWithValue(fixtureId.ToString());
             cmd.Parameters.AddWithValue(homePct);
