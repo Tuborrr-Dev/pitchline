@@ -76,6 +76,25 @@ public class PostgresRepository(NpgsqlDataSource db, ILogger<PostgresRepository>
                 ts           BIGINT,
                 created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
+
+            DELETE FROM odds_history a
+            USING odds_history b
+            WHERE a.id < b.id
+              AND a.fixture_id = b.fixture_id
+              AND a.ts = b.ts;
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_indexes
+                    WHERE schemaname = 'public'
+                      AND indexname = 'odds_history_fixture_ts_idx'
+                ) THEN
+                    CREATE UNIQUE INDEX odds_history_fixture_ts_idx
+                        ON odds_history (fixture_id, ts);
+                END IF;
+            END $$;
         """);
 
         await cmd.ExecuteNonQueryAsync();
@@ -246,6 +265,82 @@ public class PostgresRepository(NpgsqlDataSource db, ILogger<PostgresRepository>
         {
             _logger.LogError(ex, "[POSTGRES] AppendOddsSnapshot failed for {FixtureId}", fixtureId);
         }
+    }
+    public async Task<int> BulkInsertOddsHistoryAsync(int fixtureId, IReadOnlyCollection<Pitchline.Infrastructure.TxLine.OddsSnapshot> snapshots, CancellationToken cancellationToken = default)
+    {
+        if (snapshots.Count == 0)
+        {
+            return 0;
+        }
+
+        await using var connection = await _db.OpenConnectionAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var inserted = 0;
+            foreach (var snapshot in snapshots)
+            {
+                await using var cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = """
+                    INSERT INTO odds_history (fixture_id, home_pct, draw_pct, away_pct, ts, created_at)
+                    VALUES ($1, $2, $3, $4, $5, NOW())
+                    ON CONFLICT (fixture_id, ts) DO NOTHING;
+                """;
+                cmd.Parameters.AddWithValue(fixtureId.ToString());
+                cmd.Parameters.AddWithValue(snapshot.HomePct);
+                cmd.Parameters.AddWithValue(snapshot.DrawPct);
+                cmd.Parameters.AddWithValue(snapshot.AwayPct);
+                cmd.Parameters.AddWithValue(snapshot.Timestamp.ToUnixTimeMilliseconds());
+                var affected = await cmd.ExecuteNonQueryAsync(cancellationToken);
+                inserted += affected;
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return inserted;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            _logger.LogError(ex, "[POSTGRES] BulkInsertOddsHistoryAsync failed for {FixtureId}", fixtureId);
+            throw;
+        }
+    }
+
+    public async Task<IReadOnlyList<FixtureInfo>> GetFinishedFixturesMissingOddsHistoryAsync(int competitionId, CancellationToken cancellationToken = default)
+    {
+        var list = new List<FixtureInfo>();
+        try
+        {
+            await using var cmd = _db.CreateCommand("""
+                SELECT m.fixture_id, m.home_name, m.away_name, m.home_id, m.away_id, m.participant_1_is_home, m.kick_off
+                FROM fixture_meta m
+                WHERE m.kick_off < NOW()
+                  AND m.fixture_id NOT IN (
+                      SELECT DISTINCT fixture_id FROM odds_history
+                  )
+                ORDER BY m.kick_off ASC;
+            """);
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                list.Add(new FixtureInfo(
+                    FixtureId: int.Parse(reader.GetString(0)),
+                    HomeName: reader.GetString(1),
+                    AwayName: reader.GetString(2),
+                    HomeId: int.Parse(reader.GetString(3)),
+                    AwayId: int.Parse(reader.GetString(4)),
+                    Participant1IsHome: reader.GetBoolean(5),
+                    KickOff: reader.GetFieldValue<DateTimeOffset>(6)));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[POSTGRES] GetFinishedFixturesMissingOddsHistoryAsync failed for competition {CompetitionId}", competitionId);
+        }
+
+        return list;
     }
 
     // ── Source of Truth Reads ────────────────────────────────────────────────
@@ -443,7 +538,7 @@ public class PostgresRepository(NpgsqlDataSource db, ILogger<PostgresRepository>
                     HomePct: reader.GetDecimal(0),
                     DrawPct: reader.GetDecimal(1),
                     AwayPct: reader.GetDecimal(2),
-                    Ts: reader.GetInt64(3)
+                    Timestamp: DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(3))
                 ));
             }
         }
@@ -566,12 +661,6 @@ public class PostgresRepository(NpgsqlDataSource db, ILogger<PostgresRepository>
     }
 }
 
-public record OddsSnapshot(
-    decimal HomePct,
-    decimal DrawPct,
-    decimal AwayPct,
-    long Ts
-);
 
 public record ScoreEvent(
     string EventType,
