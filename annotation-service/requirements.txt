@@ -8,3 +8,5 @@ python-dotenv
 pydantic
 requests
 google-genai
+httpx-sse
+httpx
