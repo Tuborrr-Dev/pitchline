@@ -8,7 +8,12 @@ import { useSearchParams } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { fetchMarketOverviewRows, type MarketOverviewRow } from "@/lib/market-service";
+import { useMarketOverviewStream } from "@/hooks/use-market-overview-stream";
+import {
+  fetchFinishedMarketOverviewRows,
+  fetchMarketOverviewRows,
+  type MarketOverviewRow,
+} from "@/lib/market-service";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "list" | "grid";
@@ -41,6 +46,8 @@ function isUpcomingRow(row: MarketOverviewRow) {
   return row.fixture.status === "upcoming";
 }
 
+import { AnimatedPercentage } from "./animated-percentage";
+
 function OutcomeBar({ home, draw, away }: { home: number; draw: number; away: number }) {
   return (
     <div className="flex h-7 w-full overflow-hidden border border-[var(--terminal-border)] bg-[var(--terminal-surface)]">
@@ -48,25 +55,25 @@ function OutcomeBar({ home, draw, away }: { home: number; draw: number; away: nu
         className="flex items-center justify-center bg-[var(--prob-home)] font-mono text-[0.72rem] font-semibold text-[#061009]"
         initial={false}
         animate={{ width: `${home}%` }}
-        transition={{ duration: 0.28, ease: "easeOut" }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
-        {home.toFixed(1)}%
+        <AnimatedPercentage value={home} showDeltaBadge />
       </motion.div>
       <motion.div
         className="flex items-center justify-center bg-[var(--prob-draw)] font-mono text-[0.72rem] font-semibold text-[#071018]"
         initial={false}
         animate={{ width: `${draw}%` }}
-        transition={{ duration: 0.28, ease: "easeOut" }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
-        {draw.toFixed(1)}%
+        <AnimatedPercentage value={draw} showDeltaBadge />
       </motion.div>
       <motion.div
         className="flex items-center justify-center bg-[var(--prob-away)] font-mono text-[0.72rem] font-semibold text-[#15090d]"
         initial={false}
         animate={{ width: `${away}%` }}
-        transition={{ duration: 0.28, ease: "easeOut" }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
-        {away.toFixed(1)}%
+        <AnimatedPercentage value={away} showDeltaBadge />
       </motion.div>
     </div>
   );
@@ -113,6 +120,8 @@ function StatusBadge({ row }: { row: MarketOverviewRow }) {
   );
 }
 
+import { TeamLogo } from "./team-logo";
+
 function MarketRow({ row }: { row: MarketOverviewRow }) {
   const href = rowHref(row);
 
@@ -123,18 +132,22 @@ function MarketRow({ row }: { row: MarketOverviewRow }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.18 }}
-      className="grid min-w-[64rem] grid-cols-[5rem_15rem_8rem_1fr_8.5rem_5.5rem] items-center border-t border-[var(--terminal-line)] px-4 py-3 text-[var(--foreground)] transition hover:bg-[var(--terminal-hover)]"
+      className="grid min-w-[64rem] grid-cols-[6.5rem_18rem_9rem_1fr_8.5rem_5.5rem] items-center border-t border-[var(--terminal-line)] px-4 py-3 text-[var(--foreground)] transition hover:bg-[var(--terminal-hover)]"
     >
       <div className="flex items-center">
         <StatusBadge row={row} />
       </div>
       <div>
-        <Link
-          href={href}
-          className="cursor-pointer font-display text-[1.25rem] font-bold uppercase text-[var(--terminal-text-strong)] transition hover:text-[var(--terminal-green)]"
-        >
-          {row.eventPair}
-        </Link>
+        <div className="flex items-center gap-2">
+          <TeamLogo code={row.fixture.teamACode} name={row.fixture.teamAName} size="sm" />
+          <Link
+            href={href}
+            className="cursor-pointer font-display text-[1.25rem] font-bold uppercase text-[var(--terminal-text-strong)] transition hover:text-[var(--terminal-green)]"
+          >
+            {row.eventPair}
+          </Link>
+          <TeamLogo code={row.fixture.teamBCode} name={row.fixture.teamBName} size="sm" />
+        </div>
         <p className="mt-0.5 font-mono text-[0.68rem] uppercase text-[var(--muted)]">
           {cleanLabel(row.eventSubLabel)}
         </p>
@@ -299,11 +312,23 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
   const searchParams = useSearchParams();
   const deferredQuery = useDeferredValue(searchParams.get("q") ?? "");
 
-  const { data: rows = initialRows, isError, isFetching } = useQuery({
+  const { data: fetchedActiveRows = initialRows, isError: isMarketsError, isFetching: isMarketsFetching } = useQuery({
     queryKey: ["market-overview"],
     queryFn: fetchMarketOverviewRows,
     initialData: initialRows,
   });
+
+  const streamedActiveRows = useMarketOverviewStream(fetchedActiveRows, activeTab === "markets");
+
+  const { data: finishedRows = [], isError: isFinishedError, isFetching: isFinishedFetching } = useQuery({
+    queryKey: ["market-overview-finished"],
+    queryFn: fetchFinishedMarketOverviewRows,
+    enabled: activeTab === "history",
+  });
+
+  const rows = activeTab === "history" ? finishedRows : streamedActiveRows;
+  const isError = activeTab === "history" ? isFinishedError : isMarketsError;
+  const isFetching = activeTab === "history" ? isFinishedFetching : isMarketsFetching;
   const isInitialLoading = isFetching && rows.length === 0;
 
   const filteredRows = useMemo(() => {
@@ -547,7 +572,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                 </motion.div>
               ) : (
                 <motion.div key="list" {...panelMotion}>
-                  <div className="grid min-w-[64rem] grid-cols-[5rem_15rem_8rem_1fr_8.5rem_5.5rem] items-center border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-4 py-3 font-mono text-[0.68rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
+                  <div className="grid min-w-[64rem] grid-cols-[6.5rem_18rem_9rem_1fr_8.5rem_5.5rem] items-center border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-4 py-3 font-mono text-[0.68rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
                     <div>Status</div>
                     <div>Event / Pair</div>
                     <div className="text-center">Score/Time</div>

@@ -20,7 +20,7 @@ import {
   type Time,
 } from "lightweight-charts";
 
-import type { ConnectionState, MatchEvent, ProbabilityPoint } from "@/lib/types";
+import type { ConnectionState, MarketAnalyticsData, MatchEvent, ProbabilityPoint } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface ProbabilityChartProps {
@@ -30,6 +30,7 @@ interface ProbabilityChartProps {
   events: MatchEvent[];
   selectedEvent?: MatchEvent | null;
   connectionState: ConnectionState;
+  analytics?: MarketAnalyticsData;
   onSelectEvent?: (eventId: string) => void;
 }
 
@@ -138,11 +139,11 @@ function interpolatePointTime(fromPoint: ProbabilityPoint, toPoint: ProbabilityP
 
 function canAnimateLatestPoint(fromHistory: ProbabilityPoint[], toHistory: ProbabilityPoint[]) {
   if (fromHistory.length === 0 || toHistory.length === 0) return false;
-  if (toHistory.length < fromHistory.length || toHistory.length > fromHistory.length + 1) {
+  if (toHistory.length !== fromHistory.length && toHistory.length !== fromHistory.length + 1) {
     return false;
   }
 
-  const stableLength = toHistory.length - 1;
+  const stableLength = Math.min(fromHistory.length - 1, toHistory.length - 1);
   for (let index = 0; index < stableLength; index += 1) {
     if (fromHistory[index]?.timestamp !== toHistory[index]?.timestamp) return false;
   }
@@ -246,6 +247,7 @@ export function ProbabilityChart({
   events,
   selectedEvent,
   connectionState,
+  analytics,
   onSelectEvent,
 }: ProbabilityChartProps) {
   const { resolvedTheme } = useTheme();
@@ -466,7 +468,10 @@ export function ProbabilityChart({
       draw: sourcePoint.draw,
     };
     const animationBaseHistory = normalizedHistory.slice(0, -1);
-
+    const initialSeriesData = toSeriesData(animationBaseHistory);
+    teamASeriesRef.current.setData(initialSeriesData.teamA);
+    teamBSeriesRef.current.setData(initialSeriesData.teamB);
+    drawSeriesRef.current.setData(initialSeriesData.draw);
     displayedHistoryRef.current = animationBaseHistory;
     setRenderedHistory(animationBaseHistory);
 
@@ -477,14 +482,14 @@ export function ProbabilityChart({
         timestamp: progress >= 1 ? targetPoint.timestamp : interpolatePointTime(startPoint, targetPoint, progress),
         minuteLabel: targetPoint.minuteLabel,
       };
-      const animatedHistory = [...animationBaseHistory, animatedPoint];
-      const animatedSeriesData = toSeriesData(animatedHistory);
 
-      teamASeriesRef.current?.setData(animatedSeriesData.teamA);
-      teamBSeriesRef.current?.setData(animatedSeriesData.teamB);
-      drawSeriesRef.current?.setData(animatedSeriesData.draw);
+      const animTime = toTime(animatedPoint.timestamp);
+      teamASeriesRef.current?.update({ time: animTime, value: animatedPoint.teamA });
+      teamBSeriesRef.current?.update({ time: animTime, value: animatedPoint.teamB });
+      drawSeriesRef.current?.update({ time: animTime, value: animatedPoint.draw });
+
+      const animatedHistory = [...animationBaseHistory, animatedPoint];
       displayedHistoryRef.current = animatedHistory;
-      setRenderedHistory(animatedHistory);
 
       if (!didFitContentRef.current) {
         chartRef.current?.timeScale().fitContent();
@@ -495,6 +500,11 @@ export function ProbabilityChart({
         animationFrameRef.current = requestAnimationFrame(renderFrame);
         return;
       }
+
+      const finalSeriesData = toSeriesData(normalizedHistory);
+      teamASeriesRef.current?.setData(finalSeriesData.teamA);
+      teamBSeriesRef.current?.setData(finalSeriesData.teamB);
+      drawSeriesRef.current?.setData(finalSeriesData.draw);
 
       displayedHistoryRef.current = normalizedHistory;
       setRenderedHistory(normalizedHistory);
@@ -558,7 +568,7 @@ export function ProbabilityChart({
         <div className="hidden flex-wrap items-center justify-between gap-3 px-3 py-2 font-mono text-[0.68rem] font-semibold uppercase md:flex md:min-w-[16rem]">
           <span className="text-[var(--terminal-green)]">{teamACode} Equity</span>
           <span className="text-[#ff4b6e]">{teamBCode} Equity</span>
-          <span className="text-[#10a2cc]">VIX</span>
+          <span className="text-[#10a2cc]">DRAW</span>
         </div>
       </div>
 
@@ -631,11 +641,11 @@ export function ProbabilityChart({
             />
           </svg>
           <div className="pointer-events-none absolute inset-x-3 top-2 flex justify-between font-mono text-[0.54rem] font-semibold uppercase text-[#0f9ac3] sm:inset-x-4 sm:text-[0.62rem]">
-            <span>VIX Max</span>
-            <span>Volatility shock index</span>
+            <span>VIX Max {analytics?.volatility ? `· Volatility ${analytics.volatility.level}` : ""}</span>
+            <span>{analytics?.momentum ? `Momentum: ${analytics.momentum.direction} (${analytics.momentum.slope > 0 ? "+" : ""}${analytics.momentum.slope})` : "Volatility shock index"}</span>
           </div>
           <div className="pointer-events-none absolute inset-x-3 bottom-2 flex justify-between font-mono text-[0.54rem] font-semibold uppercase text-[#0f6c87] sm:inset-x-4 sm:text-[0.62rem]">
-            <span>VIX Min</span>
+            <span>VIX Min {analytics?.volatility ? `(σ ${analytics.volatility.stdDev})` : ""}</span>
             <span>{connectionState === "live" ? "Live feed stable" : connectionState}</span>
           </div>
         </div>

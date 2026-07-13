@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type {
+  Annotation,
   ConnectionState,
   Fixture,
   LiveMatchState,
@@ -10,7 +11,12 @@ import type {
 } from "./types";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_PITCHLINE_API_BASE_URL ?? "https://pitchline.onrender.com";
+  process.env.NEXT_PUBLIC_PITCHLINE_API_BASE_URL ?? "http://localhost:5050";
+
+export const ANNOTATION_API_BASE_URL = (
+  process.env.NEXT_PUBLIC_ANNOTATION_API_BASE_URL ?? "https://annotation-service-production.up.railway.app"
+).replace(/\/$/, "");
+
 
 const fixtureDtoSchema = z.object({
   fixtureId: z.string(),
@@ -68,22 +74,52 @@ type BackendMatchHistoryDto = z.infer<typeof matchHistoryResponseSchema>;
 
 const teamCodeOverrides: Record<string, string> = {
   Argentina: "ARG",
+  Australia: "AUS",
   Belgium: "BEL",
+  "Bosnia & Herzegovina": "BIH",
+  "Bosnia and Herzegovina": "BIH",
   Brazil: "BRA",
+  Cameroon: "CMR",
+  Canada: "CAN",
+  "Cape Verde": "CPV",
+  Colombia: "COL",
+  "Congo DR": "COD",
+  "DR Congo": "COD",
+  Croatia: "CRO",
+  Curacao: "CUW",
+  Curaçao: "CUW",
+  Denmark: "DEN",
+  Ecuador: "ECU",
+  Egypt: "EGY",
   England: "ENG",
   France: "FRA",
   Germany: "GER",
+  Ghana: "GHA",
+  Haiti: "HAI",
+  Iran: "IRN",
+  "IR Iran": "IRN",
+  Iraq: "IRQ",
+  Italy: "ITA",
+  "Ivory Coast": "CIV",
   Japan: "JPN",
+  Jordan: "JOR",
   Mexico: "MEX",
+  Morocco: "MAR",
+  Netherlands: "NED",
   Nigeria: "NGA",
   Norway: "NOR",
+  Paraguay: "PAR",
+  Poland: "POL",
   Portugal: "POR",
+  Qatar: "QAT",
   "Saudi Arabia": "KSA",
+  Senegal: "SEN",
   "South Korea": "KOR",
   Spain: "ESP",
   Switzerland: "SUI",
-  "United States": "USA",
   Uruguay: "URU",
+  "United States": "USA",
+  Uzbekistan: "UZB",
 };
 
 export function getApiBaseUrl() {
@@ -378,9 +414,12 @@ export async function fetchFixtureIndex() {
   return response.fixtures;
 }
 
-export async function fetchMarketOverviewRows() {
-  const fixtures = await fetchFixtureIndex();
+export async function fetchFinishedFixtureIndex() {
+  const response = await getJson("/api/Fixtures/finished", fixturesResponseSchema);
+  return response.fixtures;
+}
 
+function mapDtosToMarketOverviewRows(fixtures: BackendFixtureDto[]) {
   return fixtures.map((dto) => {
     const fixture = createFixtureFromDto(dto);
     const placeholders = buildMarketPlaceholder(fixture);
@@ -407,9 +446,24 @@ export async function fetchMarketOverviewRows() {
   });
 }
 
-export async function fetchInitialLiveMatchState(fixtureId: string) {
+export async function fetchMarketOverviewRows() {
   const fixtures = await fetchFixtureIndex();
-  const fixtureMeta = fixtures.find((fixture) => fixture.fixtureId === fixtureId);
+  return mapDtosToMarketOverviewRows(fixtures);
+}
+
+export async function fetchFinishedMarketOverviewRows() {
+  const finishedFixtures = await fetchFinishedFixtureIndex();
+  return mapDtosToMarketOverviewRows(finishedFixtures);
+}
+
+export async function fetchInitialLiveMatchState(fixtureId: string) {
+  const [activeFixtures, finishedFixtures] = await Promise.all([
+    fetchFixtureIndex().catch(() => []),
+    fetchFinishedFixtureIndex().catch(() => []),
+  ]);
+
+  const allFixtures = [...activeFixtures, ...finishedFixtures];
+  const fixtureMeta = allFixtures.find((fixture) => fixture.fixtureId === fixtureId);
 
   if (!fixtureMeta) {
     return null;
@@ -422,21 +476,19 @@ export async function fetchInitialLiveMatchState(fixtureId: string) {
     match = null;
   }
 
+  let history: BackendMatchHistoryDto | null = null;
+  try {
+    history = await getJson(`/api/Match/${fixtureId}/history`, matchHistoryResponseSchema);
+  } catch {
+    history = null;
+  }
+
   const baseFixture = createFixtureFromDto(match ?? fixtureMeta);
   const currentProbabilities = {
     teamA: match?.homePct ?? fixtureMeta.homePct ?? 0,
     draw: match?.drawPct ?? fixtureMeta.drawPct ?? 0,
     teamB: match?.awayPct ?? fixtureMeta.awayPct ?? 0,
   };
-
-  let history: BackendMatchHistoryDto | null = null;
-  if (match) {
-    try {
-      history = await getJson(`/api/Match/${fixtureId}/history`, matchHistoryResponseSchema);
-    } catch {
-      history = null;
-    }
-  }
 
   const resolvedFixture = match
     ? {
@@ -454,16 +506,55 @@ export async function fetchInitialLiveMatchState(fixtureId: string) {
     initialHistory[initialHistory.length - 1]?.timestamp ?? new Date().toISOString();
   const initialEvents = createInitialEvents(resolvedFixture);
 
+  const initialAnnotations = await fetchAnnotationHistory(fixtureId);
+
   return {
     fixture: resolvedFixture,
     currentProbabilities,
     history: initialHistory,
     events: initialEvents,
+    annotations: initialAnnotations,
     activeNarrative: undefined,
     connectionState:
-      resolvedFixture.status === "live"
+      resolvedFixture.status !== "finished"
         ? ("connecting" satisfies ConnectionState)
         : ("stale" satisfies ConnectionState),
     lastUpdatedAt: lastTimestamp,
   } satisfies LiveMatchState;
+}
+
+export async function fetchAnnotationHistory(fixtureId: string): Promise<Annotation[]> {
+  try {
+    const response = await fetch(`${ANNOTATION_API_BASE_URL}/history/${fixtureId}`, {
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+    if (!response.ok) return [];
+    return await response.json();
+  } catch (error) {
+    console.warn("[fetchAnnotationHistory] Unable to fetch annotations history:", error);
+    return [];
+  }
+}
+
+export async function startAnnotationStream(fixtureId: string): Promise<void> {
+  try {
+    await fetch(`${ANNOTATION_API_BASE_URL}/streams/${fixtureId}`, {
+      method: "POST",
+    });
+  } catch (error) {
+    console.warn("[startAnnotationStream] Unable to start annotation stream:", error);
+  }
+}
+
+export async function stopAnnotationStream(fixtureId: string): Promise<void> {
+  try {
+    await fetch(`${ANNOTATION_API_BASE_URL}/streams/${fixtureId}`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    console.warn("[stopAnnotationStream] Unable to stop annotation stream:", error);
+  }
 }

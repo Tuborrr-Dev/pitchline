@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -214,17 +214,23 @@ function ConnectWalletModal({
 export function LandingPage() {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
   const wallet = useWallet();
-  const heroImage =
-    resolvedTheme === "dark"
-      ? "/images/pitchline-hero-football.png"
-      : "/images/pitchline-hero-football-light.png";
-  const heroImageClass = resolvedTheme === "dark" ? "object-cover opacity-55" : "object-cover opacity-95";
-  const heroOverlayClass =
-    resolvedTheme === "dark"
-      ? "absolute inset-0 bg-[linear-gradient(90deg,#05080c_0%,rgba(5,8,12,0.86)_34%,rgba(5,8,12,0.42)_66%,#05080c_100%)]"
-      : "absolute inset-0 bg-[linear-gradient(90deg,rgba(248,250,252,0.94)_0%,rgba(248,250,252,0.68)_36%,rgba(248,250,252,0.18)_72%,rgba(248,250,252,0.46)_100%)]";
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  const isDark = mounted ? resolvedTheme === "dark" : true;
+  const heroImage = isDark
+    ? "/images/pitchline-hero-football.png"
+    : "/images/pitchline-hero-football-light.png";
+  const heroImageClass = isDark ? "object-cover opacity-55" : "object-cover opacity-95";
+  const heroOverlayClass = isDark
+    ? "absolute inset-0 bg-[linear-gradient(90deg,#05080c_0%,rgba(5,8,12,0.86)_34%,rgba(5,8,12,0.42)_66%,#05080c_100%)]"
+    : "absolute inset-0 bg-[linear-gradient(90deg,rgba(248,250,252,0.94)_0%,rgba(248,250,252,0.68)_36%,rgba(248,250,252,0.18)_72%,rgba(248,250,252,0.46)_100%)]";
 
   function enterApp() {
     router.push("/markets");

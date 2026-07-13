@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { MarketOverview } from "@/components/market-overview";
 import { fetchMarketOverviewRows } from "@/lib/market-service";
 
+export const dynamic = "force-dynamic";
+
 export default async function MarketsPage() {
   const initialRows = await fetchMarketOverviewRows();
 

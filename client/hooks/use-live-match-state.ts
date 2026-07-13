@@ -4,11 +4,15 @@ import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { startTransition, useEffect, useEffectEvent, useMemo, useState } from "react";
 
 import {
+  ANNOTATION_API_BASE_URL,
   createSystemEvent,
   deriveTeamCode,
+  fetchAnnotationHistory,
   getApiBaseUrl,
+  startAnnotationStream,
+  stopAnnotationStream,
 } from "@/lib/pitchline-service";
-import type { LiveMatchState, MatchEvent } from "@/lib/types";
+import type { Annotation, LiveMatchState, MatchEvent } from "@/lib/types";
 
 type ScoreUpdatePayload = {
   fixtureId: string;
@@ -31,10 +35,21 @@ type OddsUpdatePayload = {
   awayPct: number;
   probabilityDelta?: number;
   timestamp?: number;
+  momentum?: { slope: number; direction: string };
+  volatility?: { stdDev: number; level: string };
+  marketFreeze?: { isFrozen: boolean; secondsSinceUpdate: number };
+  peakSwing?: { delta: number; minute: string };
 };
 
-function toIsoTimestamp(timestamp?: number) {
-  return new Date(timestamp ?? Date.now()).toISOString();
+function toIsoTimestamp(timestamp?: number | string) {
+  if (typeof timestamp === "string") {
+    const parsed = new Date(timestamp).getTime();
+    if (!Number.isNaN(parsed) && parsed > 0) return new Date(timestamp).toISOString();
+  }
+  if (typeof timestamp === "number" && timestamp > 0) {
+    return new Date(timestamp).toISOString();
+  }
+  return new Date().toISOString();
 }
 
 function toDisplayMinute(minute?: string | null) {
@@ -224,17 +239,161 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
           events: seededEvent,
           connectionState: "live",
           lastUpdatedAt: timestamp,
+          analytics: {
+            momentum: payload.momentum ?? current.analytics?.momentum,
+            volatility: payload.volatility ?? current.analytics?.volatility,
+            marketFreeze: payload.marketFreeze ?? current.analytics?.marketFreeze,
+            peakSwing: payload.peakSwing ?? current.analytics?.peakSwing,
+          },
         };
       });
     });
   });
 
   useEffect(() => {
-    if (!enabled) {
-      return;
+    if (!enabled) return;
+
+    const fixtureId = initialState.fixture.fixtureId;
+    let isDisposed = false;
+    let eventSource: EventSource | null = null;
+
+    async function initStream() {
+      try {
+        // 1. Fetch initial annotation history in case server-side fetch failed or to refresh
+        const history = await fetchAnnotationHistory(fixtureId);
+        if (isDisposed) return;
+        setState((current) => ({
+          ...current,
+          annotations: history,
+        }));
+
+        // 2. Request start of stream on the backend
+        await startAnnotationStream(fixtureId);
+        if (isDisposed) return;
+
+        // 3. Connect to the SSE endpoint
+        const streamUrl = `${ANNOTATION_API_BASE_URL}/stream/${fixtureId}`;
+        console.log(`[Annotation Service] Connecting to SSE: ${streamUrl}`);
+        eventSource = new EventSource(streamUrl);
+
+        eventSource.onerror = (err) => {
+          console.warn("[Annotation Service] SSE connection error / service offline:", err);
+        };
+
+        eventSource.onopen = () => {
+          console.log("[Annotation Service] SSE Connected");
+        };
+
+        // Handle new commentary
+        eventSource.addEventListener("commentary", (e) => {
+          if (isDisposed) return;
+          try {
+            const payload = JSON.parse(e.data) as Annotation;
+            setState((current) => {
+              // Avoid duplicate additions
+              if (current.annotations.some((a) => a.id === payload.id || (a.source_action === payload.source_action && a.source_id === payload.source_id))) {
+                return current;
+              }
+              return {
+                ...current,
+                annotations: [...current.annotations, payload],
+              };
+            });
+          } catch (err) {
+            console.error("Failed to parse commentary SSE payload", err);
+          }
+        });
+
+        // Handle new AI annotation
+        eventSource.addEventListener("annotation", (e) => {
+          if (isDisposed) return;
+          try {
+            const payload = JSON.parse(e.data) as Annotation;
+            setState((current) => {
+              // Avoid duplicate additions
+              if (current.annotations.some((a) => a.id === payload.id || (a.source_action === payload.source_action && a.source_id === payload.source_id))) {
+                return current;
+              }
+              return {
+                ...current,
+                annotations: [...current.annotations, payload],
+              };
+            });
+          } catch (err) {
+            console.error("Failed to parse annotation SSE payload", err);
+          }
+        });
+
+        // Handle annotation updates (corrections)
+        eventSource.addEventListener("update", (e) => {
+          if (isDisposed) return;
+          try {
+            const payload = JSON.parse(e.data) as Annotation;
+            setState((current) => {
+              const nextAnnotations = current.annotations.map((a) => {
+                if (
+                  a.fixture_id === payload.fixture_id &&
+                  a.source_action === payload.source_action &&
+                  a.source_id === payload.source_id
+                ) {
+                  return { ...a, ...payload };
+                }
+                return a;
+              });
+              return {
+                ...current,
+                annotations: nextAnnotations,
+              };
+            });
+          } catch (err) {
+            console.error("Failed to parse update SSE payload", err);
+          }
+        });
+
+        // Handle retraction
+        eventSource.addEventListener("retract", (e) => {
+          if (isDisposed) return;
+          try {
+            const payload = JSON.parse(e.data) as {
+              fixture_id: number;
+              source_action: string;
+              source_id: number;
+            };
+            setState((current) => {
+              const nextAnnotations = current.annotations.filter(
+                (a) =>
+                  !(
+                    a.fixture_id === payload.fixture_id &&
+                    a.source_id === payload.source_id
+                  )
+              );
+              return {
+                ...current,
+                annotations: nextAnnotations,
+              };
+            });
+          } catch (err) {
+            console.error("Failed to parse retract SSE payload", err);
+          }
+        });
+      } catch (err) {
+        console.warn("[Annotation Service] Failed to initialize stream:", err);
+      }
     }
 
-    if (initialState.fixture.status !== "live") {
+    void initStream();
+
+    return () => {
+      isDisposed = true;
+      if (eventSource) {
+        eventSource.close();
+      }
+      void stopAnnotationStream(fixtureId);
+    };
+  }, [enabled, initialState.fixture.fixtureId]);
+
+  useEffect(() => {
+    if (!enabled) {
       return;
     }
 
@@ -242,7 +401,21 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
     const connection = new HubConnectionBuilder()
       .withUrl(`${getApiBaseUrl()}/hubs/match`)
       .withAutomaticReconnect()
-      .configureLogging(LogLevel.Error)
+      .configureLogging({
+        log: (level, message) => {
+          if (
+            isDisposed &&
+            (message.includes("stopped during negotiation") ||
+              message.includes("failed to complete negotiation") ||
+              message.includes("negotiation"))
+          ) {
+            return;
+          }
+          if (level >= LogLevel.Error) {
+            console.error(message);
+          }
+        },
+      })
       .build();
 
     connection.onreconnecting(() => {
@@ -267,8 +440,9 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
 
     void connection
       .start()
-      .then(() => connection.invoke("JoinFixture", initialState.fixture.fixtureId))
-      .then(() => {
+      .then(async () => {
+        if (isDisposed) return;
+        await connection.invoke("JoinFixture", initialState.fixture.fixtureId);
         if (isDisposed) return;
         setState((current) => ({ ...current, connectionState: "live" }));
       })
@@ -283,12 +457,18 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
       isDisposed = true;
       connection.off("ScoreUpdate", applyScoreUpdate);
       connection.off("OddsUpdate", applyOddsUpdate);
-      void connection
-        .invoke("LeaveFixture", initialState.fixture.fixtureId)
-        .catch(() => undefined)
-        .finally(() => {
-          void connection.stop();
-        });
+
+      const isConnected = connection.state === "Connected";
+      if (isConnected) {
+        connection
+          .invoke("LeaveFixture", initialState.fixture.fixtureId)
+          .catch(() => undefined)
+          .finally(() => {
+            void connection.stop().catch(() => undefined);
+          });
+      } else {
+        void connection.stop().catch(() => undefined);
+      }
     };
   }, [enabled, initialState.fixture.fixtureId, initialState.fixture.status]);
 

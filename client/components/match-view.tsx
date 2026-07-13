@@ -11,7 +11,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { LiveMatchState, MatchEvent } from "@/lib/types";
+import type { Annotation, LiveMatchState, MatchEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 import { ProbabilityChart } from "./probability-chart";
@@ -102,6 +102,10 @@ function formatKickoffDate(kickoffUtc: string) {
   }).format(new Date(kickoffUtc));
 }
 
+import { TeamLogo } from "./team-logo";
+
+import { AnimatedPercentage } from "./animated-percentage";
+
 function TeamPlate({
   code,
   name,
@@ -121,24 +125,16 @@ function TeamPlate({
         align !== "right" && "justify-start",
       )}
     >
-      {align === "left" ? (
-        <span className="flex h-7 w-10 shrink-0 items-center justify-center border border-[var(--terminal-border)] bg-[var(--terminal-surface)] font-mono text-[0.62rem] font-semibold text-[var(--terminal-text-strong)] sm:h-12 sm:w-16 sm:text-sm">
-          {code}
-        </span>
-      ) : null}
+      {align === "left" ? <TeamLogo code={code} name={name} size="md" /> : null}
       <div>
         <p className="font-display text-[1rem] font-bold uppercase leading-none text-[var(--terminal-text-strong)] sm:text-[2.15rem]">
           {name}
         </p>
         <p className={cn("mt-1 font-mono text-[0.56rem] font-semibold uppercase sm:text-[0.72rem]", probability > 0 ? "text-[var(--terminal-green)]" : "text-[#9aa7b2]")}>
-          Win {probability.toFixed(1)}%
+          Win <AnimatedPercentage value={probability} showDeltaBadge />
         </p>
       </div>
-      {align === "right" ? (
-        <span className="flex h-7 w-10 shrink-0 items-center justify-center border border-[var(--terminal-border)] bg-[var(--terminal-surface)] font-mono text-[0.62rem] font-semibold text-[var(--terminal-text-strong)] sm:h-12 sm:w-16 sm:text-sm">
-          {code}
-        </span>
-      ) : null}
+      {align === "right" ? <TeamLogo code={code} name={name} size="md" /> : null}
     </div>
   );
 }
@@ -189,13 +185,85 @@ function EventButton({
   );
 }
 
+function annotationTone(color?: string) {
+  switch (color) {
+    case "green":
+      return "border-l-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-green)]";
+    case "red":
+      return "border-l-[#ff4b6e] bg-red-500/10 text-[#d71945]";
+    case "gold":
+      return "border-l-[#ffd700] bg-amber-500/10 text-[#ffd700]";
+    case "gray":
+    default:
+      return "border-l-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[var(--terminal-text)]";
+  }
+}
+
 function CommentaryContent({
   events,
+  annotations = [],
   selectedEventId,
 }: {
   events: MatchEvent[];
+  annotations?: Annotation[];
   selectedEventId: string | null;
 }) {
+  const hasAnnotations = annotations && annotations.length > 0;
+
+  if (hasAnnotations) {
+    const sortedAnnotations = [...annotations].reverse();
+    return (
+      <section className="flex min-h-0 flex-1 flex-col border border-[var(--terminal-border)] bg-[var(--terminal-panel)]">
+          <div className="border-b border-[var(--terminal-border)] px-4 py-3">
+            <p className="font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-text-strong)]">
+              Commentary
+            </p>
+            <p className="mt-1 font-mono text-[0.66rem] uppercase text-[var(--terminal-text-muted)]">
+              Live market notes and match-state calls
+            </p>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {sortedAnnotations.map((item) => (
+              <article
+                key={`${item.fixture_id}-${item.source_action}-${item.source_id}-${item.id}`}
+                className={cn(
+                  "border-b border-[var(--terminal-line)] px-4 py-3 font-mono uppercase last:border-b-0",
+                  selectedEventId === `${item.fixture_id}-${item.source_action}-${item.source_id}` && "bg-[var(--terminal-hover)]",
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[0.76rem] font-semibold text-[var(--terminal-text-strong)]">
+                      {item.action ? item.action.replace(/_/g, " ") : "UPDATE"}
+                    </p>
+                    <p className="mt-1 text-[0.62rem] text-[var(--terminal-blue)]">
+                      {item.minute !== undefined ? `${item.minute}'` : "0'"} / {item.team ?? "market"}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      "shrink-0 border px-2 py-0.5 text-[0.54rem] font-semibold",
+                      annotationTone(item.color),
+                    )}
+                  >
+                    {item.type === "annotation" ? "AI ANALYST" : "LIVE FEED"}
+                  </span>
+                </div>
+                <p className="mt-3 text-[0.68rem] leading-6 text-[var(--terminal-text)] whitespace-pre-wrap">
+                  {item.text}
+                </p>
+                {item.home_score !== null && item.away_score !== null && item.home_score !== undefined && item.away_score !== undefined && (
+                  <p className="mt-2 text-[0.62rem] text-[var(--terminal-text-muted)] font-semibold font-mono">
+                    SCORE: {item.home_score} - {item.away_score}
+                  </p>
+                )}
+              </article>
+            ))}
+          </div>
+      </section>
+    );
+  }
+
   const commentaryFeed = [...events].reverse();
 
   return (
@@ -254,7 +322,7 @@ export function MatchView({
   selectedEventId: string | null;
   onSelectEvent: (eventId: string) => void;
 }) {
-  const { fixture, currentProbabilities, history, events, connectionState } =
+  const { fixture, currentProbabilities, history, events, annotations, connectionState } =
     state;
   const preKickoff = isPreKickoffFixture(fixture);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -478,10 +546,17 @@ export function MatchView({
               <div className="mt-1 border border-[var(--terminal-border)] bg-[var(--terminal-panel)] px-4 py-2 font-display text-[2.25rem] font-bold uppercase leading-none text-[var(--terminal-text-strong)] sm:mt-2 sm:px-8 sm:py-3 sm:text-[4rem]">
                 {preKickoff ? "Kickoff" : `${fixture.scoreA} : ${fixture.scoreB}`}
               </div>
-              <div className="mx-auto mt-1 w-fit border border-[var(--terminal-green)] bg-emerald-500/10 px-2 py-1 font-mono text-[0.5rem] font-semibold uppercase text-[var(--terminal-green)] sm:mt-2 sm:px-3 sm:text-[0.72rem]">
-                {preKickoff
-                  ? `KO ${formatKickoffDate(fixture.kickoffUtc)} UTC`
-                  : `Market edge ${Math.abs(currentProbabilities.teamA - currentProbabilities.teamB).toFixed(1)} pts`}
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-1 sm:mt-2">
+                <div className="border border-[var(--terminal-green)] bg-emerald-500/10 px-2 py-1 font-mono text-[0.5rem] font-semibold uppercase text-[var(--terminal-green)] sm:px-3 sm:text-[0.72rem]">
+                  {preKickoff
+                    ? `KO ${formatKickoffDate(fixture.kickoffUtc)} UTC`
+                    : `Market edge ${Math.abs(currentProbabilities.teamA - currentProbabilities.teamB).toFixed(1)} pts`}
+                </div>
+                {state.analytics?.peakSwing?.delta ? (
+                  <div className="border border-[#10a2cc] bg-sky-500/10 px-2 py-1 font-mono text-[0.5rem] font-semibold uppercase text-[#10a2cc] sm:px-3 sm:text-[0.72rem]">
+                    ⚡ Peak Move +{state.analytics.peakSwing.delta}% ({state.analytics.peakSwing.minute})
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -492,6 +567,12 @@ export function MatchView({
               align="right"
             />
           </motion.section>
+
+          {state.analytics?.marketFreeze?.isFrozen ? (
+            <div className="border-b border-[#ff4b6e] bg-[#3a1622] px-4 py-2 text-center font-mono text-[0.72rem] font-semibold uppercase text-[#ff8aa2] shadow-md animate-pulse">
+              ⚠️ MARKET SUSPENDED — POSSIBLE VAR REVIEW IN PROGRESS ({state.analytics.marketFreeze.secondsSinceUpdate}s since last odds tick)
+            </div>
+          ) : null}
 
           <section className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-[var(--terminal-border)] bg-[var(--terminal-panel)] px-3 py-2 [scrollbar-width:none] [-ms-overflow-style:none] sm:px-5 sm:py-3 lg:justify-between [&::-webkit-scrollbar]:hidden">
             <div className="flex shrink-0 items-center gap-2">
@@ -517,7 +598,7 @@ export function MatchView({
             <div className="flex shrink-0 items-center gap-3 font-mono text-[0.62rem] font-semibold uppercase sm:gap-4 sm:text-[0.72rem]">
               <span className="text-[var(--terminal-green)]">{fixture.teamACode}</span>
               <span className="text-[#ff4b6e]">{fixture.teamBCode}</span>
-              <span className="text-[#10a2cc]">VIX</span>
+              <span className="text-[#10a2cc]">DRAW</span>
               <Button
                 type="button"
                 onClick={() => setDetailsOpen((open) => !open)}
@@ -544,6 +625,7 @@ export function MatchView({
                 events={events}
                 selectedEvent={selectedEvent}
                 connectionState={connectionState}
+                analytics={state.analytics}
                 onSelectEvent={onSelectEvent}
               />
             </motion.div>
@@ -557,7 +639,7 @@ export function MatchView({
                   transition={{ duration: 0.18 }}
                   className="hidden overflow-y-auto border-t border-[var(--terminal-border)] bg-[var(--terminal-bg)] p-4 xl:block xl:min-h-0 xl:border-l xl:border-t-0"
                 >
-                  <CommentaryContent events={events} selectedEventId={selectedEventId} />
+                  <CommentaryContent events={events} annotations={annotations} selectedEventId={selectedEventId} />
                 </motion.aside>
               ) : null}
             </AnimatePresence>
@@ -597,7 +679,7 @@ export function MatchView({
                   Close
                 </Button>
               </div>
-              <CommentaryContent events={events} selectedEventId={selectedEventId} />
+              <CommentaryContent events={events} annotations={annotations} selectedEventId={selectedEventId} />
             </motion.aside>
           </>
         ) : null}
