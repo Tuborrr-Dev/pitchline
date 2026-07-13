@@ -1,0 +1,16 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
+
+services:
+  pitchlineapi:
+    image: pitchlineapi
+    build:
+      context: .
+      dockerfile: match-engine/PitchLine.API/Dockerfile
+      args:
+        - configuration=Debug
+    ports:
+      - 5050:5050
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - ~/.vsdbg:/remote_debugger:rw

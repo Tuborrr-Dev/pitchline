@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
@@ -7,16 +8,10 @@ namespace Pitchline.Infrastructure.TxLine;
 /// Raw SSE reader. Reads any SSE stream line-by-line and yields parsed events.
 /// HttpClient MUST be configured with Timeout = InfiniteTimeSpan before passing in.
 /// </summary>
-public class SseClient
+public class SseClient(HttpClient http, ILogger<SseClient> logger)
 {
-    private readonly HttpClient _http;
-    private readonly ILogger<SseClient> _logger;
-
-    public SseClient(HttpClient http, ILogger<SseClient> logger)
-    {
-        _http   = http;
-        _logger = logger;
-    }
+    private readonly HttpClient _http = http;
+    private readonly ILogger<SseClient> _logger = logger;
 
     /// <summary>
     /// Opens a long-lived GET to <paramref name="path"/> and yields SSE events
@@ -24,13 +19,15 @@ public class SseClient
     /// </summary>
     public async IAsyncEnumerable<SseEvent> StreamAsync(
         string path,
+        string jwt,
         string apiToken,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, path);
-        request.Headers.Authorization    = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiToken);
+        request.Headers.Authorization    = new AuthenticationHeaderValue("Bearer", jwt);
+        request.Headers.Add("X-Api-Token", apiToken);
         request.Headers.Accept.ParseAdd("text/event-stream");
-        request.Headers.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue { NoCache = true };
+        request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
 
         using var response = await _http.SendAsync(
             request,
@@ -50,9 +47,9 @@ public class SseClient
         using var reader = new StreamReader(stream);
 
         // SSE spec state machine
-        string?       eventType   = null;
-        string?       lastEventId = null;
-        var           dataBuffer  = new System.Text.StringBuilder();
+        string? eventType   = null;
+        string? lastEventId = null;
+        var dataBuffer  = new System.Text.StringBuilder();
 
         while (!ct.IsCancellationRequested)
         {
@@ -92,8 +89,8 @@ public class SseClient
 
                     yield return new SseEvent(
                         EventType: eventType,
-                        Data:      dataBuffer.ToString(),
-                        Id:        lastEventId
+                        Data: dataBuffer.ToString(),
+                        Id: lastEventId
                     );
                 }
 
