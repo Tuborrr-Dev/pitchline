@@ -1,6 +1,61 @@
 @import "tailwindcss";
 
 :root {
+  --background: #f4f7fa;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #0a9f62;
+  --primary-foreground: #ffffff;
+  --secondary: #e6edf3;
+  --secondary-foreground: #1f2937;
+  --muted: #64748b;
+  --muted-foreground: #475569;
+  --accent: #0f8bb7;
+  --accent-foreground: #ffffff;
+  --destructive: #e8355e;
+  --destructive-foreground: #ffffff;
+  --border: #cbd5e1;
+  --input: #d7e0e8;
+  --ring: #0a9f62;
+  --radius: 0.25rem;
+
+  --terminal-bg: #eef3f7;
+  --terminal-bg-strong: #ffffff;
+  --terminal-panel: #ffffff;
+  --terminal-surface: #f7fafc;
+  --terminal-border: #cbd5e1;
+  --terminal-line: #d8e1ea;
+  --terminal-green: #078a55;
+  --terminal-blue: #117ea7;
+  --terminal-pink: #b64e68;
+  --logo-cream: #111827;
+  --prob-home: #10c878;
+  --prob-draw: #7f8fa3;
+  --prob-away: #f04a5f;
+  --line-home: #10b981;
+  --line-away: #ff4b6e;
+  --line-draw: #718096;
+  --signal: #d4a400;
+  --danger: #e8355e;
+  --app-bg-gradient: linear-gradient(180deg, #f8fafc 0%, #edf3f8 100%);
+  --selection-bg: rgba(15, 139, 183, 0.18);
+  --selection-fg: #0f172a;
+  --terminal-text: #111827;
+  --terminal-text-strong: #020617;
+  --terminal-text-muted: #526176;
+  --terminal-hover: #e7eef5;
+  --terminal-active-bg: #111827;
+  --terminal-active-fg: #ffffff;
+  --terminal-inverse-fg: #ffffff;
+  --terminal-grid: rgba(17, 126, 167, 0.09);
+  --terminal-grid-strong: rgba(17, 126, 167, 0.16);
+  --terminal-shadow: rgba(15, 23, 42, 0.08);
+}
+
+.dark {
   --background: #05070a;
   --foreground: #e5edf7;
   --card: #0d1319;
@@ -20,7 +75,6 @@
   --border: #20262d;
   --input: #273039;
   --ring: #19ef8c;
-  --radius: 0.25rem;
 
   --terminal-bg: #090d12;
   --terminal-bg-strong: #080c11;
@@ -32,14 +86,27 @@
   --terminal-blue: #7faeca;
   --terminal-pink: #bf8694;
   --logo-cream: #fff8db;
-  --prob-home: #1ed884;
-  --prob-draw: #7faeca;
-  --prob-away: #bf8694;
+  --prob-home: #16e07a;
+  --prob-draw: #8b949e;
+  --prob-away: #ef4d5d;
   --line-home: #00ff87;
   --line-away: #ff4b6e;
   --line-draw: #718096;
   --signal: #ffd700;
   --danger: #e8355e;
+  --app-bg-gradient: linear-gradient(180deg, #05070a 0%, #080c11 100%);
+  --selection-bg: rgba(0, 198, 255, 0.28);
+  --selection-fg: #ffffff;
+  --terminal-text: #e5edf7;
+  --terminal-text-strong: #ffffff;
+  --terminal-text-muted: #9fb0bc;
+  --terminal-hover: #111820;
+  --terminal-active-bg: #1d252d;
+  --terminal-active-fg: #ffffff;
+  --terminal-inverse-fg: #06110b;
+  --terminal-grid: rgba(127, 174, 202, 0.04);
+  --terminal-grid-strong: rgba(127, 174, 202, 0.08);
+  --terminal-shadow: rgba(0, 0, 0, 0.36);
 }
 
 @theme inline {
@@ -75,6 +142,10 @@
 }
 
 html {
+  color-scheme: light;
+}
+
+html.dark {
   color-scheme: dark;
 }
 
@@ -82,7 +153,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-rajdhani), sans-serif;
-  background-image: linear-gradient(180deg, #05070a 0%, #080c11 100%);
+  background-image: var(--app-bg-gradient);
   min-height: 100vh;
   font-size: 16px;
 }
@@ -106,10 +177,54 @@ textarea {
 }
 
 ::selection {
-  background: rgba(0, 198, 255, 0.28);
-  color: white;
+  background: var(--selection-bg);
+  color: var(--selection-fg);
 }
 
 .font-display {
   font-family: var(--font-barlow-condensed), sans-serif;
+}
+
+.light [class*="bg-[#05"],
+.light [class*="bg-[#06"],
+.light [class*="bg-[#07"],
+.light [class*="bg-[#08"],
+.light [class*="bg-[#09"],
+.light [class*="bg-[#0a"],
+.light [class*="bg-[#0d"],
+.light [class*="bg-[#0e"],
+.light [class*="bg-[#10"],
+.light [class*="bg-[#11"],
+.light [class*="bg-[#12"],
+.light [class*="bg-[#17"],
+.light [class*="bg-[#20"],
+.light [class*="bg-[#24"] {
+  background-color: var(--terminal-panel) !important;
+}
+
+.light [class*="hover:bg-[#10"]:hover,
+.light [class*="hover:bg-[#11"]:hover,
+.light [class*="hover:bg-[#12"]:hover {
+  background-color: #edf3f8 !important;
+}
+
+.light [class*="border-[#1"],
+.light [class*="border-[#2"],
+.light [class*="border-[#3"],
+.light [class*="border-[#4"],
+.light [class*="border-[#5"] {
+  border-color: var(--terminal-border) !important;
+}
+
+.light [class*="shadow-[0_"],
+.light [class*="shadow-[inset"] {
+  box-shadow: 0 14px 40px var(--terminal-shadow) !important;
+}
+
+.light .bg-black\/70 {
+  background-color: rgba(15, 23, 42, 0.42) !important;
+}
+
+.light .bg-black\/45 {
+  background-color: rgba(15, 23, 42, 0.32) !important;
 }

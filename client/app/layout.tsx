@@ -3,6 +3,7 @@ import { Barlow_Condensed, IBM_Plex_Mono, Rajdhani } from "next/font/google";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
 import { QueryProvider } from "@/components/query-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const sans = Rajdhani({
@@ -37,17 +38,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${sans.variable} ${display.variable} ${mono.variable} h-full antialiased`}
     >
-      <body className="h-full bg-[var(--background)] text-white">
-        <QueryProvider>
-          <div className="flex h-screen flex-col overflow-hidden">
-            <Suspense fallback={<div className="h-[5.125rem] shrink-0 border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)]" />}>
-              <AppHeader />
-            </Suspense>
-            <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
-          </div>
-        </QueryProvider>
+      <body className="h-full bg-[var(--background)] text-[var(--foreground)]">
+        <ThemeProvider>
+          <QueryProvider>
+            <div className="flex h-screen flex-col overflow-hidden">
+              <Suspense fallback={<div className="h-[5.125rem] shrink-0 border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)]" />}>
+                <AppHeader />
+              </Suspense>
+              <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+            </div>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

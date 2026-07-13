@@ -15,6 +15,7 @@ export type MatchEventType =
   | "penalty-scored"
   | "penalty-missed"
   | "var"
+  | "status"
   | "half-time"
   | "full-time";
 
@@ -52,6 +53,7 @@ export interface MatchEvent {
   minuteLabel: string;
   timestamp: string;
   side?: "teamA" | "teamB" | "draw";
+  teamCode?: string;
   label: string;
   detailLabel?: string;
   delta?: number;

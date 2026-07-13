@@ -1,7 +1,6 @@
-import axios from "axios";
 import { z } from "zod";
 
-import { getMarketOverviewRows } from "./mock-data";
+import { fetchMarketOverviewRows as fetchPitchlineMarketOverviewRows } from "./pitchline-service";
 
 const marketRowSchema = z.object({
   fixture: z.object({
@@ -41,30 +40,7 @@ const marketRowsSchema = z.array(marketRowSchema);
 
 export type MarketOverviewRow = z.infer<typeof marketRowSchema>;
 
-const marketApi = axios.create({
-  baseURL: "/api",
-  adapter: async (config) => {
-    if (config.url === "/markets") {
-      return {
-        data: getMarketOverviewRows(),
-        status: 200,
-        statusText: "OK",
-        headers: {},
-        config,
-      };
-    }
-
-    return {
-      data: null,
-      status: 404,
-      statusText: "Not Found",
-      headers: {},
-      config,
-    };
-  },
-});
-
 export async function fetchMarketOverviewRows() {
-  const response = await marketApi.get("/markets");
-  return marketRowsSchema.parse(response.data);
+  const rows = await fetchPitchlineMarketOverviewRows();
+  return marketRowsSchema.parse(rows);
 }
