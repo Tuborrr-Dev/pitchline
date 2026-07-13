@@ -87,6 +87,14 @@ public static class DependencyInjection
         });
         services.AddSingleton<HistoricalScoreReplayService>();
 
+        services.AddHttpClient<HistoricalOddsReplayService>(c =>
+        {
+            c.BaseAddress = new Uri("https://txline.txodds.com");
+            c.Timeout = TimeSpan.FromSeconds(30);
+            c.DefaultRequestHeaders.Add("User-Agent", "Pitchline/1.0");
+        });
+        services.AddSingleton<HistoricalOddsReplayService>();
+
         services.AddHttpClient("HistoricalOddsSeedService", c =>
         {
             c.BaseAddress = new Uri("https://txline.txodds.com");

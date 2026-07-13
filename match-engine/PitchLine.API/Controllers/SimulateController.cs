@@ -7,10 +7,12 @@ namespace PitchLine.API.Controllers;
 [Route("api/[controller]")]
 public class SimulateController(
     MatchReplayService replay,
-    HistoricalScoreReplayService historicalReplay) : ControllerBase
+    HistoricalScoreReplayService historicalReplay,
+    HistoricalOddsReplayService oddsReplay) : ControllerBase
 {
     private readonly MatchReplayService _replay = replay;
     private readonly HistoricalScoreReplayService _historicalReplay = historicalReplay;
+    private readonly HistoricalOddsReplayService _oddsReplay = oddsReplay;
 
     /// <summary>
     /// POST /api/simulate/replay
@@ -64,6 +66,45 @@ public class SimulateController(
         return Accepted(new
         {
             message   = $"Historical replay started for fixture {fixtureId}",
+            fixtureId,
+            speed     = req.Speed
+        });
+    }
+
+    /// <summary>
+    /// POST /api/simulate/replay-odds
+    /// Replays historical odds updates for all known fixtures through the live event bus and SignalR.
+    /// speed=1.0 = real time gaps. speed=10 = 10x faster. speed=0 = instant.
+    /// </summary>
+    [HttpPost("replay-odds")]
+    public IActionResult ReplayOdds([FromBody] HistoricalReplayRequest req, CancellationToken ct)
+    {
+        _ = Task.Run(() => _oddsReplay.ReplayAllAsync(req.Speed, ct), ct);
+
+        return Accepted(new
+        {
+            message = "Historical odds replay started for all known fixtures",
+            speed   = req.Speed
+        });
+    }
+
+    /// <summary>
+    /// POST /api/simulate/replay-odds/{fixtureId}
+    /// Replays historical odds updates for a single fixture ID.
+    /// </summary>
+    [HttpPost("replay-odds/{fixtureId}")]
+    [HttpPost("replay-historical-odds/{fixtureId}")]
+    public IActionResult ReplayOddsFixture(string fixtureId, [FromBody] HistoricalReplayRequest req, CancellationToken ct)
+    {
+        _ = Task.Run(async () =>
+        {
+            var result = await _oddsReplay.ReplayFixtureAsync(fixtureId, req.Speed, ct);
+            return result;
+        }, ct);
+
+        return Accepted(new
+        {
+            message   = $"Historical odds replay started for fixture {fixtureId}",
             fixtureId,
             speed     = req.Speed
         });

@@ -108,6 +108,7 @@ export function useMockMatchState(initialState: LiveMatchState) {
       },
       history: visibleHistory,
       events: visibleEvents,
+      annotations: initialState.annotations ?? [],
       activeNarrative,
       connectionState:
         initialState.fixture.status !== "live"

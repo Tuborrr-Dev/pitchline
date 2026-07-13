@@ -1,10 +1,12 @@
-import type { ConnectionState } from "@/lib/types";
+import type { ConnectionState, MarketAnalyticsData } from "@/lib/types";
 import type { getVisibleVixPoints } from "./chart-utils";
 
 export function VixPanel({
+  analytics,
   connectionState,
   visibleVixPoints,
 }: {
+  analytics?: MarketAnalyticsData;
   connectionState: ConnectionState;
   visibleVixPoints: ReturnType<typeof getVisibleVixPoints>;
 }) {
@@ -30,11 +32,15 @@ export function VixPanel({
         />
       </svg>
       <div className="pointer-events-none absolute inset-x-3 top-2 flex justify-between font-mono text-[0.54rem] font-semibold uppercase text-[#0f9ac3] sm:inset-x-4 sm:text-[0.62rem]">
-        <span>VIX Max</span>
-        <span>Volatility shock index</span>
+        <span>VIX Max {analytics?.volatility ? `/ Volatility ${analytics.volatility.level}` : ""}</span>
+        <span>
+          {analytics?.momentum
+            ? `Momentum: ${analytics.momentum.direction} (${analytics.momentum.slope > 0 ? "+" : ""}${analytics.momentum.slope})`
+            : "Volatility shock index"}
+        </span>
       </div>
       <div className="pointer-events-none absolute inset-x-3 bottom-2 flex justify-between font-mono text-[0.54rem] font-semibold uppercase text-[#0f6c87] sm:inset-x-4 sm:text-[0.62rem]">
-        <span>VIX Min</span>
+        <span>VIX Min {analytics?.volatility ? `(sigma ${analytics.volatility.stdDev})` : ""}</span>
         <span>{connectionState === "live" ? "Live feed stable" : connectionState}</span>
       </div>
     </div>

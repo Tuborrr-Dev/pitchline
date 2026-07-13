@@ -32,7 +32,7 @@ export function MatchView({
   selectedEventId: string | null;
   onSelectEvent: (eventId: string) => void;
 }) {
-  const { fixture, currentProbabilities, history, events, connectionState } = state;
+  const { fixture, currentProbabilities, history, events, annotations, connectionState } = state;
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [eventRailOpen, setEventRailOpen] = useState(true);
   const verticalEventButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -158,10 +158,12 @@ export function MatchView({
                 events={events}
                 selectedEvent={selectedEvent}
                 connectionState={connectionState}
+                analytics={state.analytics}
                 onSelectEvent={onSelectEvent}
               />
             </motion.div>
             <DesktopDetailsPanel
+              annotations={annotations}
               events={events}
               open={detailsOpen}
               selectedEventId={selectedEventId}
@@ -171,6 +173,7 @@ export function MatchView({
       </motion.main>
 
       <MobileDetailsDrawer
+        annotations={annotations}
         events={events}
         onClose={() => setDetailsOpen(false)}
         open={detailsOpen}

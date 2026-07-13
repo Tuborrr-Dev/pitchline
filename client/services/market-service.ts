@@ -1,5 +1,6 @@
 import { marketRowsSchema } from "@/schemas/market";
-import { fetchFixtureIndex } from "@/services/fixture-service";
+import type { BackendFixtureDto } from "@/schemas/pitchline";
+import { fetchFinishedFixtureIndex, fetchFixtureIndex } from "@/services/fixture-service";
 import {
   buildMarketPlaceholder,
   buildScoreLine,
@@ -7,9 +8,8 @@ import {
   createFixtureFromDto,
 } from "@/services/pitchline-mappers";
 
-export async function fetchMarketOverviewRows() {
-  const fixtures = await fetchFixtureIndex();
-  const rows = fixtures.map((dto) => {
+function mapDtosToMarketOverviewRows(fixtures: BackendFixtureDto[]) {
+  return fixtures.map((dto) => {
     const fixture = createFixtureFromDto(dto);
     const placeholders = buildMarketPlaceholder(fixture);
 
@@ -33,6 +33,18 @@ export async function fetchMarketOverviewRows() {
       actionTone: fixture.status === "live" ? "primary" : "secondary",
     };
   });
+}
+
+export async function fetchMarketOverviewRows() {
+  const fixtures = await fetchFixtureIndex();
+  const rows = mapDtosToMarketOverviewRows(fixtures);
+
+  return marketRowsSchema.parse(rows);
+}
+
+export async function fetchFinishedMarketOverviewRows() {
+  const fixtures = await fetchFinishedFixtureIndex();
+  const rows = mapDtosToMarketOverviewRows(fixtures);
 
   return marketRowsSchema.parse(rows);
 }

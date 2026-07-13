@@ -17,7 +17,7 @@ import {
   type Time,
 } from "lightweight-charts";
 
-import type { ConnectionState, MatchEvent, ProbabilityPoint } from "@/lib/types";
+import type { ConnectionState, MarketAnalyticsData, MatchEvent, ProbabilityPoint } from "@/lib/types";
 
 import { ChartHeader } from "./probability-chart/chart-header";
 import {
@@ -43,6 +43,7 @@ interface ProbabilityChartProps {
   events: MatchEvent[];
   selectedEvent?: MatchEvent | null;
   connectionState: ConnectionState;
+  analytics?: MarketAnalyticsData;
   onSelectEvent?: (eventId: string) => void;
 }
 
@@ -53,6 +54,7 @@ export function ProbabilityChart({
   events,
   selectedEvent,
   connectionState,
+  analytics,
   onSelectEvent,
 }: ProbabilityChartProps) {
   const { resolvedTheme } = useTheme();
@@ -337,7 +339,7 @@ export function ProbabilityChart({
           selectedEvent={selectedEvent}
           visibleLogicalRange={visibleLogicalRange}
         />
-        <VixPanel connectionState={connectionState} visibleVixPoints={visibleVixPoints} />
+        <VixPanel analytics={analytics} connectionState={connectionState} visibleVixPoints={visibleVixPoints} />
         <FeedStatusBadge connectionState={connectionState} />
       </div>
     </motion.section>

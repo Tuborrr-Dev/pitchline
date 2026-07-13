@@ -5,6 +5,10 @@ psycopg2-binary
 redis
 upstash-redis
 python-dotenv
-pydantic
+pydantic>=2.0.0
 requests
 google-genai
+httpx-sse
+httpx
+asyncpg
+pydantic-settings

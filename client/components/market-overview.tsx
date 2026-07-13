@@ -8,8 +8,12 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { MarketHeader } from "@/components/market-overview/market-header";
 import { MarketPanel } from "@/components/market-overview/market-panel";
 import { MarketTicker } from "@/components/market-overview/market-ticker";
+import { useMarketOverviewStream } from "@/hooks/use-market-overview-stream";
 import type { MarketOverviewRow, MarketTab, ViewMode } from "@/components/market-overview/types";
-import { marketOverviewQueryOptions } from "@/queries/market-queries";
+import {
+  finishedMarketOverviewQueryOptions,
+  marketOverviewQueryOptions,
+} from "@/queries/market-queries";
 
 export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow[] }) {
   const [activeTab, setActiveTab] = useState<MarketTab>("markets");
@@ -21,9 +25,18 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
   const searchParams = useSearchParams();
   const deferredQuery = useDeferredValue(searchParams.get("q") ?? "");
 
-  const { data: rows = initialRows, isError, isFetching } = useQuery(
+  const { data: fetchedActiveRows = initialRows, isError: isMarketsError, isFetching: isMarketsFetching } = useQuery(
     marketOverviewQueryOptions(initialRows),
   );
+  const streamedActiveRows = useMarketOverviewStream(fetchedActiveRows, activeTab === "markets");
+  const { data: finishedRows = [], isError: isFinishedError, isFetching: isFinishedFetching } = useQuery({
+    ...finishedMarketOverviewQueryOptions(),
+    enabled: activeTab === "history",
+  });
+
+  const rows = activeTab === "history" ? finishedRows : streamedActiveRows;
+  const isError = activeTab === "history" ? isFinishedError : isMarketsError;
+  const isFetching = activeTab === "history" ? isFinishedFetching : isMarketsFetching;
   const isInitialLoading = isFetching && rows.length === 0;
 
   const filteredRows = useMemo(() => {
