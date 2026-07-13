@@ -265,6 +265,25 @@ Later extensions:
 - `/history/[fixtureId]`
 - gated multi-match view if premium is added as a dedicated page
 
+## Wallet Gating Note
+
+Frontend wallet connect is a UI capability, not backend authentication.
+
+That means:
+
+- the frontend can show wallet-connected state
+- the frontend can gate screens in the browser
+- the backend still does not know a trusted user identity
+
+If wallet identity must become a real user session, add:
+
+- backend-issued nonce
+- wallet signature request in the frontend
+- backend signature verification
+- authenticated session creation
+
+See `WALLET_AUTH_FLOW.md` for the complete flow.
+
 ## Non-Goals For Initial Frontend Build
 
 - no generic admin-style navigation

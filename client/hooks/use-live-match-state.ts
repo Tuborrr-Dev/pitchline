@@ -115,7 +115,31 @@ function pushEvent(events: MatchEvent[], event: MatchEvent) {
   return nextEvents.slice(-18);
 }
 
-export function useLiveMatchState(initialState: LiveMatchState) {
+function normalizeHistory(history: LiveMatchState["history"], maxPoints = 120) {
+  const dedupedByTimestamp = new Map<string, LiveMatchState["history"][number]>();
+
+  history.forEach((point) => {
+    if (Number.isNaN(new Date(point.timestamp).getTime())) return;
+    dedupedByTimestamp.set(point.timestamp, point);
+  });
+
+  return [...dedupedByTimestamp.values()]
+    .sort((left, right) => new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime())
+    .slice(-maxPoints);
+}
+
+function isExpectedConnectionShutdown(error: unknown) {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("connection was stopped during negotiation") ||
+    message.includes("failed to complete negotiation") ||
+    message.includes("abort")
+  );
+}
+
+export function useLiveMatchState(initialState: LiveMatchState, enabled = true) {
   const [state, setState] = useState(initialState);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
     initialState.events[initialState.events.length - 1]?.eventId ?? null,
@@ -162,10 +186,11 @@ export function useLiveMatchState(initialState: LiveMatchState) {
           draw: payload.drawPct,
           teamB: payload.awayPct,
         };
-        const history =
+        const history = normalizeHistory(
           current.history[current.history.length - 1]?.timestamp === timestamp
             ? [...current.history.slice(0, -1), nextPoint]
-            : [...current.history, nextPoint].slice(-120);
+            : [...current.history, nextPoint],
+        );
 
         const seededEvent =
           current.events.length === 0
@@ -205,10 +230,15 @@ export function useLiveMatchState(initialState: LiveMatchState) {
   });
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     if (initialState.fixture.status !== "live") {
       return;
     }
 
+    let isDisposed = false;
     const connection = new HubConnectionBuilder()
       .withUrl(`${getApiBaseUrl()}/hubs/match`)
       .withAutomaticReconnect()
@@ -216,15 +246,19 @@ export function useLiveMatchState(initialState: LiveMatchState) {
       .build();
 
     connection.onreconnecting(() => {
+      if (isDisposed) return;
       setState((current) => ({ ...current, connectionState: "reconnecting" }));
     });
 
     connection.onreconnected(async () => {
+      if (isDisposed) return;
       await connection.invoke("JoinFixture", initialState.fixture.fixtureId);
+      if (isDisposed) return;
       setState((current) => ({ ...current, connectionState: "live" }));
     });
 
     connection.onclose(() => {
+      if (isDisposed) return;
       setState((current) => ({ ...current, connectionState: "offline" }));
     });
 
@@ -235,13 +269,18 @@ export function useLiveMatchState(initialState: LiveMatchState) {
       .start()
       .then(() => connection.invoke("JoinFixture", initialState.fixture.fixtureId))
       .then(() => {
+        if (isDisposed) return;
         setState((current) => ({ ...current, connectionState: "live" }));
       })
-      .catch(() => {
+      .catch((error) => {
+        if (isDisposed || isExpectedConnectionShutdown(error)) {
+          return;
+        }
         setState((current) => ({ ...current, connectionState: "offline" }));
       });
 
     return () => {
+      isDisposed = true;
       connection.off("ScoreUpdate", applyScoreUpdate);
       connection.off("OddsUpdate", applyOddsUpdate);
       void connection
@@ -251,7 +290,7 @@ export function useLiveMatchState(initialState: LiveMatchState) {
           void connection.stop();
         });
     };
-  }, [initialState.fixture.fixtureId, initialState.fixture.status]);
+  }, [enabled, initialState.fixture.fixtureId, initialState.fixture.status]);
 
   const selectedEvent =
     state.events.find((event) => event.eventId === selectedEventId) ??

@@ -10,7 +10,9 @@ Use these docs in this order:
    Page-by-page wireframe guidance for desktop and mobile layouts.
 3. `CHART_STRATEGY.md`
    Chart library decision, constraints, and how the chart should behave.
-4. `DELIVERY_PLAN.md`
+4. `WALLET_AUTH_FLOW.md`
+   Frontend wallet connect behavior, backend auth boundary, nonce flow, and signature verification model.
+5. `DELIVERY_PLAN.md`
    Recommended build order, milestones, and implementation sequence.
 
 Scope notes:
