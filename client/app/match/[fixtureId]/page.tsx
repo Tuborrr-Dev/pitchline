@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { LiveMatchTerminal } from "@/components/live-match-terminal";
 import { getLiveMatchState } from "@/lib/mock-data";
-import { fetchInitialLiveMatchState } from "@/lib/pitchline-service";
+import { fetchInitialLiveMatchState } from "@/services/match-service";
 
 export default async function MatchPage({
   params,

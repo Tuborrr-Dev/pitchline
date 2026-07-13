@@ -1,8 +1,6 @@
 import { z } from "zod";
 
-import { fetchMarketOverviewRows as fetchPitchlineMarketOverviewRows } from "./pitchline-service";
-
-const marketRowSchema = z.object({
+export const marketRowSchema = z.object({
   fixture: z.object({
     fixtureId: z.string(),
     teamAName: z.string(),
@@ -36,11 +34,6 @@ const marketRowSchema = z.object({
   actionTone: z.string(),
 });
 
-const marketRowsSchema = z.array(marketRowSchema);
+export const marketRowsSchema = z.array(marketRowSchema);
 
 export type MarketOverviewRow = z.infer<typeof marketRowSchema>;
-
-export async function fetchMarketOverviewRows() {
-  const rows = await fetchPitchlineMarketOverviewRows();
-  return marketRowsSchema.parse(rows);
-}

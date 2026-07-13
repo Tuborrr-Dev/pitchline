@@ -3,11 +3,11 @@
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { startTransition, useEffect, useEffectEvent, useMemo, useState } from "react";
 
+import { getApiBaseUrl } from "@/config/api";
 import {
   createSystemEvent,
   deriveTeamCode,
-  getApiBaseUrl,
-} from "@/lib/pitchline-service";
+} from "@/services/pitchline-mappers";
 import type { LiveMatchState, MatchEvent } from "@/lib/types";
 
 type ScoreUpdatePayload = {
