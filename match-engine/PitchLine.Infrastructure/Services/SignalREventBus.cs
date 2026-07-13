@@ -79,8 +79,10 @@ public class SignalREventBus(
             timestamp = enriched.Score.Ts,
         };
 
-        // 4. Push to frontend via SignalR
+        // 4. Push to frontend via SignalR (fixture group, lobby group, & all connected clients)
         await _hub.Clients.Group(group).SendAsync("ScoreUpdate", payload, ct);
+        await _hub.Clients.Group("lobby").SendAsync("ScoreUpdate", payload, ct);
+        await _hub.Clients.All.SendAsync("ScoreUpdate", payload, ct);
 
     //     // 5. POST to annotation service — fire and forget (significant actions only)
     //     if (IsAnnotatable(enriched.Score.Action))
@@ -159,8 +161,10 @@ public class SignalREventBus(
             peakSwing = new { delta = peakResult.Delta, minute = peakResult.Minute }
         };
 
-        // 5. Push to frontend via SignalR
+        // 5. Push to frontend via SignalR (fixture group, lobby group, & all connected clients)
         await _hub.Clients.Group(group).SendAsync("OddsUpdate", payload, ct);
+        await _hub.Clients.Group("lobby").SendAsync("OddsUpdate", payload, ct);
+        await _hub.Clients.All.SendAsync("OddsUpdate", payload, ct);
 
         // Annotation service only handles score events — odds delta tracked via score handler
 

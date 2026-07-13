@@ -100,9 +100,9 @@ public record OddsUpdate(
         SuperOddsType == FullMatchResult && MarketPeriod is null
         && Prices.Length == PriceNames.Length && Prices.Length > 0;
 
-    public decimal HomeDecimalOdds => Prices[Array.IndexOf(PriceNames, "part1")] / 1000m;
-    public decimal DrawDecimalOdds => Prices[Array.IndexOf(PriceNames, "draw")] / 1000m;
-    public decimal AwayDecimalOdds => Prices[Array.IndexOf(PriceNames, "part2")] / 1000m;
+    public decimal HomeDecimalOdds => (Prices is { Length: > 0 } && PriceNames is { Length: > 0 } && Array.IndexOf(PriceNames, "part1") is var i && i >= 0 && i < Prices.Length && Prices[i] > 0) ? Prices[i] / 1000m : 0m;
+    public decimal DrawDecimalOdds => (Prices is { Length: > 0 } && PriceNames is { Length: > 0 } && Array.IndexOf(PriceNames, "draw") is var i && i >= 0 && i < Prices.Length && Prices[i] > 0) ? Prices[i] / 1000m : 0m;
+    public decimal AwayDecimalOdds => (Prices is { Length: > 0 } && PriceNames is { Length: > 0 } && Array.IndexOf(PriceNames, "part2") is var i && i >= 0 && i < Prices.Length && Prices[i] > 0) ? Prices[i] / 1000m : 0m;
 
     /// <summary>
     /// Use Pct from the API when available (already de-margined).
@@ -110,24 +110,40 @@ public record OddsUpdate(
     /// </summary>
     public (decimal Home, decimal Draw, decimal Away) ToImpliedProbabilities()
     {
-        if (Pct is { Length: 3 } &&
-            decimal.TryParse(Pct[0], out var h) &&
-            decimal.TryParse(Pct[1], out var d) &&
-            decimal.TryParse(Pct[2], out var a))
+        if (Pct is { Length: 3 } && PriceNames is { Length: 3 })
         {
-            return (Math.Round(h, 1), Math.Round(d, 1), Math.Round(a, 1));
+            var homeIdx = Array.IndexOf(PriceNames, "part1");
+            var drawIdx = Array.IndexOf(PriceNames, "draw");
+            var awayIdx = Array.IndexOf(PriceNames, "part2");
+
+            if (homeIdx >= 0 && drawIdx >= 0 && awayIdx >= 0 &&
+                decimal.TryParse(Pct[homeIdx], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var h) &&
+                decimal.TryParse(Pct[drawIdx], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var d) &&
+                decimal.TryParse(Pct[awayIdx], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var a))
+            {
+                return (Math.Round(h, 1), Math.Round(d, 1), Math.Round(a, 1));
+            }
         }
 
-        var rawHome = 1m / HomeDecimalOdds;
-        var rawDraw = 1m / DrawDecimalOdds;
-        var rawAway = 1m / AwayDecimalOdds;
-        var sum = rawHome + rawDraw + rawAway;
+        var hOdds = HomeDecimalOdds;
+        var dOdds = DrawDecimalOdds;
+        var aOdds = AwayDecimalOdds;
 
-        var home = Math.Round(rawHome / sum * 100, 1);
-        var away = Math.Round(rawAway / sum * 100, 1);
-        var draw = Math.Round(100m - home - away, 1);
+        if (hOdds > 0 && dOdds > 0 && aOdds > 0)
+        {
+            var rawHome = 1m / hOdds;
+            var rawDraw = 1m / dOdds;
+            var rawAway = 1m / aOdds;
+            var sum = rawHome + rawDraw + rawAway;
 
-        return (home, draw, away);
+            var home = Math.Round(rawHome / sum * 100, 1);
+            var away = Math.Round(rawAway / sum * 100, 1);
+            var draw = Math.Round(100m - home - away, 1);
+
+            return (home, draw, away);
+        }
+
+        return (0m, 0m, 0m);
     }
 }
 public record OddsSnapshot(
