@@ -130,6 +130,12 @@ public record OddsUpdate(
         return (home, draw, away);
     }
 }
+public record OddsSnapshot(
+    decimal HomePct,
+    decimal DrawPct,
+    decimal AwayPct,
+    DateTimeOffset Timestamp
+);
 
 public record FixtureInfo(
     int FixtureId,

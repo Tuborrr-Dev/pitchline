@@ -8,6 +8,7 @@ using Pitchline.Infrastructure.Postgres;
 using Pitchline.Infrastructure.Redis;
 using Pitchline.Infrastructure.TxLine;
 using StackExchange.Redis;
+using Microsoft.Extensions.Logging;
 
 namespace PitchLine.Infrastructure;
 
@@ -85,6 +86,23 @@ public static class DependencyInjection
             c.DefaultRequestHeaders.Add("User-Agent", "Pitchline/1.0");
         });
         services.AddSingleton<HistoricalScoreReplayService>();
+
+        services.AddHttpClient("HistoricalOddsSeedService", c =>
+        {
+            c.BaseAddress = new Uri("https://txline.txodds.com");
+            c.Timeout = TimeSpan.FromSeconds(10);
+            c.DefaultRequestHeaders.Add("User-Agent", "Pitchline/1.0");
+        });
+        services.AddSingleton<IHistoricalOddsSeedService>(sp =>
+        {
+            var http = sp.GetRequiredService<IHttpClientFactory>()
+                .CreateClient("HistoricalOddsSeedService");
+            return new HistoricalOddsSeedService(
+                http,
+                sp.GetRequiredService<PostgresRepository>(),
+                sp.GetRequiredService<ILogger<HistoricalOddsSeedService>>(),
+                sp.GetRequiredService<IConfiguration>());
+        });
 
         services.AddSingleton<IMatchEventBus, SignalREventBus>();
         services.AddHostedService<TxLineStreamService>();

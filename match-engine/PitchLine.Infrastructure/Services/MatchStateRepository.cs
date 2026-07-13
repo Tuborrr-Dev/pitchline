@@ -431,7 +431,7 @@ public class MatchStateRepository(IConnectionMultiplexer redis, PostgresReposito
                 homePct = o.HomePct,
                 drawPct = o.DrawPct,
                 awayPct = o.AwayPct,
-                ts = o.Ts
+                timestamp = o.Timestamp
             })).ToList();
 
             // Populate Redis cache
