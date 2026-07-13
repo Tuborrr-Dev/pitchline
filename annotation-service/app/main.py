@@ -33,5 +33,15 @@ async def root():
     return {"status": "running"}
 
 
+@app.on_event("startup")
+async def startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    annotation_service = AnnotationService()
+    app.state.annotation_service = annotation_service
+    app.state.stream_manager = StreamManager(annotation_service)
+
+
 app.include_router(api_router)
 app.include_router(sse_router)

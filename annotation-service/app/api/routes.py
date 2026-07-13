@@ -47,6 +47,17 @@ async def stop_stream(fixture_id: int, request: Request):
     return StreamActionOut(status="stopped", fixture_id=fixture_id)
 
 
+@router.get("/streams")
+async def list_streams(request: Request):
+    """For the cron job to check what's already being watched, and for
+    how long, so it can decide what to start/stop."""
+    stream_manager = request.app.ingestion.stream_manager
+    return {
+        fixture_id: stream_manager.watch_duration_seconds(fixture_id)
+        for fixture_id in stream_manager.tasks.keys()
+    }
+
+
 # ----------------------------
 # this is strictly for testing
 """import json
