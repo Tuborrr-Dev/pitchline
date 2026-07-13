@@ -7,8 +7,9 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
-import { setWalletConnectedState, useWalletConnected } from "@/lib/wallet-session";
+import { connectWallet, selectWallet, useWallet } from "@/lib/wallet-session";
 
 const NAV_ITEMS = [
   { href: "/markets", label: "Markets", match: (pathname: string) => pathname === "/markets" },
@@ -32,8 +33,9 @@ export function AppHeader() {
   const [matchQuery, setMatchQuery] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileSearchSettled, setMobileSearchSettled] = useState(true);
+  const [walletPickerOpen, setWalletPickerOpen] = useState(false);
   const controlsRef = useRef<HTMLDivElement | null>(null);
-  const walletConnected = useWalletConnected();
+  const wallet = useWallet();
   const homeQuery = searchParams.get("q") ?? "";
   const isLanding = pathname === "/";
   const isMarkets = pathname === "/markets";
@@ -53,6 +55,7 @@ export function AppHeader() {
     function closeSearchOnOutsideClick(event: PointerEvent) {
       if (!controlsRef.current?.contains(event.target as Node)) {
         setMobileSearchOpenAnimated(false);
+        setWalletPickerOpen(false);
       }
     }
 
@@ -91,9 +94,26 @@ export function AppHeader() {
     router.push(`/markets${params.toString() ? `?${params.toString()}` : ""}`);
   }
 
-  function connectWallet() {
-    setWalletConnectedState(true);
-    if (isLanding) {
+  async function handleWalletConnect() {
+    if (wallet.isConnected || wallet.status === "checking") return;
+
+    if (wallet.availableWallets.length > 1) {
+      setWalletPickerOpen(true);
+      return;
+    }
+
+    const result = await connectWallet();
+    if (result && isLanding) {
+      setWalletPickerOpen(false);
+      window.setTimeout(() => router.push("/markets"), 260);
+    }
+  }
+
+  async function handleWalletSelection(walletId: string) {
+    selectWallet(walletId);
+    const result = await connectWallet();
+    if (result && isLanding) {
+      setWalletPickerOpen(false);
       window.setTimeout(() => router.push("/markets"), 260);
     }
   }
@@ -117,7 +137,7 @@ export function AppHeader() {
             PITCHLINE
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-4 font-mono text-[0.68rem] font-semibold uppercase text-[#c3ccd4] sm:gap-5 sm:text-[0.78rem]">
+          <nav className="flex flex-wrap items-center gap-4 font-mono text-[0.68rem] font-semibold uppercase text-[var(--terminal-text-muted)] sm:gap-5 sm:text-[0.78rem]">
             {isLanding ? (
               <>
                 {[
@@ -125,7 +145,7 @@ export function AppHeader() {
                   ["#charts", "Charts"],
                   ["#access", "Access"],
                 ].map(([href, label]) => (
-                  <Link key={href} href={href} className="cursor-pointer text-[#a1adb8] transition hover:text-white">
+                  <Link key={href} href={href} className="cursor-pointer text-[var(--terminal-text-muted)] transition hover:text-[var(--terminal-text-strong)]">
                     {label}
                   </Link>
                 ))}
@@ -140,15 +160,15 @@ export function AppHeader() {
                     className={cn(
                       "relative cursor-pointer transition",
                       active
-                        ? "pb-1 text-white"
-                        : "text-[#a1adb8] hover:text-white",
+                        ? "pb-1 text-[var(--terminal-text-strong)]"
+                        : "text-[var(--terminal-text-muted)] hover:text-[var(--terminal-text-strong)]",
                     )}
                   >
                     {item.label}
                     {active ? (
                       <motion.span
                         layoutId="app-nav-active"
-                        className="absolute inset-x-0 -bottom-0.5 h-px bg-[#e1e7ee]"
+                        className="absolute inset-x-0 -bottom-0.5 h-px bg-[var(--terminal-text-strong)]"
                         transition={{ duration: 0.18, ease: "easeOut" }}
                       />
                     ) : null}
@@ -178,7 +198,7 @@ export function AppHeader() {
                 if (!mobileSearchOpen) setMobileSearchOpenAnimated(true);
               }}
               className={cn(
-                "relative flex h-10 min-w-0 items-center gap-2 border border-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[#90a0ac] sm:h-11 sm:min-w-[18rem] sm:justify-start sm:px-3 lg:min-w-[22rem]",
+                "relative flex h-10 min-w-0 items-center gap-2 border border-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[var(--terminal-text-muted)] sm:h-11 sm:min-w-[18rem] sm:justify-start sm:px-3 lg:min-w-[22rem]",
                 mobileSearchOpen ? "justify-start px-3" : "justify-center px-0",
               )}
               aria-label="Search markets"
@@ -189,7 +209,7 @@ export function AppHeader() {
                   if (!mobileSearchOpen) setMobileSearchOpenAnimated(true);
                 }}
                 className={cn(
-                  "flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center text-[#90a0ac] hover:text-white",
+                  "flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center text-[var(--terminal-text-muted)] hover:text-[var(--terminal-text-strong)]",
                   mobileIconVisibility,
                 )}
                 aria-label="Open search"
@@ -202,7 +222,7 @@ export function AppHeader() {
                 placeholder="SEARCH MARKETS..."
                 autoFocus={mobileSearchOpen}
                 className={cn(
-                  "w-full bg-transparent font-mono text-[0.72rem] uppercase text-[#dbe5ed] outline-none placeholder:text-[#66737e] sm:text-[0.78rem]",
+                  "w-full bg-transparent font-mono text-[0.72rem] uppercase text-[var(--terminal-text-strong)] outline-none placeholder:text-[var(--terminal-text-muted)] sm:text-[0.78rem]",
                   mobileSearchOpen ? "block" : "hidden sm:block",
                 )}
               />
@@ -219,7 +239,7 @@ export function AppHeader() {
                     exit={{ opacity: 0, scale: 0.82 }}
                     transition={{ duration: 0.14 }}
                     className={cn(
-                      "h-4 w-4 shrink-0 cursor-pointer text-[#8fa0ad] hover:text-white",
+                      "h-4 w-4 shrink-0 cursor-pointer text-[var(--terminal-text-muted)] hover:text-[var(--terminal-text-strong)]",
                       mobileSearchOpen ? "flex items-center justify-center" : "hidden sm:flex sm:items-center sm:justify-center",
                     )}
                     aria-label="Clear search"
@@ -235,9 +255,9 @@ export function AppHeader() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.98 }}
                     transition={{ duration: 0.16, ease: "easeOut" }}
-                    className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-50 border border-[var(--terminal-border)] bg-[#081016] shadow-[0_18px_40px_rgba(0,0,0,0.36)] sm:hidden"
+                    className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-50 border border-[var(--terminal-border)] bg-[var(--terminal-panel)] shadow-[0_18px_40px_var(--terminal-shadow)] sm:hidden"
                   >
-                    <p className="border-b border-[var(--terminal-border)] px-3 py-2 font-mono text-[0.58rem] font-semibold uppercase text-[#72808b]">
+                    <p className="border-b border-[var(--terminal-border)] px-3 py-2 font-mono text-[0.58rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
                       Search results
                     </p>
                     {SEARCH_RESULTS.map((result) => (
@@ -248,10 +268,10 @@ export function AppHeader() {
                           setMobileSearchOpenAnimated(false);
                           router.push(`/match/${result.id}`);
                         }}
-                        className="block w-full cursor-pointer border-b border-[#13202a] px-3 py-2 text-left font-mono uppercase hover:bg-[#101a22]"
+                        className="block w-full cursor-pointer border-b border-[var(--terminal-line)] px-3 py-2 text-left font-mono uppercase hover:bg-[var(--terminal-hover)]"
                       >
-                        <span className="block text-[0.72rem] font-semibold text-[#dfe8ee]">{result.label}</span>
-                        <span className="mt-1 block text-[0.58rem] text-[#7d8993]">{result.meta}</span>
+                        <span className="block text-[0.72rem] font-semibold text-[var(--terminal-text-strong)]">{result.label}</span>
+                        <span className="mt-1 block text-[0.58rem] text-[var(--terminal-text-muted)]">{result.meta}</span>
                       </button>
                     ))}
                   </motion.div>
@@ -261,33 +281,77 @@ export function AppHeader() {
           ) : null}
 
           <motion.div layout>
+            <ThemeToggle />
+          </motion.div>
+
+          <motion.div layout>
             <Button
-            type="button"
-            onClick={connectWallet}
-            className={cn(
-              "h-10 min-w-0 cursor-pointer rounded-none border px-3 font-mono text-[0.68rem] font-semibold uppercase shadow-none sm:h-11 sm:px-4 sm:text-[0.78rem]",
-              mobileSearchOpen && !isLanding && "w-10 px-0 sm:w-auto sm:px-4",
-              walletConnected
-                ? "border-[var(--terminal-green)] bg-[var(--terminal-green)] text-[#06110b]"
-                : "border-[#0fc26f] bg-transparent text-[var(--terminal-green)] hover:bg-[#0c1d15]",
-            )}
-          >
-            <span className={cn("flex h-4 w-4 shrink-0 items-center justify-center", mobileIconVisibility)}>
-              <Wallet className="h-4 w-4 shrink-0" aria-hidden="true" />
-            </span>
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.span
-                key={walletConnected ? "connected" : "disconnected"}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.14 }}
-                className={cn(mobileSearchOpen && !isLanding ? "hidden sm:inline" : "inline")}
-              >
-                {walletConnected ? "0x71c...9A4F" : "Connect Wallet"}
-              </motion.span>
-            </AnimatePresence>
+              type="button"
+              onClick={handleWalletConnect}
+              disabled={wallet.status === "checking" || wallet.status === "connecting"}
+              className={cn(
+                "h-10 min-w-0 cursor-pointer rounded-none border px-3 font-mono text-[0.68rem] font-semibold uppercase shadow-none sm:h-11 sm:px-4 sm:text-[0.78rem]",
+                mobileSearchOpen && !isLanding && "w-10 px-0 sm:w-auto sm:px-4",
+                wallet.isConnected
+                  ? "border-[var(--terminal-green)] bg-[var(--terminal-green)] text-[var(--terminal-inverse-fg)]"
+                  : "border-[var(--terminal-green)] bg-transparent text-[var(--terminal-green)] hover:bg-emerald-500/10",
+                (wallet.status === "checking" || wallet.status === "connecting") && "cursor-wait opacity-80",
+              )}
+            >
+              <span className={cn("flex h-4 w-4 shrink-0 items-center justify-center", mobileIconVisibility)}>
+                <Wallet className="h-4 w-4 shrink-0" aria-hidden="true" />
+              </span>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={wallet.isConnected ? "connected" : wallet.status}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.14 }}
+                  className={cn(mobileSearchOpen && !isLanding ? "hidden sm:inline" : "inline")}
+                >
+                  {wallet.isConnected
+                    ? wallet.addressLabel
+                    : wallet.status === "checking"
+                      ? "Checking..."
+                    : wallet.status === "connecting"
+                      ? "Connecting..."
+                      : wallet.availableWallets.length > 1
+                        ? "Choose Wallet"
+                      : wallet.hasProvider
+                        ? "Connect Wallet"
+                        : "Install Wallet"}
+                </motion.span>
+              </AnimatePresence>
             </Button>
+            {!wallet.isConnected && walletPickerOpen && wallet.availableWallets.length > 1 ? (
+              <div className="absolute right-0 top-[calc(100%+0.45rem)] z-50 min-w-64 border border-[var(--terminal-border)] bg-[var(--terminal-panel)] shadow-[0_18px_40px_var(--terminal-shadow)]">
+                <p className="border-b border-[var(--terminal-border)] px-3 py-2 font-mono text-[0.58rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
+                  Choose wallet
+                </p>
+                {wallet.availableWallets.map((provider) => (
+                  <button
+                    key={provider.id}
+                    type="button"
+                    onClick={() => void handleWalletSelection(provider.id)}
+                    className={cn(
+                      "flex w-full cursor-pointer items-center justify-between border-b border-[var(--terminal-line)] px-3 py-2 text-left font-mono uppercase hover:bg-[var(--terminal-hover)]",
+                      wallet.selectedWalletId === provider.id && "bg-[var(--terminal-hover)]",
+                    )}
+                  >
+                    <span className="text-[0.72rem] font-semibold text-[var(--terminal-text-strong)]">{provider.name}</span>
+                    <span className="text-[0.58rem] text-[var(--terminal-text-muted)]">
+                      {wallet.selectedWalletId === provider.id ? "Selected" : "Use"}
+                    </span>
+                  </button>
+                ))}
+                {wallet.error ? (
+                  <p className="px-3 py-2 font-mono text-[0.58rem] uppercase text-[#ff9aa9]">
+                    {wallet.error}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </motion.div>
         </div>
       </motion.div>

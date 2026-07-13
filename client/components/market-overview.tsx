@@ -37,6 +37,10 @@ function cleanLabel(value: string) {
   return value.replace("Ã‚Â·", "/").replace("Â·", "/");
 }
 
+function isUpcomingRow(row: MarketOverviewRow) {
+  return row.fixture.status === "upcoming";
+}
+
 function OutcomeBar({ home, draw, away }: { home: number; draw: number; away: number }) {
   return (
     <div className="flex h-7 w-full overflow-hidden border border-[var(--terminal-border)] bg-[var(--terminal-surface)]">
@@ -68,6 +72,32 @@ function OutcomeBar({ home, draw, away }: { home: number; draw: number; away: nu
   );
 }
 
+function MarketTiming({ row, compact = false }: { row: MarketOverviewRow; compact?: boolean }) {
+  if (isUpcomingRow(row)) {
+    return (
+      <>
+        <p className={cn("font-display font-bold uppercase text-[var(--terminal-text-strong)]", compact ? "text-[1.35rem]" : "text-[1.15rem]")}>
+          Kickoff
+        </p>
+        <p className={cn("font-mono uppercase text-[var(--terminal-text-muted)]", compact ? "text-[0.72rem]" : "text-[0.7rem]")}>
+          {row.timeLabel}
+        </p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <p className={cn("font-display font-bold uppercase text-[var(--terminal-text-strong)]", compact ? "text-[1.8rem]" : "text-[1.25rem]")}>
+        {row.scoreLine}
+      </p>
+      <p className={cn("font-mono uppercase text-[var(--terminal-text-muted)]", compact ? "text-[0.72rem]" : "text-[0.7rem]")}>
+        {row.timeLabel}
+      </p>
+    </>
+  );
+}
+
 function StatusBadge({ row }: { row: MarketOverviewRow }) {
   return (
     <span
@@ -75,7 +105,7 @@ function StatusBadge({ row }: { row: MarketOverviewRow }) {
         "inline-flex h-6 items-center border px-2 font-mono text-[0.68rem] font-semibold leading-none",
         row.status === "live"
           ? "border-[#135238] bg-[var(--prob-home)] text-[#041009]"
-          : "border-[#314e66] bg-[#203d53] text-[#d2edf7]",
+          : "border-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[var(--terminal-text-strong)]",
       )}
     >
       {row.statusLabel}
@@ -93,7 +123,7 @@ function MarketRow({ row }: { row: MarketOverviewRow }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.18 }}
-      className="grid min-w-[64rem] grid-cols-[5rem_15rem_8rem_1fr_8.5rem_5.5rem] items-center border-t border-[var(--terminal-line)] px-4 py-3 text-[var(--foreground)] transition hover:bg-[#101820]"
+      className="grid min-w-[64rem] grid-cols-[5rem_15rem_8rem_1fr_8.5rem_5.5rem] items-center border-t border-[var(--terminal-line)] px-4 py-3 text-[var(--foreground)] transition hover:bg-[var(--terminal-hover)]"
     >
       <div className="flex items-center">
         <StatusBadge row={row} />
@@ -101,7 +131,7 @@ function MarketRow({ row }: { row: MarketOverviewRow }) {
       <div>
         <Link
           href={href}
-          className="cursor-pointer font-display text-[1.25rem] font-bold uppercase text-white transition hover:text-[var(--terminal-green)]"
+          className="cursor-pointer font-display text-[1.25rem] font-bold uppercase text-[var(--terminal-text-strong)] transition hover:text-[var(--terminal-green)]"
         >
           {row.eventPair}
         </Link>
@@ -110,8 +140,7 @@ function MarketRow({ row }: { row: MarketOverviewRow }) {
         </p>
       </div>
       <div className="text-center">
-        <p className="font-display text-[1.25rem] font-bold uppercase text-white">{row.scoreLine}</p>
-        <p className="font-mono text-[0.7rem] uppercase text-[#9fb0bc]">{row.timeLabel}</p>
+        <MarketTiming row={row} />
       </div>
       <div className="px-4">
         <OutcomeBar
@@ -121,7 +150,7 @@ function MarketRow({ row }: { row: MarketOverviewRow }) {
         />
       </div>
       <div className="text-right">
-        <p className="font-display text-[1.2rem] font-bold uppercase text-white">{row.liquidity}</p>
+        <p className="font-display text-[1.2rem] font-bold uppercase text-[var(--terminal-text-strong)]">{row.liquidity}</p>
         <p className="font-mono text-[0.7rem] uppercase text-[var(--terminal-green)]">
           Depth {row.depth}
         </p>
@@ -132,8 +161,8 @@ function MarketRow({ row }: { row: MarketOverviewRow }) {
           className={cn(
             "h-8 min-w-[4.25rem] cursor-pointer rounded-none border px-3 font-mono text-[0.7rem] font-semibold uppercase shadow-none",
             row.actionTone === "primary"
-              ? "border-[var(--terminal-green)] bg-[var(--terminal-green)] text-[#07110b] hover:bg-[#7affba]"
-              : "border-[#3e5a6f] bg-transparent text-[#a6bfd0] hover:border-[#7fb8d8] hover:bg-transparent hover:text-white",
+              ? "border-[var(--terminal-green)] bg-[var(--terminal-green)] text-[var(--terminal-inverse-fg)] hover:bg-[var(--terminal-green)]"
+              : "border-[var(--terminal-border)] bg-transparent text-[var(--terminal-text-muted)] hover:border-[var(--terminal-blue)] hover:bg-transparent hover:text-[var(--terminal-text-strong)]",
           )}
         >
           <Link href={href}>{row.action}</Link>
@@ -158,11 +187,11 @@ function MarketGrid({ rows }: { rows: MarketOverviewRow[] }) {
           >
             <Link
               href={rowHref(row)}
-              className="block cursor-pointer border border-[var(--terminal-border)] bg-[#0e151b] p-4 transition hover:border-[var(--terminal-green)] hover:bg-[#121b22]"
+              className="block cursor-pointer border border-[var(--terminal-border)] bg-[var(--terminal-panel)] p-4 transition hover:border-[var(--terminal-green)] hover:bg-[var(--terminal-hover)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-display text-[1.45rem] font-bold uppercase text-white">
+                  <p className="font-display text-[1.45rem] font-bold uppercase text-[var(--terminal-text-strong)]">
                     {row.eventPair}
                   </p>
                   <p className="mt-1 font-mono text-[0.7rem] uppercase text-[var(--muted)]">
@@ -173,11 +202,10 @@ function MarketGrid({ rows }: { rows: MarketOverviewRow[] }) {
               </div>
               <div className="mt-5 flex items-end justify-between">
                 <div>
-                  <p className="font-display text-[1.8rem] font-bold text-white">{row.scoreLine}</p>
-                  <p className="font-mono text-[0.7rem] uppercase text-[#9fb0bc]">{row.timeLabel}</p>
+                  <MarketTiming row={row} compact />
                 </div>
                 <div className="text-right">
-                  <p className="font-display text-[1.5rem] font-bold text-white">{row.liquidity}</p>
+                  <p className="font-display text-[1.5rem] font-bold text-[var(--terminal-text-strong)]">{row.liquidity}</p>
                   <p className="font-mono text-[0.7rem] uppercase text-[var(--terminal-green)]">
                     Depth {row.depth}
                   </p>
@@ -208,7 +236,7 @@ function MarketCompactListRow({ row }: { row: MarketOverviewRow }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.18 }}
-      className="border-t border-[var(--terminal-line)] px-4 py-4 transition hover:bg-[#101820]"
+      className="border-t border-[var(--terminal-line)] px-4 py-4 transition hover:bg-[var(--terminal-hover)]"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -216,7 +244,7 @@ function MarketCompactListRow({ row }: { row: MarketOverviewRow }) {
             <StatusBadge row={row} />
             <Link
               href={href}
-              className="cursor-pointer font-display text-[1.55rem] font-bold uppercase leading-none text-white transition hover:text-[var(--terminal-green)]"
+              className="cursor-pointer font-display text-[1.55rem] font-bold uppercase leading-none text-[var(--terminal-text-strong)] transition hover:text-[var(--terminal-green)]"
             >
               {row.eventPair}
             </Link>
@@ -227,8 +255,7 @@ function MarketCompactListRow({ row }: { row: MarketOverviewRow }) {
         </div>
 
         <div className="shrink-0 text-right">
-          <p className="font-display text-[1.8rem] font-bold leading-none text-white">{row.scoreLine}</p>
-          <p className="mt-1 font-mono text-[0.72rem] uppercase text-[#9fb0bc]">{row.timeLabel}</p>
+          <MarketTiming row={row} compact />
         </div>
       </div>
 
@@ -239,7 +266,7 @@ function MarketCompactListRow({ row }: { row: MarketOverviewRow }) {
           away={row.probabilities.away}
         />
         <div className="sm:text-right">
-          <p className="font-display text-[1.45rem] font-bold leading-none text-white">{row.liquidity}</p>
+          <p className="font-display text-[1.45rem] font-bold leading-none text-[var(--terminal-text-strong)]">{row.liquidity}</p>
           <p className="mt-1 font-mono text-[0.72rem] uppercase text-[var(--terminal-green)]">
             Depth {row.depth}
           </p>
@@ -250,8 +277,8 @@ function MarketCompactListRow({ row }: { row: MarketOverviewRow }) {
             className={cn(
               "h-9 min-w-[5rem] cursor-pointer rounded-none border px-4 font-mono text-[0.72rem] font-semibold uppercase shadow-none",
               row.actionTone === "primary"
-                ? "border-[var(--terminal-green)] bg-[var(--terminal-green)] text-[#07110b] hover:bg-[#7affba]"
-                : "border-[#3e5a6f] bg-transparent text-[#a6bfd0] hover:border-[#7fb8d8] hover:bg-transparent hover:text-white",
+                ? "border-[var(--terminal-green)] bg-[var(--terminal-green)] text-[var(--terminal-inverse-fg)] hover:bg-[var(--terminal-green)]"
+                : "border-[var(--terminal-border)] bg-transparent text-[var(--terminal-text-muted)] hover:border-[var(--terminal-blue)] hover:bg-transparent hover:text-[var(--terminal-text-strong)]",
             )}
           >
             <Link href={href}>{row.action}</Link>
@@ -347,7 +374,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
   const effectiveViewMode = isMobile ? "grid" : viewMode;
 
   return (
-    <div className="h-full overflow-y-auto bg-[var(--background)] pb-20 text-white">
+    <div className="h-full overflow-y-auto bg-[var(--background)] pb-20 text-[var(--terminal-text)]">
       <main className="w-full overflow-hidden bg-[var(--terminal-bg)]">
         <motion.section
           initial={{ opacity: 0, y: 8 }}
@@ -366,8 +393,8 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                     className={cn(
                       "relative h-8 cursor-pointer rounded-none border px-3 font-mono text-[0.7rem] font-semibold uppercase shadow-none",
                       activeTab === tab
-                        ? "border-[#d6dee5] bg-[#1d252d] text-white"
-                        : "border-[#26313a] bg-transparent text-[#8e9ba6] hover:bg-[#111820] hover:text-white",
+                        ? "border-[var(--terminal-active-bg)] bg-[var(--terminal-active-bg)] text-[var(--terminal-active-fg)]"
+                        : "border-[var(--terminal-border)] bg-transparent text-[var(--terminal-text-muted)] hover:bg-[var(--terminal-hover)] hover:text-[var(--terminal-text-strong)]",
                     )}
                   >
                     {activeTab === tab ? (
@@ -389,7 +416,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.16 }}
-                    className="font-display text-[2rem] font-bold uppercase leading-none text-[#dde4ea] sm:text-[2.45rem] lg:text-[2.75rem]"
+                    className="font-display text-[2rem] font-bold uppercase leading-none text-[var(--terminal-text-strong)] sm:text-[2.45rem] lg:text-[2.75rem]"
                   >
                     {activeTab === "markets" && "World Cup: Market Overview (F-07)"}
                     {activeTab === "history" && "Market History"}
@@ -400,7 +427,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                   High Vol
                 </span>
               </div>
-              <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 font-mono text-[0.72rem] font-semibold uppercase text-[#8e9ba6]">
+              <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
                 <span>Total liquidity: $42.52M</span>
                 <span>Active markets: {filteredRows.length}</span>
                 {isFetching ? <span>Refreshing feed</span> : null}
@@ -414,7 +441,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                   <Activity className="h-4 w-4" aria-hidden="true" />
                   System Live
                 </p>
-                <p className="font-mono text-[0.68rem] uppercase text-[#91a0ab]">Latency: 12ms</p>
+                <p className="font-mono text-[0.68rem] uppercase text-[var(--terminal-text-muted)]">Latency: 12ms</p>
               </div>
               {!isMobile ? (
                 <div className="flex border border-[var(--terminal-border)] bg-[var(--terminal-surface)]">
@@ -424,8 +451,8 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                     className={cn(
                       "h-9 cursor-pointer rounded-none border-0 border-r border-[var(--terminal-border)] px-3 font-mono text-[0.7rem] font-semibold uppercase shadow-none",
                       effectiveViewMode === "list"
-                        ? "bg-[#242b33] text-[#dbe2e8]"
-                        : "bg-transparent text-[#8997a3] hover:bg-transparent hover:text-white",
+                        ? "bg-[var(--terminal-active-bg)] text-[var(--terminal-active-fg)]"
+                        : "bg-transparent text-[var(--terminal-text-muted)] hover:bg-transparent hover:text-[var(--terminal-text-strong)]",
                     )}
                   >
                     <List className="h-4 w-4" aria-hidden="true" />
@@ -436,7 +463,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                     onClick={() => setViewMode("grid")}
                     className={cn(
                       "h-9 cursor-pointer rounded-none border-0 px-3 font-mono text-[0.7rem] font-semibold uppercase shadow-none",
-                      viewMode === "grid" ? "bg-[#242b33] text-[#dbe2e8]" : "bg-transparent text-[#8997a3] hover:bg-transparent hover:text-white",
+                      viewMode === "grid" ? "bg-[var(--terminal-active-bg)] text-[var(--terminal-active-fg)]" : "bg-transparent text-[var(--terminal-text-muted)] hover:bg-transparent hover:text-[var(--terminal-text-strong)]",
                     )}
                   >
                     <Grid3X3 className="h-4 w-4" aria-hidden="true" />
@@ -460,7 +487,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.16, delay: index * 0.04 }}
-                      className="flex cursor-pointer items-center gap-3 border border-[#26313a] bg-[#10171d] px-4 py-5 text-left font-mono text-[0.76rem] font-semibold uppercase text-[#d4dde5] hover:border-[var(--terminal-green)]"
+                      className="flex cursor-pointer items-center gap-3 border border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-4 py-5 text-left font-mono text-[0.76rem] font-semibold uppercase text-[var(--terminal-text-strong)] hover:border-[var(--terminal-green)]"
                     >
                       <Settings className="h-4 w-4" aria-hidden="true" />
                       {setting}: On
@@ -474,8 +501,8 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                   className="flex min-h-[18rem] flex-col items-center justify-center gap-3 border-t border-[var(--terminal-line)] px-4 py-10 text-center font-mono uppercase"
                 >
                   <AlertTriangle className="h-6 w-6 text-[var(--danger)]" aria-hidden="true" />
-                  <p className="text-[0.84rem] font-semibold text-[#dbe5ed]">Market feed unavailable</p>
-                  <p className="max-w-md text-[0.72rem] text-[#7d8993]">
+                  <p className="text-[0.84rem] font-semibold text-[var(--terminal-text-strong)]">Market feed unavailable</p>
+                  <p className="max-w-md text-[0.72rem] text-[var(--terminal-text-muted)]">
                     The market endpoint failed validation or could not be reached.
                   </p>
                 </motion.div>
@@ -489,15 +516,15 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                       transition={{ duration: 0.18, delay: index * 0.05 }}
                       className="grid min-w-[64rem] grid-cols-[5rem_15rem_8rem_1fr_8.5rem_5.5rem] items-center border-t border-[var(--terminal-line)] px-4 py-4"
                     >
-                      <div className="h-5 w-10 animate-pulse bg-[#172029]" />
+                      <div className="h-5 w-10 animate-pulse bg-[var(--terminal-hover)]" />
                       <div className="space-y-2">
-                        <div className="h-4 w-24 animate-pulse bg-[#172029]" />
-                        <div className="h-3 w-36 animate-pulse bg-[#121920]" />
+                        <div className="h-4 w-24 animate-pulse bg-[var(--terminal-hover)]" />
+                        <div className="h-3 w-36 animate-pulse bg-[var(--terminal-hover)]" />
                       </div>
-                      <div className="mx-auto h-4 w-12 animate-pulse bg-[#172029]" />
-                      <div className="mx-4 h-7 animate-pulse bg-[#172029]" />
-                      <div className="ml-auto h-4 w-16 animate-pulse bg-[#172029]" />
-                      <div className="ml-auto h-8 w-16 animate-pulse bg-[#172029]" />
+                      <div className="mx-auto h-4 w-12 animate-pulse bg-[var(--terminal-hover)]" />
+                      <div className="mx-4 h-7 animate-pulse bg-[var(--terminal-hover)]" />
+                      <div className="ml-auto h-4 w-16 animate-pulse bg-[var(--terminal-hover)]" />
+                      <div className="ml-auto h-8 w-16 animate-pulse bg-[var(--terminal-hover)]" />
                     </motion.div>
                   ))}
                 </motion.div>
@@ -507,7 +534,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                 </motion.div>
               ) : !isDesktopTable ? (
                 <motion.div key="compact-list" {...panelMotion}>
-                  <div className="grid grid-cols-[5.5rem_1fr_5.5rem] items-center border-b border-[var(--terminal-border)] bg-[#20262d] px-4 py-3 font-mono text-[0.68rem] font-semibold uppercase text-[#b4bec8]">
+                  <div className="grid grid-cols-[5.5rem_1fr_5.5rem] items-center border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-4 py-3 font-mono text-[0.68rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
                     <div>Status</div>
                     <div>Event / Market</div>
                     <div className="text-right">Score</div>
@@ -520,7 +547,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                 </motion.div>
               ) : (
                 <motion.div key="list" {...panelMotion}>
-                  <div className="grid min-w-[64rem] grid-cols-[5rem_15rem_8rem_1fr_8.5rem_5.5rem] items-center border-b border-[var(--terminal-border)] bg-[#20262d] px-4 py-3 font-mono text-[0.68rem] font-semibold uppercase text-[#b4bec8]">
+                  <div className="grid min-w-[64rem] grid-cols-[5rem_15rem_8rem_1fr_8.5rem_5.5rem] items-center border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-4 py-3 font-mono text-[0.68rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
                     <div>Status</div>
                     <div>Event / Pair</div>
                     <div className="text-center">Score/Time</div>
@@ -544,7 +571,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.16 }}
-                  className="border-t border-[var(--terminal-line)] px-4 py-10 text-center font-mono text-[0.76rem] uppercase text-[#7d8993]"
+                  className="border-t border-[var(--terminal-line)] px-4 py-10 text-center font-mono text-[0.76rem] uppercase text-[var(--terminal-text-muted)]"
                 >
                   No markets match your search.
                 </motion.div>
@@ -553,17 +580,17 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
           </div>
         </section>
 
-        <section className="fixed inset-x-0 bottom-8 z-40 hidden flex-col gap-3 border-y border-[var(--terminal-border)] bg-[#070b10] px-4 py-3 md:flex md:flex-row md:items-center md:justify-between">
+        <section className="fixed inset-x-0 bottom-8 z-40 hidden flex-col gap-3 border-y border-[var(--terminal-border)] bg-[var(--terminal-panel)] px-4 py-3 md:flex md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[0.68rem] font-semibold uppercase">
-            <span className="text-[#b7c0c7]">Streaming 24 data feeds</span>
+            <span className="text-[var(--terminal-text-muted)]">Streaming 24 data feeds</span>
             <span className="text-[var(--terminal-green)]">Secure p2p orderbook active</span>
           </div>
-          <p className="font-mono text-[0.68rem] font-semibold uppercase text-[#d5dce2]">
+          <p className="font-mono text-[0.68rem] font-semibold uppercase text-[var(--terminal-text-strong)]">
             Last update: 14:32:44 UTC
           </p>
         </section>
 
-        <section className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--terminal-border)] bg-[#05080c] px-3 py-2">
+        <section className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)] px-3 py-2">
           <div
             ref={tickerRef}
             className="overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
@@ -573,7 +600,7 @@ export function MarketOverview({ initialRows }: { initialRows: MarketOverviewRow
                 <span
                   key={`${item.label}-${index}`}
                   aria-hidden={index >= tickerItems.length}
-                  className="text-[#aeb8bf]"
+                  className="text-[var(--terminal-text-muted)]"
                 >
                   {item.label}{" "}
                   <span className={item.tone === "up" ? "text-[var(--terminal-green)]" : "text-[#ea8a9f]"}>

@@ -121,9 +121,19 @@ function formatUtcKickoff(kickoffUtc: string) {
   }).format(new Date(kickoffUtc));
 }
 
-function toMatchStatus(phase: string | null | undefined) {
+function toMatchStatus(phase: string | null | undefined, kickoffUtc?: string) {
   const value = (phase ?? "").toLowerCase();
-  if (value.includes("scheduled")) return "upcoming" satisfies MatchStatus;
+  const kickoffTime = kickoffUtc ? new Date(kickoffUtc).getTime() : Number.NaN;
+
+  if (
+    value.includes("scheduled") ||
+    value.includes("not started") ||
+    value.includes("pre") ||
+    (!Number.isNaN(kickoffTime) && kickoffTime > Date.now())
+  ) {
+    return "upcoming" satisfies MatchStatus;
+  }
+
   if (
     value.includes("finished") ||
     value.includes("abandoned") ||
@@ -170,7 +180,7 @@ function buildFixtureMeta(status: MatchStatus, kickoffUtc: string, phase: string
 }
 
 function createFixtureFromDto(dto: BackendFixtureDto | BackendMatchDto) {
-  const status = toMatchStatus(dto.phase);
+  const status = toMatchStatus(dto.phase, dto.kickOff);
   const teamACode = deriveTeamCode(dto.homeName);
   const teamBCode = deriveTeamCode(dto.awayName);
   const meta = buildFixtureMeta(status, dto.kickOff, dto.phase);
@@ -254,6 +264,19 @@ function isUsableHistoryTimestamp(timestamp: string) {
   return !Number.isNaN(date.getTime()) && date.getUTCFullYear() > 2000;
 }
 
+function normalizeProbabilityHistory(history: ProbabilityPoint[]) {
+  const dedupedByTimestamp = new Map<string, ProbabilityPoint>();
+
+  history.forEach((point) => {
+    if (!isUsableHistoryTimestamp(point.timestamp)) return;
+    dedupedByTimestamp.set(point.timestamp, point);
+  });
+
+  return [...dedupedByTimestamp.values()].sort(
+    (left, right) => new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime(),
+  );
+}
+
 function historyToProbabilityPoints(
   history: BackendMatchHistoryDto | null,
   fixture: Fixture,
@@ -269,22 +292,24 @@ function historyToProbabilityPoints(
     );
   }
 
-  return oddsHistory.map((point) => {
-    const elapsedMinutes = Math.max(
-      0,
-      Math.round(
-        (new Date(point.timestamp).getTime() - new Date(fixture.kickoffUtc).getTime()) / 60_000,
-      ),
-    );
+  return normalizeProbabilityHistory(
+    oddsHistory.map((point) => {
+      const elapsedMinutes = Math.max(
+        0,
+        Math.round(
+          (new Date(point.timestamp).getTime() - new Date(fixture.kickoffUtc).getTime()) / 60_000,
+        ),
+      );
 
-    return {
-      timestamp: point.timestamp,
-      minuteLabel: `${elapsedMinutes}'`,
-      teamA: point.homePct,
-      draw: point.drawPct,
-      teamB: point.awayPct,
-    } satisfies ProbabilityPoint;
-  });
+      return {
+        timestamp: point.timestamp,
+        minuteLabel: `${elapsedMinutes}'`,
+        teamA: point.homePct,
+        draw: point.drawPct,
+        teamB: point.awayPct,
+      } satisfies ProbabilityPoint;
+    }),
+  );
 }
 
 export function createSystemEvent(

@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { Flag, Search, ShieldAlert, Volleyball } from "lucide-react";
+import { useTheme } from "next-themes";
 import {
   AreaSeries,
   ColorType,
@@ -35,6 +37,21 @@ function toTime(timestamp: string): Time {
   return Math.floor(new Date(timestamp).getTime() / 1000) as Time;
 }
 
+function normalizeChartHistory(history: ProbabilityPoint[]) {
+  const dedupedBySecond = new Map<number, ProbabilityPoint>();
+
+  history.forEach((point) => {
+    const time = new Date(point.timestamp).getTime();
+    if (Number.isNaN(time)) return;
+
+    dedupedBySecond.set(Math.floor(time / 1000), point);
+  });
+
+  return [...dedupedBySecond.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([, point]) => point);
+}
+
 function parseMinuteLabel(minuteLabel: string) {
   return Number.parseInt(minuteLabel.replace(/\D/g, ""), 10) || 0;
 }
@@ -60,19 +77,6 @@ function findFocusedPoint(history: ProbabilityPoint[], selectedEvent?: MatchEven
   }
 
   return focusedPoint;
-}
-
-function getEventPoint(history: ProbabilityPoint[], event: MatchEvent) {
-  const eventMinute = parseMinuteLabel(event.minuteLabel);
-  let point = history[0];
-
-  for (const item of history) {
-    if (parseMinuteLabel(item.minuteLabel) <= eventMinute) {
-      point = item;
-    }
-  }
-
-  return point;
 }
 
 function getEventPointIndex(history: ProbabilityPoint[], event: MatchEvent) {
@@ -118,6 +122,20 @@ function interpolatePoint(fromPoint: ProbabilityPoint, toPoint: ProbabilityPoint
   };
 }
 
+function interpolatePointTime(fromPoint: ProbabilityPoint, toPoint: ProbabilityPoint, progress: number) {
+  const fromTime = new Date(fromPoint.timestamp).getTime();
+  const toTimeValue = new Date(toPoint.timestamp).getTime();
+
+  if (Number.isNaN(fromTime) || Number.isNaN(toTimeValue) || toTimeValue <= fromTime) {
+    return toPoint.timestamp;
+  }
+
+  const eased = easeOutCubic(progress);
+  const interpolatedTime = fromTime + (toTimeValue - fromTime) * eased;
+  const minTime = fromTime + 1000;
+  return new Date(Math.min(toTimeValue, Math.max(minTime, interpolatedTime))).toISOString();
+}
+
 function canAnimateLatestPoint(fromHistory: ProbabilityPoint[], toHistory: ProbabilityPoint[]) {
   if (fromHistory.length === 0 || toHistory.length === 0) return false;
   if (toHistory.length < fromHistory.length || toHistory.length > fromHistory.length + 1) {
@@ -146,16 +164,51 @@ function toSeriesData(animatedHistory: ProbabilityPoint[]) {
   };
 }
 
-function eventColor(event: MatchEvent) {
-  if (event.side === "teamB") return "border-[#ff4b6e] bg-[#3a1622] text-[#ff8aa2] shadow-[0_0_22px_rgba(255,75,110,0.22)]";
-  if (event.side === "teamA") return "border-[var(--terminal-green)] bg-[#073525] text-[#65ffb8] shadow-[0_0_22px_rgba(25,239,140,0.22)]";
-  return "border-[#ffd700] bg-[#302509] text-[#ffe36d] shadow-[0_0_22px_rgba(255,215,0,0.18)]";
+function eventMarkerTone(event: MatchEvent) {
+  switch (event.type) {
+    case "goal":
+      return "border-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-green)] shadow-[0_0_18px_rgba(25,239,140,0.22)]";
+    case "red-card":
+      return "border-[#ff4b6e] bg-[#3a1622] text-[#ff8aa2] shadow-[0_0_18px_rgba(255,75,110,0.25)]";
+    case "yellow-card":
+      return "border-[#ffd700] bg-[#302509] text-[#ffe36d] shadow-[0_0_18px_rgba(255,215,0,0.2)]";
+    case "penalty-awarded":
+    case "penalty-scored":
+    case "penalty-missed":
+      return "border-[var(--terminal-blue)] bg-sky-500/10 text-[var(--terminal-blue)] shadow-[0_0_18px_rgba(16,162,204,0.2)]";
+    case "var":
+      return "border-[var(--terminal-blue)] bg-sky-500/10 text-[var(--terminal-blue)] shadow-[0_0_18px_rgba(127,174,202,0.2)]";
+    default:
+      return "border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-[var(--terminal-text-strong)] shadow-[0_0_18px_var(--terminal-shadow)]";
+  }
 }
 
-function eventShortLabel(event: MatchEvent) {
-  const side = event.teamCode ?? (event.side === "draw" ? "MKT" : "LIVE");
-  const delta = event.delta ? `${event.delta > 0 ? "+" : ""}${event.delta.toFixed(1)}%` : "Market";
-  return `${event.minuteLabel} ${event.label} ${delta} ${side}`;
+function EventMarkerIcon({ event }: { event: MatchEvent }) {
+  if (event.type === "goal") {
+    return <Volleyball className="h-3.5 w-3.5" strokeWidth={2} />;
+  }
+
+  if (event.type === "red-card") {
+    return <span className="block h-3.5 w-2.5 rounded-[1px] border border-current bg-current/90" />;
+  }
+
+  if (event.type === "yellow-card") {
+    return <span className="block h-3.5 w-2.5 rounded-[1px] border border-current bg-[#ffd700]" />;
+  }
+
+  if (
+    event.type === "penalty-awarded" ||
+    event.type === "penalty-scored" ||
+    event.type === "penalty-missed"
+  ) {
+    return <Flag className="h-3.5 w-3.5" strokeWidth={2} />;
+  }
+
+  if (event.type === "var") {
+    return <Search className="h-3.5 w-3.5" strokeWidth={2} />;
+  }
+
+  return <ShieldAlert className="h-3.5 w-3.5" strokeWidth={2} />;
 }
 
 function getVisibleVixPoints(
@@ -195,18 +248,21 @@ export function ProbabilityChart({
   connectionState,
   onSelectEvent,
 }: ProbabilityChartProps) {
+  const { resolvedTheme } = useTheme();
+  const normalizedHistory = useMemo(() => normalizeChartHistory(history), [history]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const teamASeriesRef = useRef<ISeriesApi<"Area"> | null>(null);
   const teamBSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const drawSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
-  const historyRef = useRef<ProbabilityPoint[]>(history);
+  const historyRef = useRef<ProbabilityPoint[]>(normalizedHistory);
   const displayedHistoryRef = useRef<ProbabilityPoint[]>([]);
   const animationFrameRef = useRef<number | null>(null);
   const didFitContentRef = useRef(false);
+  const previousThemeRef = useRef<string | undefined>(undefined);
   const [hoveredTimestamp, setHoveredTimestamp] = useState<string | null>(null);
   const [visibleLogicalRange, setVisibleLogicalRange] = useState<LogicalRange | null>(null);
-  const [renderedHistory, setRenderedHistory] = useState(history);
+  const [renderedHistory, setRenderedHistory] = useState(normalizedHistory);
 
   const focusedPoint = useMemo(
     () => findFocusedPoint(renderedHistory, selectedEvent),
@@ -228,43 +284,48 @@ export function ProbabilityChart({
   );
 
   useEffect(() => {
-    historyRef.current = history;
-  }, [history]);
+    historyRef.current = normalizedHistory;
+  }, [normalizedHistory]);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     const container = containerRef.current;
+    const styles = getComputedStyle(document.documentElement);
+    const chartTextColor = styles.getPropertyValue("--terminal-text-muted").trim() || "#9fb0bc";
+    const chartGridColor = styles.getPropertyValue("--terminal-grid-strong").trim() || "rgba(127, 174, 202, 0.08)";
+    const chartBorderColor = styles.getPropertyValue("--terminal-border").trim() || "rgba(127, 174, 202, 0.16)";
+    const chartCrosshairBg = styles.getPropertyValue("--terminal-active-bg").trim() || "#06120d";
     const chart = createChart(container, {
       width: container.clientWidth,
       height: container.clientHeight,
       layout: {
-        textColor: "#9fb0bc",
+        textColor: chartTextColor,
         background: { type: ColorType.Solid, color: "transparent" },
         fontFamily: "var(--font-ibm-plex-mono)",
         attributionLogo: false,
       },
       grid: {
-        vertLines: { color: "rgba(127, 174, 202, 0.08)" },
-        horzLines: { color: "rgba(127, 174, 202, 0.08)" },
+        vertLines: { color: chartGridColor },
+        horzLines: { color: chartGridColor },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
         vertLine: {
           color: "rgba(25, 239, 140, 0.35)",
-          labelBackgroundColor: "#06120d",
+          labelBackgroundColor: chartCrosshairBg,
         },
         horzLine: {
           color: "rgba(25, 239, 140, 0.22)",
-          labelBackgroundColor: "#06120d",
+          labelBackgroundColor: chartCrosshairBg,
         },
       },
       rightPriceScale: {
-        borderColor: "rgba(127, 174, 202, 0.16)",
+        borderColor: chartBorderColor,
         scaleMargins: { top: 0.08, bottom: 0.18 },
       },
       timeScale: {
-        borderColor: "rgba(127, 174, 202, 0.16)",
+        borderColor: chartBorderColor,
         timeVisible: false,
         secondsVisible: false,
       },
@@ -290,9 +351,9 @@ export function ProbabilityChart({
       lastValueVisible: false,
     });
     const drawSeries = chart.addSeries(LineSeries, {
-      color: "rgba(127,174,202,0.45)",
-      lineWidth: 1,
-      lineStyle: 2,
+      color: "#9ed2ef",
+      lineWidth: 2,
+      lineStyle: 0,
       lineType: LineType.WithSteps,
       priceLineVisible: false,
       lastValueVisible: false,
@@ -325,6 +386,7 @@ export function ProbabilityChart({
     });
 
     resizeObserver.observe(container);
+    didFitContentRef.current = false;
     chartRef.current = chart;
     teamASeriesRef.current = teamASeries;
     teamBSeriesRef.current = teamBSeries;
@@ -343,7 +405,7 @@ export function ProbabilityChart({
       teamBSeriesRef.current = null;
       drawSeriesRef.current = null;
     };
-  }, []);
+  }, [resolvedTheme]);
 
   useEffect(() => {
     if (!teamASeriesRef.current || !teamBSeriesRef.current || !drawSeriesRef.current) return;
@@ -352,18 +414,34 @@ export function ProbabilityChart({
       cancelAnimationFrame(animationFrameRef.current);
     }
 
-    const fromHistory = displayedHistoryRef.current.length > 0 ? displayedHistoryRef.current : history;
-    const startedAt = performance.now();
-    const duration = 560;
-    const shouldAnimateLatestPoint = canAnimateLatestPoint(fromHistory, history);
+    const themeChanged = previousThemeRef.current !== resolvedTheme;
+    previousThemeRef.current = resolvedTheme;
 
-    if (!shouldAnimateLatestPoint) {
-      const seriesData = toSeriesData(history);
+    if (themeChanged) {
+      const seriesData = toSeriesData(normalizedHistory);
       teamASeriesRef.current.setData(seriesData.teamA);
       teamBSeriesRef.current.setData(seriesData.teamB);
       drawSeriesRef.current.setData(seriesData.draw);
-      displayedHistoryRef.current = history;
-      setRenderedHistory(history);
+      displayedHistoryRef.current = normalizedHistory;
+      setRenderedHistory(normalizedHistory);
+      chartRef.current?.timeScale().fitContent();
+      didFitContentRef.current = true;
+      return;
+    }
+
+    const fromHistory =
+      displayedHistoryRef.current.length > 0 ? displayedHistoryRef.current : normalizedHistory;
+    const startedAt = performance.now();
+    const duration = 760;
+    const shouldAnimateLatestPoint = canAnimateLatestPoint(fromHistory, normalizedHistory);
+
+    if (!shouldAnimateLatestPoint) {
+      const seriesData = toSeriesData(normalizedHistory);
+      teamASeriesRef.current.setData(seriesData.teamA);
+      teamBSeriesRef.current.setData(seriesData.teamB);
+      drawSeriesRef.current.setData(seriesData.draw);
+      displayedHistoryRef.current = normalizedHistory;
+      setRenderedHistory(normalizedHistory);
 
       if (!didFitContentRef.current) {
         chartRef.current?.timeScale().fitContent();
@@ -373,42 +451,38 @@ export function ProbabilityChart({
       return;
     }
 
-    const targetPoint = history[history.length - 1];
+    const targetPoint = normalizedHistory[normalizedHistory.length - 1];
+    const previousTargetPoint = normalizedHistory[normalizedHistory.length - 2] ?? targetPoint;
     const sourcePoint =
       fromHistory.find((point) => point.timestamp === targetPoint.timestamp) ??
       fromHistory[fromHistory.length - 1] ??
-      targetPoint;
+      previousTargetPoint;
     const startPoint = {
       ...targetPoint,
+      timestamp: previousTargetPoint.timestamp,
+      minuteLabel: previousTargetPoint.minuteLabel,
       teamA: sourcePoint.teamA,
       teamB: sourcePoint.teamB,
       draw: sourcePoint.draw,
     };
-    const stableHistory = [...history.slice(0, -1), startPoint];
-    const stableSeriesData = toSeriesData(stableHistory);
+    const animationBaseHistory = normalizedHistory.slice(0, -1);
 
-    teamASeriesRef.current.setData(stableSeriesData.teamA);
-    teamBSeriesRef.current.setData(stableSeriesData.teamB);
-    drawSeriesRef.current.setData(stableSeriesData.draw);
-    displayedHistoryRef.current = stableHistory;
+    displayedHistoryRef.current = animationBaseHistory;
+    setRenderedHistory(animationBaseHistory);
 
     const renderFrame = (now: number) => {
       const progress = Math.min(1, (now - startedAt) / duration);
-      const animatedPoint = interpolatePoint(startPoint, targetPoint, progress);
-      const animatedHistory = [...history.slice(0, -1), animatedPoint];
+      const animatedPoint = {
+        ...interpolatePoint(startPoint, targetPoint, progress),
+        timestamp: progress >= 1 ? targetPoint.timestamp : interpolatePointTime(startPoint, targetPoint, progress),
+        minuteLabel: targetPoint.minuteLabel,
+      };
+      const animatedHistory = [...animationBaseHistory, animatedPoint];
+      const animatedSeriesData = toSeriesData(animatedHistory);
 
-      teamASeriesRef.current?.update({
-        time: toTime(animatedPoint.timestamp),
-        value: animatedPoint.teamA,
-      });
-      teamBSeriesRef.current?.update({
-        time: toTime(animatedPoint.timestamp),
-        value: animatedPoint.teamB,
-      });
-      drawSeriesRef.current?.update({
-        time: toTime(animatedPoint.timestamp),
-        value: animatedPoint.draw,
-      });
+      teamASeriesRef.current?.setData(animatedSeriesData.teamA);
+      teamBSeriesRef.current?.setData(animatedSeriesData.teamB);
+      drawSeriesRef.current?.setData(animatedSeriesData.draw);
       displayedHistoryRef.current = animatedHistory;
       setRenderedHistory(animatedHistory);
 
@@ -422,29 +496,29 @@ export function ProbabilityChart({
         return;
       }
 
-      displayedHistoryRef.current = history;
-      setRenderedHistory(history);
+      displayedHistoryRef.current = normalizedHistory;
+      setRenderedHistory(normalizedHistory);
       animationFrameRef.current = null;
     };
 
     animationFrameRef.current = requestAnimationFrame(renderFrame);
-  }, [history]);
+  }, [normalizedHistory, resolvedTheme]);
 
   return (
     <motion.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="flex h-[calc(100dvh-19rem)] min-h-[26rem] w-full flex-col border border-[var(--terminal-border)] bg-[#080d12] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] sm:h-[calc(100dvh-20rem)] sm:min-h-[30rem] xl:h-full xl:min-h-0"
+      className="flex h-[calc(100dvh-19rem)] min-h-[26rem] w-full flex-col border border-[var(--terminal-border)] bg-[var(--terminal-panel)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] sm:h-[calc(100dvh-20rem)] sm:min-h-[30rem] xl:h-full xl:min-h-0"
     >
-      <div className="grid gap-0 border-b border-[var(--terminal-border)] bg-[#0a1117] md:grid-cols-[1fr_auto]">
+      <div className="grid gap-0 border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] md:grid-cols-[1fr_auto]">
         <div className="flex overflow-x-auto border-b border-[var(--terminal-border)] [scrollbar-width:none] [-ms-overflow-style:none] md:grid md:grid-cols-4 md:overflow-visible md:border-b-0 [&::-webkit-scrollbar]:hidden">
           <div className="min-w-[7rem] border-r border-[var(--terminal-border)] px-2 py-1.5 sm:min-w-[8.5rem] sm:px-3 sm:py-2 md:min-w-0">
-            <p className="font-mono text-[0.56rem] font-semibold uppercase text-[#6f7b84] sm:text-[0.64rem]">Focus</p>
-            <p className="font-display text-[1.05rem] font-bold uppercase text-white sm:text-[1.45rem]">
+            <p className="font-mono text-[0.56rem] font-semibold uppercase text-[var(--terminal-text-muted)] sm:text-[0.64rem]">Focus</p>
+            <p className="font-display text-[1.05rem] font-bold uppercase text-[var(--terminal-text-strong)] sm:text-[1.45rem]">
               {inspectedPoint?.minuteLabel ?? "--"}
             </p>
-            <p className="font-mono text-[0.58rem] uppercase text-[#8795a0] sm:text-[0.68rem]">
+            <p className="font-mono text-[0.58rem] uppercase text-[var(--terminal-text-muted)] sm:text-[0.68rem]">
               {inspectedPoint ? formatTimestamp(inspectedPoint.timestamp) : "Waiting"}
             </p>
           </div>
@@ -452,7 +526,7 @@ export function ProbabilityChart({
             <p className="font-mono text-[0.56rem] font-semibold uppercase text-[var(--terminal-green)] sm:text-[0.64rem]">
               {teamACode} Equity
             </p>
-            <p className="font-display text-[1.05rem] font-bold uppercase text-white sm:text-[1.45rem]">
+            <p className="font-display text-[1.05rem] font-bold uppercase text-[var(--terminal-text-strong)] sm:text-[1.45rem]">
               {inspectedPoint ? `${inspectedPoint.teamA.toFixed(1)}%` : "--"}
             </p>
             <p className="font-mono text-[0.58rem] uppercase text-[var(--terminal-green)] sm:text-[0.68rem]">
@@ -464,7 +538,7 @@ export function ProbabilityChart({
             <p className="font-mono text-[0.56rem] font-semibold uppercase text-[#ff4b6e] sm:text-[0.64rem]">
               {teamBCode} Equity
             </p>
-            <p className="font-display text-[1.05rem] font-bold uppercase text-white sm:text-[1.45rem]">
+            <p className="font-display text-[1.05rem] font-bold uppercase text-[var(--terminal-text-strong)] sm:text-[1.45rem]">
               {inspectedPoint ? `${inspectedPoint.teamB.toFixed(1)}%` : "--"}
             </p>
             <p className="font-mono text-[0.58rem] uppercase text-[#ff8aa2] sm:text-[0.68rem]">
@@ -474,10 +548,10 @@ export function ProbabilityChart({
           </div>
           <div className="min-w-[7rem] px-2 py-1.5 sm:min-w-[8.5rem] sm:px-3 sm:py-2 md:min-w-0">
             <p className="font-mono text-[0.56rem] font-semibold uppercase text-[#7faeca] sm:text-[0.64rem]">Draw / Parity</p>
-            <p className="font-display text-[1.05rem] font-bold uppercase text-white sm:text-[1.45rem]">
+            <p className="font-display text-[1.05rem] font-bold uppercase text-[var(--terminal-text-strong)] sm:text-[1.45rem]">
               {inspectedPoint ? `${inspectedPoint.draw.toFixed(1)}%` : "--"}
             </p>
-            <p className="font-mono text-[0.58rem] uppercase text-[#9ed2ef] sm:text-[0.68rem]">Market reserve</p>
+            <p className="font-mono text-[0.58rem] uppercase text-[var(--terminal-blue)] sm:text-[0.68rem]">Market reserve</p>
           </div>
         </div>
 
@@ -488,25 +562,24 @@ export function ProbabilityChart({
         </div>
       </div>
 
-      <div className="relative min-h-0 flex-1 overflow-hidden bg-[linear-gradient(90deg,rgba(127,174,202,0.07)_1px,transparent_1px),linear-gradient(rgba(127,174,202,0.07)_1px,transparent_1px)] bg-[size:32px_32px]">
-        <div ref={containerRef} className="h-[calc(100%-5.5rem)] min-h-[17rem] w-full sm:h-[calc(100%-8rem)] sm:min-h-[22rem]" />
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-[linear-gradient(90deg,var(--terminal-grid-strong)_1px,transparent_1px),linear-gradient(var(--terminal-grid-strong)_1px,transparent_1px)] bg-[size:32px_32px]">
+        <div ref={containerRef} className="h-[calc(100%-8.5rem)] min-h-[14rem] w-full sm:h-[calc(100%-11rem)] sm:min-h-[19rem]" />
 
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[calc(100%-5.5rem)] min-h-[17rem] items-stretch justify-between px-[5.5%] sm:h-[calc(100%-8rem)] sm:min-h-[22rem]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[calc(100%-8.5rem)] min-h-[14rem] items-stretch justify-between px-[5.5%] sm:h-[calc(100%-11rem)] sm:min-h-[19rem]">
           {["23'", "36'", "HT", "58'", "90'", "108'", "118'", "PEN"].map((label) => (
-            <div key={label} className="relative h-full border-l border-dashed border-[#28404a]/70">
-              <span className="absolute -bottom-5 -translate-x-1/2 font-mono text-[0.62rem] font-semibold uppercase text-[#78858f]">
+            <div key={label} className="relative h-full border-l border-dashed border-[var(--terminal-border)]">
+              <span className="absolute -bottom-5 -translate-x-1/2 font-mono text-[0.62rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
                 {label}
               </span>
             </div>
           ))}
         </div>
 
-        {events.map((event, index) => {
-          const point = getEventPoint(renderedHistory, event);
+        <div className="absolute inset-x-0 bottom-[5.5rem] h-12 border-t border-[var(--terminal-border)] bg-[var(--terminal-panel)]/95 sm:bottom-[8rem] sm:h-12">
+          <div className="relative h-full w-full px-4 sm:px-5">
+            {events.map((event, index) => {
           const pointIndex = getEventPointIndex(renderedHistory, event);
           const left = logicalIndexToPercent(pointIndex, visibleLogicalRange, renderedHistory.length);
-          const topValue = event.side === "teamB" ? point.teamB : point.teamA;
-          const top = Math.min(78, Math.max(10, 100 - topValue));
 
           return (
             <motion.button
@@ -517,23 +590,27 @@ export function ProbabilityChart({
               animate={{
                 opacity: 1,
                 y: 0,
-                scale: selectedEvent?.eventId === event.eventId ? 1.04 : 1,
+                scale: selectedEvent?.eventId === event.eventId ? 1.08 : 1,
               }}
               transition={{ duration: 0.18, delay: index * 0.03 }}
-              whileHover={{ scale: 1.04 }}
+              whileHover={{ scale: 1.08 }}
               className={cn(
-                "absolute z-20 max-w-[7.5rem] -translate-x-1/2 border px-1.5 py-1 text-left font-mono text-[0.52rem] font-semibold uppercase leading-3 transition-colors hover:z-30 sm:max-w-[11rem] sm:px-2 sm:text-[0.62rem] sm:leading-4",
-                eventColor(event),
-                selectedEvent?.eventId === event.eventId && "ring-1 ring-white/80",
+                "absolute top-1/2 z-20 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border transition-colors hover:z-30 sm:h-8 sm:w-8",
+                eventMarkerTone(event),
+                selectedEvent?.eventId === event.eventId && "ring-2 ring-white/80",
               )}
-              style={{ left: `${left}%`, top: `${top}%` }}
+              style={{ left: `${left}%` }}
+              aria-label={`${event.minuteLabel} ${event.label}`}
+              title={`${event.minuteLabel} ${event.label}`}
             >
-              {eventShortLabel(event)}
+              <EventMarkerIcon event={event} />
             </motion.button>
           );
-        })}
+            })}
+          </div>
+        </div>
 
-        <div className="absolute inset-x-0 bottom-0 h-[5.5rem] border-t border-[var(--terminal-border)] bg-[#071018] px-3 py-2 sm:h-[8rem] sm:px-4 sm:py-3">
+        <div className="absolute inset-x-0 bottom-0 h-[5.5rem] border-t border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-3 py-2 sm:h-[8rem] sm:px-4 sm:py-3">
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full overflow-visible">
             <defs>
               <linearGradient id="vix-fill" x1="0" x2="0" y1="0" y2="1">
@@ -570,7 +647,7 @@ export function ProbabilityChart({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.16 }}
-              className="pointer-events-none absolute left-4 top-4 z-30 border border-[#ffd700] bg-[#211b08] px-3 py-2 font-mono text-[0.68rem] font-semibold uppercase text-[#ffe36d]"
+              className="pointer-events-none absolute left-4 top-4 z-30 border border-[var(--signal)] bg-yellow-500/10 px-3 py-2 font-mono text-[0.68rem] font-semibold uppercase text-[#a37200]"
             >
               {connectionState === "connecting"
                 ? "Connecting feed"
