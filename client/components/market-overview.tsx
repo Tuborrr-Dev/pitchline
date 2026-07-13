@@ -49,32 +49,64 @@ function isUpcomingRow(row: MarketOverviewRow) {
 import { AnimatedPercentage } from "./animated-percentage";
 
 function OutcomeBar({ home, draw, away }: { home: number; draw: number; away: number }) {
+  // Treat anything below 0.1 as effectively zero (no data / no odds)
+  const hasHome = home >= 0.1;
+  const hasDraw = draw >= 0.1;
+  const hasAway = away >= 0.1;
+  const hasAnyOdds = hasHome || hasDraw || hasAway;
+
+  // If there are no odds at all, show a simple "no data" bar
+  if (!hasAnyOdds) {
+    return (
+      <div className="flex h-9 w-full items-center justify-center border border-[var(--terminal-border)] bg-[var(--terminal-surface)] p-0.5 shadow-xs">
+        <span className="font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
+          Market pending
+        </span>
+      </div>
+    );
+  }
+
+  // Ensure every visible segment has enough room for its label
+  const minSegment = "3.5rem";
+
   return (
-    <div className="flex h-7 w-full overflow-hidden border border-[var(--terminal-border)] bg-[var(--terminal-surface)]">
-      <motion.div
-        className="flex items-center justify-center bg-[var(--prob-home)] font-mono text-[0.72rem] font-semibold text-[#061009]"
-        initial={false}
-        animate={{ width: `${home}%` }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <AnimatedPercentage value={home} showDeltaBadge />
-      </motion.div>
-      <motion.div
-        className="flex items-center justify-center bg-[var(--prob-draw)] font-mono text-[0.72rem] font-semibold text-[#071018]"
-        initial={false}
-        animate={{ width: `${draw}%` }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <AnimatedPercentage value={draw} showDeltaBadge />
-      </motion.div>
-      <motion.div
-        className="flex items-center justify-center bg-[var(--prob-away)] font-mono text-[0.72rem] font-semibold text-[#15090d]"
-        initial={false}
-        animate={{ width: `${away}%` }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <AnimatedPercentage value={away} showDeltaBadge />
-      </motion.div>
+    <div
+      className="flex h-9 w-full border border-[var(--terminal-border)] bg-[var(--terminal-surface)] p-0.5 shadow-xs"
+      title={`Home: ${home.toFixed(1)}% | Draw: ${draw.toFixed(1)}% | Away: ${away.toFixed(1)}%`}
+    >
+      {hasHome ? (
+        <motion.div
+          className="flex items-center justify-center bg-[var(--prob-home)] font-mono text-[0.78rem] font-bold text-[#061009] whitespace-nowrap"
+          initial={false}
+          animate={{ flexGrow: home, flexShrink: 1, flexBasis: 0 }}
+          style={{ minWidth: minSegment }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <AnimatedPercentage value={home} showDeltaBadge />
+        </motion.div>
+      ) : null}
+      {hasDraw ? (
+        <motion.div
+          className="flex items-center justify-center bg-[var(--prob-draw)] font-mono text-[0.78rem] font-bold text-[#071018] whitespace-nowrap"
+          initial={false}
+          animate={{ flexGrow: draw, flexShrink: 1, flexBasis: 0 }}
+          style={{ minWidth: minSegment }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <AnimatedPercentage value={draw} showDeltaBadge />
+        </motion.div>
+      ) : null}
+      {hasAway ? (
+        <motion.div
+          className="flex items-center justify-center bg-[var(--prob-away)] font-mono text-[0.78rem] font-bold text-[#15090d] whitespace-nowrap"
+          initial={false}
+          animate={{ flexGrow: away, flexShrink: 1, flexBasis: 0 }}
+          style={{ minWidth: minSegment }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <AnimatedPercentage value={away} showDeltaBadge />
+        </motion.div>
+      ) : null}
     </div>
   );
 }
