@@ -62,17 +62,29 @@ export async function fetchInitialLiveMatchState(fixtureId: string): Promise<Liv
     : baseFixture;
 
   const initialHistory = historyToProbabilityPoints(history, resolvedFixture, currentProbabilities);
+  const latestHistoryPoint = initialHistory[initialHistory.length - 1];
+  const displayProbabilities = latestHistoryPoint
+    ? {
+        teamA: latestHistoryPoint.teamA,
+        draw: latestHistoryPoint.draw,
+        teamB: latestHistoryPoint.teamB,
+      }
+    : currentProbabilities;
+  const displayFixture = {
+    ...resolvedFixture,
+    leadProbability: Math.max(displayProbabilities.teamA, displayProbabilities.teamB),
+  };
   const lastTimestamp =
     initialHistory[initialHistory.length - 1]?.timestamp ?? new Date().toISOString();
   const initialAnnotations = await fetchAnnotationHistory(fixtureId);
   const initialEvents =
     initialAnnotations.length > 0
-      ? annotationsToMatchEvents(initialAnnotations, resolvedFixture)
-      : createInitialEvents(resolvedFixture);
+      ? annotationsToMatchEvents(initialAnnotations, displayFixture)
+      : createInitialEvents(displayFixture);
 
   return {
-    fixture: resolvedFixture,
-    currentProbabilities,
+    fixture: displayFixture,
+    currentProbabilities: displayProbabilities,
     history: initialHistory,
     events: initialEvents,
     annotations: initialAnnotations,

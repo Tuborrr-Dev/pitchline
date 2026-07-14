@@ -211,16 +211,31 @@ function isUsableHistoryTimestamp(timestamp: string) {
 }
 
 function normalizeProbabilityHistory(history: ProbabilityPoint[]) {
-  const dedupedByTimestamp = new Map<string, ProbabilityPoint>();
+  const seenTimestamps = new Map<string, number>();
+  let previousTime = 0;
 
-  history.forEach((point) => {
-    if (!isUsableHistoryTimestamp(point.timestamp)) return;
-    dedupedByTimestamp.set(point.timestamp, point);
+  return history.map((point, index) => {
+    const timestampCount = seenTimestamps.get(point.timestamp) ?? 0;
+    seenTimestamps.set(point.timestamp, timestampCount + 1);
+    const parsedTime = new Date(point.timestamp).getTime();
+
+    if (
+      timestampCount === 0 &&
+      isUsableHistoryTimestamp(point.timestamp) &&
+      parsedTime > previousTime
+    ) {
+      previousTime = parsedTime;
+      return point;
+    }
+
+    const nextTime = previousTime > 0 ? previousTime + 1000 : Date.now() + index * 1000;
+    previousTime = nextTime;
+
+    return {
+      ...point,
+      timestamp: new Date(nextTime).toISOString(),
+    };
   });
-
-  return [...dedupedByTimestamp.values()].sort(
-    (left, right) => new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime(),
-  );
 }
 
 export function historyToProbabilityPoints(
@@ -228,7 +243,7 @@ export function historyToProbabilityPoints(
   fixture: Fixture,
   fallbackProbabilities: LiveMatchState["currentProbabilities"],
 ) {
-  const oddsHistory = history?.oddsHistory?.filter((point) => isUsableHistoryTimestamp(point.timestamp)) ?? [];
+  const oddsHistory = history?.oddsHistory ?? [];
 
   if (oddsHistory.length === 0) {
     return seedHistoryFromCurrentState(
@@ -239,13 +254,16 @@ export function historyToProbabilityPoints(
   }
 
   return normalizeProbabilityHistory(
-    oddsHistory.map((point) => {
-      const elapsedMinutes = Math.max(
-        0,
-        Math.round(
-          (new Date(point.timestamp).getTime() - new Date(fixture.kickoffUtc).getTime()) / 60_000,
-        ),
-      );
+    oddsHistory.map((point, index) => {
+      const hasUsableTimestamp = isUsableHistoryTimestamp(point.timestamp);
+      const elapsedMinutes = hasUsableTimestamp
+        ? Math.max(
+            0,
+            Math.round(
+              (new Date(point.timestamp).getTime() - new Date(fixture.kickoffUtc).getTime()) / 60_000,
+            ),
+          )
+        : index;
 
       return {
         timestamp: point.timestamp,

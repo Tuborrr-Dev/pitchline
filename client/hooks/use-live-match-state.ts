@@ -71,16 +71,23 @@ function pushEvent(events: MatchEvent[], event: MatchEvent) {
 }
 
 function normalizeHistory(history: LiveMatchState["history"], maxPoints = 120) {
-  const dedupedByTimestamp = new Map<string, LiveMatchState["history"][number]>();
+  const normalized: LiveMatchState["history"] = [];
+  const indexesByTimestamp = new Map<string, number>();
 
   history.forEach((point) => {
     if (Number.isNaN(new Date(point.timestamp).getTime())) return;
-    dedupedByTimestamp.set(point.timestamp, point);
+
+    const existingIndex = indexesByTimestamp.get(point.timestamp);
+    if (existingIndex !== undefined) {
+      normalized[existingIndex] = point;
+      return;
+    }
+
+    indexesByTimestamp.set(point.timestamp, normalized.length);
+    normalized.push(point);
   });
 
-  return [...dedupedByTimestamp.values()]
-    .sort((left, right) => new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime())
-    .slice(-maxPoints);
+  return normalized.slice(-maxPoints);
 }
 
 function isExpectedConnectionShutdown(error: unknown) {
