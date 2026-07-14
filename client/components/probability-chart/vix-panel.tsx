@@ -44,7 +44,7 @@ export function VixPanel({
           {analytics?.peakSwing ? (
             <span className="text-[#0f9ac3]">
               Peak Swing: {analytics.peakSwing.delta > 0 ? "+" : ""}
-              {analytics.peakSwing.delta}% at {analytics.peakSwing.minute}' |
+              {analytics.peakSwing.delta}% at {analytics.peakSwing.minute}&apos; |
             </span>
           ) : null}
           <span>VIX Min {analytics?.volatility ? `(sigma ${analytics.volatility.stdDev})` : ""}</span>

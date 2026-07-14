@@ -103,7 +103,7 @@ export function formatMinuteLabel(
   return cleanMinute.includes("'") ? cleanMinute : `${cleanMinute}'`;
 }
 
-function buildFixtureMeta(status: MatchStatus, kickoffUtc: string, phase: string | null | undefined) {
+function buildFixtureMeta(status: MatchStatus, kickoffUtc: string) {
   if (status === "upcoming") {
     return {
       competition: `Kickoff ${formatUtcKickoff(kickoffUtc)}`,
@@ -128,7 +128,7 @@ export function createFixtureFromDto(dto: BackendFixtureDto | BackendMatchDto) {
   const status = toMatchStatus(dto.phase, dto.kickOff);
   const teamACode = deriveTeamCode(dto.homeName);
   const teamBCode = deriveTeamCode(dto.awayName);
-  const meta = buildFixtureMeta(status, dto.kickOff, dto.phase);
+  const meta = buildFixtureMeta(status, dto.kickOff);
 
   return {
     fixtureId: dto.fixtureId,

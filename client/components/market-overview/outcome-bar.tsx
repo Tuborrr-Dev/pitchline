@@ -10,36 +10,43 @@ type Trend = "up" | "down" | "flat";
 interface SegmentProps {
   label: string;
   value: number;
-  prevValue?: number;
   bgClass: string;
   textClass: string;
 }
 
-function OutcomeSegment({ label, value, prevValue, bgClass, textClass }: SegmentProps) {
+function OutcomeSegment({ label, value, bgClass, textClass }: SegmentProps) {
+  const previousValueRef = useRef<number | undefined>(undefined);
   const [trend, setTrend] = useState<Trend>("flat");
   const [delta, setDelta] = useState<number>(0);
   const [showIndicator, setShowIndicator] = useState(false);
 
   useEffect(() => {
+    const prevValue = previousValueRef.current;
+    previousValueRef.current = value;
+
     if (prevValue === undefined || prevValue === value) return;
 
     const diff = value - prevValue;
     if (Math.abs(diff) < 0.05) return;
 
-    setDelta(diff);
-    setTrend(diff > 0 ? "up" : "down");
-    setShowIndicator(true);
+    const showTimer = setTimeout(() => {
+      setDelta(diff);
+      setTrend(diff > 0 ? "up" : "down");
+      setShowIndicator(true);
+    }, 0);
 
-    const timer = setTimeout(() => {
+    const hideTimer = setTimeout(() => {
       setShowIndicator(false);
       setTrend("flat");
     }, 2800);
 
-    return () => clearTimeout(timer);
-  }, [value, prevValue]);
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
+  }, [value]);
 
   const formattedDelta = delta !== 0 ? `${delta > 0 ? "+" : ""}${delta.toFixed(1)}%` : "";
-  const isNarrow = value < 12;
 
   return (
     <motion.div
@@ -69,7 +76,7 @@ function OutcomeSegment({ label, value, prevValue, bgClass, textClass }: Segment
               transition={{ duration: 0.3, ease: "easeOut" }}
               className="flex items-center opacity-80"
             >
-              <span className="text-[0.75rem]">{trend === "up" ? "↑" : "↓"}</span>
+              <span className="text-[0.75rem]">{trend === "up" ? "+" : "-"}</span>
               <span className="text-[0.65rem]">{formattedDelta}</span>
             </motion.span>
           )}
@@ -96,14 +103,6 @@ function MarketPending() {
 }
 
 export function OutcomeBar({ home, draw, away }: { home: number; draw: number; away: number }) {
-  const prevRef = useRef<{ home: number; draw: number; away: number } | undefined>(undefined);
-
-  useEffect(() => {
-    prevRef.current = { home, draw, away };
-  }, [home, draw, away]);
-
-  const prev = prevRef.current;
-
   // No odds available — show pending state
   const hasOdds = home > 0 || draw > 0 || away > 0;
   if (!hasOdds) {
@@ -115,21 +114,18 @@ export function OutcomeBar({ home, draw, away }: { home: number; draw: number; a
       <OutcomeSegment
         label="Home"
         value={home}
-        prevValue={prev?.home}
         bgClass="bg-[var(--prob-home)]"
         textClass="text-[#061009]"
       />
       <OutcomeSegment
         label="Draw"
         value={draw}
-        prevValue={prev?.draw}
         bgClass="bg-[var(--prob-draw)]"
         textClass="text-[#071018]"
       />
       <OutcomeSegment
         label="Away"
         value={away}
-        prevValue={prev?.away}
         bgClass="bg-[var(--prob-away)]"
         textClass="text-[#15090d]"
       />
