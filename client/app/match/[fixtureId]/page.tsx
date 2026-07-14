@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 
 import { LiveMatchTerminal } from "@/components/live-match-terminal";
 import { getLiveMatchState } from "@/lib/mock-data";
-import { fetchInitialLiveMatchState } from "@/services/match-service";
+import { annotationsToMatchEvents } from "@/services/annotation-mappers";
+import { fetchAnnotationHistory, fetchInitialLiveMatchState } from "@/services/match-service";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,17 @@ export default async function MatchPage({
   const { fixtureId } = await params;
   const realState = await fetchInitialLiveMatchState(fixtureId);
   const mockState = getLiveMatchState(fixtureId);
-  const state = realState ?? mockState;
+  const mockAnnotationHistory =
+    !realState && mockState ? await fetchAnnotationHistory(fixtureId) : [];
+  const hydratedMockState =
+    mockState && mockAnnotationHistory.length > 0
+      ? {
+          ...mockState,
+          annotations: mockAnnotationHistory,
+          events: annotationsToMatchEvents(mockAnnotationHistory, mockState.fixture),
+        }
+      : mockState;
+  const state = realState ?? hydratedMockState;
 
   if (!state) {
     notFound();

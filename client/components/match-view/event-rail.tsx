@@ -1,9 +1,10 @@
 "use client";
 
-import { EyeOff } from "lucide-react";
+import { EyeOff, Inbox } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { MatchBackButton } from "@/components/match-back-button";
+import { TerminalState } from "@/components/terminal-state";
 import { Button } from "@/components/ui/button";
 import type { ConnectionState, LiveMatchState, MatchEvent } from "@/lib/types";
 
@@ -69,15 +70,26 @@ export function DesktopEventRail({
 
           <motion.div variants={marketDepthContainerVariants} className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <AnimatePresence mode="popLayout" initial={false}>
-              {events.map((event) => (
-                <EventButton
-                  key={event.eventId}
-                  event={event}
-                  selected={selectedEventId === event.eventId}
-                  onSelect={onSelectEvent}
-                  setEventRef={setEventRef}
-                />
-              ))}
+              {events.length > 0 ? (
+                events.map((event) => (
+                  <EventButton
+                    key={event.eventId}
+                    event={event}
+                    selected={selectedEventId === event.eventId}
+                    onSelect={onSelectEvent}
+                    setEventRef={setEventRef}
+                  />
+                ))
+              ) : (
+                <motion.div key="empty-events" variants={marketDepthItemVariants} className="p-3">
+                  <TerminalState
+                    icon={Inbox}
+                    title="No market events"
+                    description="Event depth will populate when the live feed emits annotations or match-state calls."
+                    className="min-h-[12rem]"
+                  />
+                </motion.div>
+              )}
             </AnimatePresence>
           </motion.div>
 
@@ -143,16 +155,27 @@ export function MobileEventRail({
       <div className="overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <motion.div variants={marketDepthContainerVariants} className="flex min-w-max">
           <AnimatePresence mode="popLayout" initial={false}>
-            {events.map((event) => (
-              <EventButton
-                key={event.eventId}
-                event={event}
-                selected={selectedEventId === event.eventId}
-                onSelect={onSelectEvent}
-                orientation="horizontal"
-                setEventRef={setEventRef}
-              />
-            ))}
+            {events.length > 0 ? (
+              events.map((event) => (
+                <EventButton
+                  key={event.eventId}
+                  event={event}
+                  selected={selectedEventId === event.eventId}
+                  onSelect={onSelectEvent}
+                  orientation="horizontal"
+                  setEventRef={setEventRef}
+                />
+              ))
+            ) : (
+              <motion.div key="empty-events" variants={marketDepthHorizontalItemVariants} className="w-screen p-3">
+                <TerminalState
+                  icon={Inbox}
+                  title="No market events"
+                  description="Event depth will populate when the live feed emits annotations or match-state calls."
+                  className="min-h-[8rem]"
+                />
+              </motion.div>
+            )}
           </AnimatePresence>
         </motion.div>
       </div>

@@ -1,7 +1,9 @@
 "use client";
 
-import { AlertTriangle, Settings } from "lucide-react";
+import { AlertTriangle, SearchX, Settings } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+
+import { TerminalState } from "@/components/terminal-state";
 
 import { panelMotion } from "./constants";
 import { MarketGrid } from "./market-grid";
@@ -13,12 +15,14 @@ export function MarketPanel({
   effectiveViewMode,
   isError,
   isInitialLoading,
+  hasSearchQuery,
   rows,
 }: {
   activeTab: MarketTab;
   effectiveViewMode: ViewMode;
   isError: boolean;
   isInitialLoading: boolean;
+  hasSearchQuery: boolean;
   rows: MarketOverviewRow[];
 }) {
   return (
@@ -31,6 +35,8 @@ export function MarketPanel({
             <ErrorPanel />
           ) : isInitialLoading ? (
             <LoadingRows />
+          ) : rows.length === 0 ? (
+            <EmptyPanel activeTab={activeTab} hasSearchQuery={hasSearchQuery} />
           ) : effectiveViewMode === "grid" ? (
             <motion.div key="grid" {...panelMotion}>
               <MarketGrid rows={rows} />
@@ -47,21 +53,27 @@ export function MarketPanel({
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
-          {!isInitialLoading && !isError && rows.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.16 }}
-              className="border-t border-[var(--terminal-line)] px-4 py-10 text-center font-mono text-[0.76rem] uppercase text-[var(--terminal-text-muted)]"
-            >
-              No markets match your search.
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
       </div>
     </section>
+  );
+}
+
+function EmptyPanel({
+  activeTab,
+  hasSearchQuery,
+}: {
+  activeTab: MarketTab;
+  hasSearchQuery: boolean;
+}) {
+  return (
+    <motion.div key="empty" {...panelMotion} className="border-t border-[var(--terminal-line)] px-4 py-10">
+      <TerminalState
+        icon={SearchX}
+        title={hasSearchQuery ? "No markets match search" : activeTab === "history" ? "No settled markets" : "No active markets"}
+        description={hasSearchQuery ? "Adjust the search term or clear the filter to return to the full market list." : activeTab === "history" ? "Completed fixtures will appear here after markets settle." : "Live fixtures will appear here as soon as the market feed returns active rows."}
+        className="mx-auto min-h-[12rem] max-w-2xl border-0 bg-transparent"
+      />
+    </motion.div>
   );
 }
 
@@ -92,11 +104,13 @@ function ErrorPanel() {
       {...panelMotion}
       className="flex min-h-[18rem] flex-col items-center justify-center gap-3 border-t border-[var(--terminal-line)] px-4 py-10 text-center font-mono uppercase"
     >
-      <AlertTriangle className="h-6 w-6 text-[var(--danger)]" aria-hidden="true" />
-      <p className="text-[0.84rem] font-semibold text-[var(--terminal-text-strong)]">Market feed unavailable</p>
-      <p className="max-w-md text-[0.72rem] text-[var(--terminal-text-muted)]">
-        The market endpoint failed validation or could not be reached.
-      </p>
+      <TerminalState
+        icon={AlertTriangle}
+        title="Market feed unavailable"
+        description="The market endpoint failed validation or could not be reached. Existing rows will return when the feed recovers."
+        tone="danger"
+        className="min-h-[16rem] border-0 bg-transparent"
+      />
     </motion.div>
   );
 }
