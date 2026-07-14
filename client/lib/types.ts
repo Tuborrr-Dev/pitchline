@@ -88,7 +88,7 @@ export interface Annotation {
   action: string;
   team?: string | null;
   player?: string | null;
-  minute?: number;
+  minute?: number | null;
   phase?: string;
   home_score?: number | null;
   away_score?: number | null;

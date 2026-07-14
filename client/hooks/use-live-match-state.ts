@@ -9,6 +9,7 @@ import {
   annotationEventId,
   annotationToMatchEvent,
   annotationsToMatchEvents,
+  isMarketDepthAnnotation,
 } from "@/services/annotation-mappers";
 import {
   fetchAnnotationHistory,
@@ -104,6 +105,55 @@ function isSameAnnotation(
   );
 }
 
+function isSameAnnotationRecord(
+  annotation: Pick<
+    Annotation,
+    "fixture_id" | "id" | "minute" | "source_action" | "source_id" | "source_seconds" | "text" | "type"
+  >,
+  payload: Pick<
+    Annotation,
+    "fixture_id" | "id" | "minute" | "source_action" | "source_id" | "source_seconds" | "text" | "type"
+  >,
+) {
+  if (payload.id !== undefined && annotation.id !== undefined) {
+    return annotation.id === payload.id && annotation.type === payload.type;
+  }
+
+  if (annotation.type !== payload.type) {
+    return false;
+  }
+
+  if (payload.type === "commentary") {
+    return (
+      isSameAnnotation(annotation, payload) &&
+      annotation.minute === payload.minute &&
+      annotation.source_seconds === payload.source_seconds &&
+      annotation.text === payload.text
+    );
+  }
+
+  return isSameAnnotation(annotation, payload);
+}
+
+function upsertAnnotationRecord(annotations: Annotation[], payload: Annotation) {
+  let didUpdate = false;
+  const nextAnnotations = annotations.map((annotation) => {
+    if (!isSameAnnotationRecord(annotation, payload)) return annotation;
+    didUpdate = true;
+    return payload;
+  });
+
+  return didUpdate ? nextAnnotations : [...annotations, payload];
+}
+
+function mergeAnnotationHistory(currentAnnotations: Annotation[], refreshedHistory: Annotation[]) {
+  if (refreshedHistory.length === 0) {
+    return currentAnnotations;
+  }
+
+  return refreshedHistory.reduce(upsertAnnotationRecord, currentAnnotations);
+}
+
 function upsertAnnotationEvent(events: MatchEvent[], payload: Annotation, fixture: LiveMatchState["fixture"]) {
   const nextEvent = annotationToMatchEvent(payload, fixture);
   const nextEvents = events.filter((event) => event.eventId !== nextEvent.eventId);
@@ -113,9 +163,7 @@ function upsertAnnotationEvent(events: MatchEvent[], payload: Annotation, fixtur
 function appendAnnotation(current: LiveMatchState, payload: Annotation) {
   if (
     current.annotations.some(
-      (annotation) =>
-        (payload.id !== undefined && annotation.id === payload.id) ||
-        isSameAnnotation(annotation, payload),
+      (annotation) => isSameAnnotationRecord(annotation, payload),
     )
   ) {
     return current;
@@ -124,7 +172,9 @@ function appendAnnotation(current: LiveMatchState, payload: Annotation) {
   return {
     ...current,
     annotations: [...current.annotations, payload],
-    events: upsertAnnotationEvent(current.events, payload, current.fixture),
+    events: isMarketDepthAnnotation(payload)
+      ? upsertAnnotationEvent(current.events, payload, current.fixture)
+      : current.events,
   };
 }
 
@@ -233,14 +283,18 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
       try {
         const history = await fetchAnnotationHistory(fixtureId);
         if (isDisposed) return;
-        setState((current) => ({
-          ...current,
-          annotations: history,
-          events:
-            history.length > 0
-              ? annotationsToMatchEvents(history, current.fixture)
-              : current.events,
-        }));
+        setState((current) => {
+          const annotations = mergeAnnotationHistory(current.annotations, history);
+
+          return {
+            ...current,
+            annotations,
+            events:
+              annotations.length > 0
+                ? annotationsToMatchEvents(annotations, current.fixture)
+                : current.events,
+          };
+        });
 
         await startAnnotationStream(fixtureId);
         if (isDisposed) return;
@@ -277,10 +331,10 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
             const payload = JSON.parse(event.data) as Annotation;
             setState((current) => ({
               ...current,
-              annotations: current.annotations.map((annotation) =>
-                isSameAnnotation(annotation, payload) ? payload : annotation,
-              ),
-              events: upsertAnnotationEvent(current.events, payload, current.fixture),
+              annotations: upsertAnnotationRecord(current.annotations, payload),
+              events: isMarketDepthAnnotation(payload)
+                ? upsertAnnotationEvent(current.events, payload, current.fixture)
+                : current.events.filter((event) => event.eventId !== annotationEventId(payload)),
             }));
           } catch (error) {
             console.error("Failed to parse update SSE payload", error);
