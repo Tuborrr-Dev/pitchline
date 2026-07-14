@@ -124,13 +124,19 @@ export function useMarketOverviewStream(initialRows: MarketOverviewRow[], enable
       .start()
       .then(async () => {
         if (isDisposed) return;
-        await connection.invoke("JoinLobby");
+        try {
+          await connection.invoke("JoinLobby");
+        } catch (err) {
+          if (!isDisposed) {
+            console.debug("[SignalR] JoinLobby invoke skipped or handled:", err);
+          }
+        }
       })
       .catch((error) => {
         if (isDisposed) return;
         const msg = String(error).toLowerCase();
         if (msg.includes("stopped") || msg.includes("negotiation")) return;
-        console.warn("[SignalR Lobby Connection Failed]", error);
+        console.warn("[SignalR Lobby Connection Error]", error);
       });
 
     return () => {

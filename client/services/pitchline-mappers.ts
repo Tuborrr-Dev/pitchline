@@ -56,10 +56,9 @@ function formatUtcKickoff(kickoffUtc: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
-    hour: "2-digit",
+    hour: "numeric",
     minute: "2-digit",
-    timeZone: "UTC",
-    hour12: false,
+    hour12: true,
   }).format(new Date(kickoffUtc));
 }
 
@@ -93,7 +92,7 @@ export function formatMinuteLabel(
   kickoffUtc: string,
 ) {
   if (status === "upcoming") {
-    return `KO ${formatUtcKickoff(kickoffUtc)} UTC`;
+    return `KO ${formatUtcKickoff(kickoffUtc)}`;
   }
 
   const cleanMinute = (minute ?? "").trim();
@@ -107,21 +106,21 @@ export function formatMinuteLabel(
 function buildFixtureMeta(status: MatchStatus, kickoffUtc: string, phase: string | null | undefined) {
   if (status === "upcoming") {
     return {
-      competition: "Scheduled Market",
-      stage: `Kickoff ${formatUtcKickoff(kickoffUtc)} UTC`,
+      competition: `Kickoff ${formatUtcKickoff(kickoffUtc)}`,
+      stage: "",
     };
   }
 
   if (status === "finished") {
     return {
       competition: "Settled Market",
-      stage: phase?.trim() || "Full Time",
+      stage: "",
     };
   }
 
   return {
     competition: "Live Market",
-    stage: `Kickoff ${formatUtcKickoff(kickoffUtc)} UTC`,
+    stage: `Kickoff ${formatUtcKickoff(kickoffUtc)}`,
   };
 }
 
@@ -158,6 +157,10 @@ export function buildTimeLabel(fixture: Fixture) {
     return fixture.minute;
   }
 
+  if (fixture.status === "finished") {
+    return "FT";
+  }
+
   return `${fixture.phase} / ${fixture.minute}`;
 }
 
@@ -167,7 +170,7 @@ export function buildMarketPlaceholder(fixture: Fixture) {
   }
 
   if (fixture.status === "finished") {
-    return { liquidity: "FINAL", depth: "Settled", action: "RECAP" };
+    return { liquidity: "-", depth: "Settled", action: "RECAP" };
   }
 
   return { liquidity: "READY", depth: formatUtcKickoff(fixture.kickoffUtc), action: "WATCH" };
