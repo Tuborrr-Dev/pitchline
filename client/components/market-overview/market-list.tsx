@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 
+import { TeamLogo } from "@/components/team-logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -22,15 +23,21 @@ function MarketRow({ row }: { row: MarketOverviewRow }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.18 }}
-      className="grid min-w-[64rem] grid-cols-[5rem_15rem_8rem_1fr_8.5rem_5.5rem] items-center border-t border-[var(--terminal-line)] px-4 py-3 text-[var(--foreground)] transition hover:bg-[var(--terminal-hover)]"
+      className="grid min-w-[66rem] grid-cols-[8.5rem_17rem_8rem_1fr_8.5rem_5.5rem] items-center border-t border-[var(--terminal-line)] px-4 py-3 text-[var(--foreground)] transition hover:bg-[var(--terminal-hover)]"
     >
-      <div className="flex items-center">
+      <div className="flex items-center pr-3">
         <StatusBadge row={row} />
       </div>
-      <div>
-        <Link href={href} className="cursor-pointer font-display text-[1.25rem] font-bold uppercase text-[var(--terminal-text-strong)] transition hover:text-[var(--terminal-green)]">
-          {row.eventPair}
-        </Link>
+      <div className="flex flex-col items-start justify-center">
+        <div className="flex items-center gap-2.5">
+          <TeamLogo code={row.fixture.teamACode} name={row.fixture.teamAName} size="sm" />
+          <Link href={href} className="inline-flex items-center gap-1.5 cursor-pointer font-display text-[1.25rem] font-bold uppercase text-[var(--terminal-text-strong)] transition hover:text-[var(--terminal-green)]">
+            <span>{row.fixture.teamACode}</span>
+            <span className="font-mono text-xs font-normal text-[var(--muted)]">VS</span>
+            <span>{row.fixture.teamBCode}</span>
+          </Link>
+          <TeamLogo code={row.fixture.teamBCode} name={row.fixture.teamBName} size="sm" />
+        </div>
         <p className="mt-0.5 font-mono text-[0.68rem] uppercase text-[var(--muted)]">
           {cleanLabel(row.eventSubLabel)}
         </p>
@@ -76,11 +83,17 @@ function MarketCompactListRow({ row }: { row: MarketOverviewRow }) {
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3.5">
             <StatusBadge row={row} />
-            <Link href={href} className="cursor-pointer font-display text-[1.55rem] font-bold uppercase leading-none text-[var(--terminal-text-strong)] transition hover:text-[var(--terminal-green)]">
-              {row.eventPair}
-            </Link>
+            <div className="flex items-center gap-2">
+              <TeamLogo code={row.fixture.teamACode} name={row.fixture.teamAName} size="sm" />
+              <Link href={href} className="inline-flex items-center gap-1.5 cursor-pointer font-display text-[1.55rem] font-bold uppercase leading-none text-[var(--terminal-text-strong)] transition hover:text-[var(--terminal-green)]">
+                <span>{row.fixture.teamACode}</span>
+                <span className="font-mono text-sm font-normal text-[var(--muted)]">VS</span>
+                <span>{row.fixture.teamBCode}</span>
+              </Link>
+              <TeamLogo code={row.fixture.teamBCode} name={row.fixture.teamBName} size="sm" />
+            </div>
           </div>
           <p className="mt-2 font-mono text-[0.72rem] uppercase text-[var(--muted)]">
             {cleanLabel(row.eventSubLabel)}
@@ -118,7 +131,7 @@ function MarketCompactListRow({ row }: { row: MarketOverviewRow }) {
 export function MarketTable({ rows }: { rows: MarketOverviewRow[] }) {
   return (
     <motion.div key="list">
-      <div className="grid min-w-[64rem] grid-cols-[5rem_15rem_8rem_1fr_8.5rem_5.5rem] items-center border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-4 py-3 font-mono text-[0.68rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
+      <div className="grid min-w-[66rem] grid-cols-[8.5rem_17rem_8rem_1fr_8.5rem_5.5rem] items-center border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-4 py-3 font-mono text-[0.68rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
         <div>Status</div>
         <div>Event / Pair</div>
         <div className="text-center">Score/Time</div>

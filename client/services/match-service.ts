@@ -107,8 +107,8 @@ export async function fetchAnnotationHistory(fixtureId: string): Promise<Annotat
     });
     if (!response.ok) return [];
     return await response.json();
-  } catch (error) {
-    console.warn("[fetchAnnotationHistory] Unable to fetch annotations history:", error);
+  } catch {
+    // Annotation service is optional — silently return empty when offline
     return [];
   }
 }
@@ -118,8 +118,8 @@ export async function startAnnotationStream(fixtureId: string): Promise<void> {
     await fetch(`${ANNOTATION_API_BASE_URL}/streams/${fixtureId}`, {
       method: "POST",
     });
-  } catch (error) {
-    console.warn("[startAnnotationStream] Unable to start annotation stream:", error);
+  } catch {
+    // Annotation service is optional — silently skip when offline
   }
 }
 
@@ -128,7 +128,7 @@ export async function stopAnnotationStream(fixtureId: string): Promise<void> {
     await fetch(`${ANNOTATION_API_BASE_URL}/streams/${fixtureId}`, {
       method: "DELETE",
     });
-  } catch (error) {
-    console.warn("[stopAnnotationStream] Unable to stop annotation stream:", error);
+  } catch {
+    // Annotation service is optional — silently skip when offline
   }
 }

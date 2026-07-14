@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 
+import { TeamLogo } from "@/components/team-logo";
 import type { LiveMatchState } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -15,30 +16,73 @@ export function MatchScoreHeader({
   fixture: LiveMatchState["fixture"];
 }) {
   const preKickoff = isPreKickoffFixture(fixture);
+  const isFinished = fixture.status === "finished" || fixture.phase === "Finished" || fixture.phase === "FT";
+  const hasOdds = currentProbabilities.teamA > 0 || currentProbabilities.teamB > 0;
+
+  // Determine center badge text
+  let centerBadgeText = "";
+  if (isFinished) {
+    centerBadgeText = "FULL TIME";
+  } else if (preKickoff) {
+    centerBadgeText = `KO ${formatKickoffDate(fixture.kickoffUtc)}`;
+  } else if (!hasOdds) {
+    centerBadgeText = "MARKET PENDING";
+  } else {
+    centerBadgeText = `Market edge ${Math.abs(currentProbabilities.teamA - currentProbabilities.teamB).toFixed(1)} pts`;
+  }
+
+  // Determine team subtitles
+  let homeSubtitle = `Win ${currentProbabilities.teamA.toFixed(1)}%`;
+  let awaySubtitle = `Win ${currentProbabilities.teamB.toFixed(1)}%`;
+  let homeColor = currentProbabilities.teamA > 0 ? "text-[var(--terminal-green)]" : "text-[#9aa7b2]";
+  let awayColor = currentProbabilities.teamB > 0 ? "text-[var(--terminal-green)]" : "text-[#9aa7b2]";
+
+  if (isFinished) {
+    if (fixture.scoreA > fixture.scoreB) {
+      homeSubtitle = "Winner";
+      homeColor = "text-[var(--terminal-green)]";
+      awaySubtitle = "Defeated";
+      awayColor = "text-[#9aa7b2]";
+    } else if (fixture.scoreB > fixture.scoreA) {
+      homeSubtitle = "Defeated";
+      homeColor = "text-[#9aa7b2]";
+      awaySubtitle = "Winner";
+      awayColor = "text-[var(--terminal-green)]";
+    } else {
+      homeSubtitle = "Draw";
+      homeColor = "text-[#9aa7b2]";
+      awaySubtitle = "Draw";
+      awayColor = "text-[#9aa7b2]";
+    }
+  } else if (!hasOdds && !preKickoff) {
+    homeSubtitle = "Odds Pending";
+    awaySubtitle = "Odds Pending";
+    homeColor = "text-[#9aa7b2]";
+    awayColor = "text-[#9aa7b2]";
+  }
 
   return (
     <motion.section
       layout
       className="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-[var(--terminal-border)] bg-[radial-gradient(circle_at_center,rgba(127,174,202,0.08),transparent_42%)] px-3 py-2 sm:px-5 sm:py-3 md:gap-4"
     >
-      <TeamPlate code={fixture.teamACode} name={fixture.teamAName} probability={currentProbabilities.teamA} />
+      <TeamPlate code={fixture.teamACode} name={fixture.teamAName} subtitle={homeSubtitle} subtitleColor={homeColor} />
       <div className="text-center">
         <p className="hidden font-mono text-[0.58rem] font-semibold uppercase text-[var(--terminal-text-muted)] sm:block sm:text-[0.72rem]">
-          {fixture.competition} / {fixture.stage}
+          {fixture.stage ? `${fixture.competition} / ${fixture.stage}` : fixture.competition}
         </p>
         <div className="mt-1 border border-[var(--terminal-border)] bg-[var(--terminal-panel)] px-4 py-2 font-display text-[2.25rem] font-bold uppercase leading-none text-[var(--terminal-text-strong)] sm:mt-2 sm:px-8 sm:py-3 sm:text-[4rem]">
           {preKickoff ? "Kickoff" : `${fixture.scoreA} : ${fixture.scoreB}`}
         </div>
         <div className="mx-auto mt-1 w-fit border border-[var(--terminal-green)] bg-emerald-500/10 px-2 py-1 font-mono text-[0.5rem] font-semibold uppercase text-[var(--terminal-green)] sm:mt-2 sm:px-3 sm:text-[0.72rem]">
-          {preKickoff
-            ? `KO ${formatKickoffDate(fixture.kickoffUtc)} UTC`
-            : `Market edge ${Math.abs(currentProbabilities.teamA - currentProbabilities.teamB).toFixed(1)} pts`}
+          {centerBadgeText}
         </div>
       </div>
       <TeamPlate
         code={fixture.teamBCode}
         name={fixture.teamBName}
-        probability={currentProbabilities.teamB}
+        subtitle={awaySubtitle}
+        subtitleColor={awayColor}
         align="right"
       />
     </motion.section>
@@ -48,12 +92,14 @@ export function MatchScoreHeader({
 function TeamPlate({
   code,
   name,
-  probability,
+  subtitle,
+  subtitleColor,
   align = "left",
 }: {
   code: string;
   name: string;
-  probability: number;
+  subtitle: string;
+  subtitleColor: string;
   align?: "left" | "right";
 }) {
   return (
@@ -64,24 +110,16 @@ function TeamPlate({
         align !== "right" && "justify-start",
       )}
     >
-      {align === "left" ? (
-        <span className="flex h-7 w-10 shrink-0 items-center justify-center border border-[var(--terminal-border)] bg-[var(--terminal-surface)] font-mono text-[0.62rem] font-semibold text-[var(--terminal-text-strong)] sm:h-12 sm:w-16 sm:text-sm">
-          {code}
-        </span>
-      ) : null}
+      {align === "left" ? <TeamLogo code={code} name={name} size="md" /> : null}
       <div>
         <p className="font-display text-[1rem] font-bold uppercase leading-none text-[var(--terminal-text-strong)] sm:text-[2.15rem]">
           {name}
         </p>
-        <p className={cn("mt-1 font-mono text-[0.56rem] font-semibold uppercase sm:text-[0.72rem]", probability > 0 ? "text-[var(--terminal-green)]" : "text-[#9aa7b2]")}>
-          Win {probability.toFixed(1)}%
+        <p className={cn("mt-1 font-mono text-[0.56rem] font-semibold uppercase sm:text-[0.72rem]", subtitleColor)}>
+          {subtitle}
         </p>
       </div>
-      {align === "right" ? (
-        <span className="flex h-7 w-10 shrink-0 items-center justify-center border border-[var(--terminal-border)] bg-[var(--terminal-surface)] font-mono text-[0.62rem] font-semibold text-[var(--terminal-text-strong)] sm:h-12 sm:w-16 sm:text-sm">
-          {code}
-        </span>
-      ) : null}
+      {align === "right" ? <TeamLogo code={code} name={name} size="md" /> : null}
     </div>
   );
 }

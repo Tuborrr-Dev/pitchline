@@ -40,8 +40,26 @@ export function VixPanel({
         </span>
       </div>
       <div className="pointer-events-none absolute inset-x-3 bottom-2 flex justify-between font-mono text-[0.54rem] font-semibold uppercase text-[#0f6c87] sm:inset-x-4 sm:text-[0.62rem]">
-        <span>VIX Min {analytics?.volatility ? `(sigma ${analytics.volatility.stdDev})` : ""}</span>
-        <span>{connectionState === "live" ? "Live feed stable" : connectionState}</span>
+        <span className="flex gap-2">
+          {analytics?.peakSwing ? (
+            <span className="text-[#0f9ac3]">
+              Peak Swing: {analytics.peakSwing.delta > 0 ? "+" : ""}
+              {analytics.peakSwing.delta}% at {analytics.peakSwing.minute}' |
+            </span>
+          ) : null}
+          <span>VIX Min {analytics?.volatility ? `(sigma ${analytics.volatility.stdDev})` : ""}</span>
+        </span>
+        <span>
+          {analytics?.marketFreeze?.isFrozen ? (
+            <span className="animate-pulse text-rose-500">
+              MARKET FROZEN ({analytics.marketFreeze.secondsSinceUpdate}s)
+            </span>
+          ) : connectionState === "live" ? (
+            "Live feed stable"
+          ) : (
+            connectionState
+          )}
+        </span>
       </div>
     </div>
   );

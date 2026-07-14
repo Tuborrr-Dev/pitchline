@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { TeamLogo } from "@/components/team-logo";
 import { getHistoryByFixtureId } from "@/lib/mock-data";
 import type { Fixture } from "@/lib/types";
 
@@ -35,11 +36,11 @@ export function MatchCard({ fixture }: { fixture: Fixture }) {
           </p>
           <div className="mt-3 space-y-2">
             <div className="flex items-center gap-3">
-              <span className="font-mono text-sm text-cyan-200">{fixture.teamACode}</span>
+              <TeamLogo code={fixture.teamACode} name={fixture.teamAName} size="sm" />
               <span className="text-base font-medium text-white">{fixture.teamAName}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-sm text-rose-200">{fixture.teamBCode}</span>
+              <TeamLogo code={fixture.teamBCode} name={fixture.teamBName} size="sm" />
               <span className="text-base font-medium text-white">{fixture.teamBName}</span>
             </div>
           </div>

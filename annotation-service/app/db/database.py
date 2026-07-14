@@ -18,10 +18,15 @@ _db_url = settings.DATABASE_URL
 if _db_url.startswith("postgresql://"):
     _db_url = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
+# only opens that connection when a query actually runs, then it sits idle in the pool
 engine = create_async_engine(
     _db_url,
     future=True,
     echo=False,
+    pool_size=1,
+    max_overflow=0,
+    pool_recycle=1800,
+    pool_pre_ping=False,
 )
 
 AsyncSessionLocal = async_sessionmaker(

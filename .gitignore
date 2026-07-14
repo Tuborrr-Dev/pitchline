@@ -5,3 +5,12 @@ __pycache__/
 appsettings.json
 appsettings*.json
 /Profiles
+pitchline/annotation-service/test.py
+
+.DS_Store
+**/.DS_Store
+
+
+*.json
+!app/schemas/*.js
+pitchline/annotation-service/get_events_ALL_fixtures.py

@@ -58,7 +58,6 @@ export function MarketHeader({
             </span>
           </div>
           <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
-            <span>Total liquidity: $42.52M</span>
             <span>{activeTab === "history" ? "Settled markets" : "Active markets"}: {filteredCount}</span>
             {isFetching ? <span>Refreshing feed</span> : null}
             {deferredQuery.trim() ? <span>Filter: {deferredQuery}</span> : null}

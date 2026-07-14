@@ -19,7 +19,7 @@ function mapDtosToMarketOverviewRows(fixtures: BackendFixtureDto[]) {
       statusLabel:
         fixture.status === "live" ? "LIVE" : fixture.status === "finished" ? "FINAL" : "SCHEDULED",
       eventPair: `${fixture.teamACode} VS ${fixture.teamBCode}`,
-      eventSubLabel: `${fixture.competition} / ${fixture.stage}`,
+      eventSubLabel: fixture.stage ? `${fixture.competition} / ${fixture.stage}` : fixture.competition,
       scoreLine: buildScoreLine(fixture),
       timeLabel: buildTimeLabel(fixture),
       probabilities: {
