@@ -41,7 +41,10 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${sans.variable} ${display.variable} ${mono.variable} h-full antialiased`}
     >
-      <body className="h-full bg-[var(--background)] text-[var(--foreground)]">
+      <body
+        suppressHydrationWarning
+        className="h-full bg-[var(--background)] text-[var(--foreground)]"
+      >
         <ThemeProvider>
           <QueryProvider>
             <div className="flex h-screen flex-col overflow-hidden">

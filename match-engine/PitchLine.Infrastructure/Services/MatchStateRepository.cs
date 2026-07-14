@@ -401,7 +401,7 @@ public class MatchStateRepository(IConnectionMultiplexer redis, PostgresReposito
                 homePct,
                 drawPct,
                 awayPct,
-                ts = enriched.Odds.Ts,
+                timestamp = DateTimeOffset.FromUnixTimeMilliseconds(enriched.Odds.Ts),
             });
 
             await _db.ListRightPushAsync(key, payload);

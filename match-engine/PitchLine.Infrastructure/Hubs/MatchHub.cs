@@ -13,4 +13,13 @@ public class MatchHub : Hub
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"fixture:{fixtureId}");
     }
+    public async Task JoinLobby()
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, "lobby");
+    }
+
+    public async Task LeaveLobby()
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "lobby");
+    }
 }
