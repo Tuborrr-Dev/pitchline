@@ -92,6 +92,10 @@ export function annotationToMatchEvent(annotation: Annotation, fixture: Fixture)
     label: toTitle(annotation.action || annotation.source_action) || "Update",
     detailLabel: annotation.text ?? annotation.reason ?? annotation.outcome ?? undefined,
     importance: annotationImportance(type),
+    annotationColor: annotation.color,
+    annotationIcon: annotation.icon,
+    annotationAction: annotation.action || annotation.source_action,
+    annotationType: annotation.type,
   };
 }
 

@@ -52,6 +52,7 @@ export function MarketOverview({
   const isError = activeTab === "history" ? isFinishedError : isMarketsError;
   const isFetching = activeTab === "history" ? isFinishedFetching : isMarketsFetching;
   const isInitialLoading = isFetching && rows.length === 0;
+  const hasSearchQuery = deferredQuery.trim().length > 0;
 
   const filteredRows = useMemo(() => {
     const normalizedQuery = deferredQuery.trim().toLowerCase();
@@ -134,6 +135,7 @@ export function MarketOverview({
           effectiveViewMode={effectiveViewMode}
           isError={isError}
           isInitialLoading={isInitialLoading}
+          hasSearchQuery={hasSearchQuery}
           rows={filteredRows}
         />
         <MarketTicker tickerRef={tickerRef} />

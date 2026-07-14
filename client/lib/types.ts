@@ -58,6 +58,10 @@ export interface MatchEvent {
   detailLabel?: string;
   delta?: number;
   importance: EventImportance;
+  annotationColor?: string;
+  annotationIcon?: string;
+  annotationAction?: string;
+  annotationType?: Annotation["type"];
 }
 
 export interface NarrativeMoment {
