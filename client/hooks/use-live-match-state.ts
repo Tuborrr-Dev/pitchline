@@ -247,8 +247,8 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
 
         eventSource = new EventSource(`${ANNOTATION_API_BASE_URL}/stream/${fixtureId}`);
 
-        eventSource.onerror = (error) => {
-          console.warn("[Annotation Service] SSE connection error / service offline:", error);
+        eventSource.onerror = () => {
+          // Annotation SSE is optional — silently ignore when service is offline
         };
 
         eventSource.addEventListener("commentary", (event) => {
@@ -308,8 +308,8 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
             console.error("Failed to parse retract SSE payload", error);
           }
         });
-      } catch (error) {
-        console.warn("[Annotation Service] Failed to initialize stream:", error);
+      } catch {
+        // Annotation service is optional — silently skip when offline
       }
     }
 

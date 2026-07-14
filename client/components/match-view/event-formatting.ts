@@ -44,9 +44,8 @@ export function formatKickoffDate(kickoffUtc: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "2-digit",
-    hour: "2-digit",
+    hour: "numeric",
     minute: "2-digit",
-    timeZone: "UTC",
-    hour12: false,
+    hour12: true,
   }).format(new Date(kickoffUtc));
 }
