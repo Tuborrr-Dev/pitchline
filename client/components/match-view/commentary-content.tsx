@@ -7,11 +7,14 @@ import { cn } from "@/lib/utils";
 import { AnnotationGlyph, annotationId, annotationTone } from "./annotation-ui";
 import { eventCommentary } from "./event-formatting";
 
-function annotationBadge(type: Annotation["type"]) {
-  if (type === "annotation") return "AI ANALYST";
-  if (type === "update") return "UPDATED";
-  return "LIVE FEED";
+function minuteValue(value?: number | string | null) {
+  if (typeof value === "number") return value;
+  return Number.parseInt(String(value ?? "").replace(/\D/g, ""), 10) || 0;
 }
+
+type CommentaryFeedItem =
+  | { annotation: Annotation; index: number; kind: "annotation" }
+  | { event: MatchEvent; kind: "event"; minute: number };
 
 export function CommentaryContent({
   annotations = [],
@@ -22,10 +25,29 @@ export function CommentaryContent({
   events: MatchEvent[];
   selectedEventId: string | null;
 }) {
-  const hasAnnotations = annotations.length > 0;
-  const sortedAnnotations = [...annotations].reverse();
-  const commentaryFeed = [...events].reverse();
-  const commentaryCardTone = annotationTone("gold");
+  const commentaryFeed: CommentaryFeedItem[] =
+    annotations.length > 0
+      ? annotations
+          .map(
+            (annotation, index) =>
+              ({
+                annotation,
+                index,
+                kind: "annotation" as const,
+              }) satisfies CommentaryFeedItem,
+          )
+          .sort((left, right) => right.index - left.index)
+      : events
+          .map(
+            (event) =>
+              ({
+                event,
+                kind: "event" as const,
+                minute: minuteValue(event.minuteLabel),
+              }) satisfies CommentaryFeedItem,
+          )
+          .sort((left, right) => right.minute - left.minute);
+  const fallbackCardTone = annotationTone("gold");
 
   return (
     <section className="flex min-h-0 flex-1 flex-col border border-[var(--terminal-border)] bg-[var(--terminal-panel)]">
@@ -38,7 +60,7 @@ export function CommentaryContent({
         </p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        {!hasAnnotations && commentaryFeed.length === 0 ? (
+        {commentaryFeed.length === 0 ? (
           <TerminalState
             icon={MessageSquareDashed}
             title="No commentary yet"
@@ -46,22 +68,31 @@ export function CommentaryContent({
             tone="gold"
             className="m-4 min-h-[12rem]"
           />
-        ) : hasAnnotations
-          ? sortedAnnotations.map((item) => {
+        ) : (
+          commentaryFeed.map((feedItem) => {
+            if (feedItem.kind === "annotation") {
+              const item = feedItem.annotation;
               const itemId = annotationId(item);
               const hasIcon = Boolean(item.icon?.trim());
+              const itemTone = annotationTone(item.color);
+              const itemKey = [
+                feedItem.kind,
+                itemId,
+                item.id ?? item.source_seconds ?? item.minute ?? "live",
+                item.type,
+                item.text ?? "",
+              ].join("-");
 
               return (
                 <article
-                  key={`${itemId}-${item.id ?? "live"}`}
+                  key={itemKey}
                   className={cn(
                     "border-l-4 border-b border-[var(--terminal-line)] px-4 py-3 font-mono uppercase last:border-b-0",
-                    commentaryCardTone,
+                    itemTone,
                     selectedEventId === itemId && "bg-[var(--terminal-hover)]",
                   )}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-start gap-2">
+                  <div className="flex min-w-0 items-start gap-2">
                       {hasIcon ? (
                         <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border border-current bg-black/10">
                           <AnnotationGlyph action={item.action} icon={item.icon} className="h-3.5 w-3.5" />
@@ -72,16 +103,12 @@ export function CommentaryContent({
                           {item.action ? item.action.replace(/_/g, " ") : "UPDATE"}
                         </p>
                         <p className="mt-1 text-[0.62rem] text-[var(--terminal-blue)]">
-                          {item.minute !== undefined ? `${item.minute}'` : "0'"} / {item.team ?? "market"}
+                          {item.minute !== undefined && item.minute !== null ? `${item.minute}'` : "--'"} / {item.team ?? "market"}
                         </p>
                       </div>
-                    </div>
-                    <span className={cn("shrink-0 border px-2 py-0.5 text-[0.54rem] font-semibold", commentaryCardTone)}>
-                      {annotationBadge(item.type)}
-                    </span>
                   </div>
                   <p className="mt-3 whitespace-pre-wrap text-[0.68rem] leading-6 text-[var(--terminal-text)]">
-                    {item.text}
+                    {item.text ?? item.reason ?? item.outcome ?? "Market-state annotation received."}
                   </p>
                   {item.home_score !== null &&
                   item.away_score !== null &&
@@ -93,13 +120,15 @@ export function CommentaryContent({
                   ) : null}
                 </article>
               );
-            })
-          : commentaryFeed.map((event) => (
+            }
+
+            const event = feedItem.event;
+            return (
               <article
                 key={event.eventId}
                 className={cn(
                   "border-l-4 border-b border-[var(--terminal-line)] px-4 py-3 font-mono uppercase last:border-b-0",
-                  commentaryCardTone,
+                  fallbackCardTone,
                   selectedEventId === event.eventId && "bg-[var(--terminal-hover)]",
                 )}
               >
@@ -110,7 +139,7 @@ export function CommentaryContent({
                       {event.minuteLabel} / {event.teamCode ?? "market"}
                     </p>
                   </div>
-                  <span className={cn("shrink-0 border px-2 py-0.5 text-[0.54rem] font-semibold", commentaryCardTone)}>
+                  <span className={cn("shrink-0 border px-2 py-0.5 text-[0.54rem] font-semibold", fallbackCardTone)}>
                     {event.type.replace(/-/g, " ")}
                   </span>
                 </div>
@@ -118,7 +147,9 @@ export function CommentaryContent({
                   {eventCommentary(event)}
                 </p>
               </article>
-            ))}
+            );
+          })
+        )}
       </div>
     </section>
   );

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { LiveMatchState, MatchEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { annotationsToTimelineEvents } from "@/services/annotation-mappers";
 
 import {
   DesktopDetailsPanel,
@@ -33,6 +34,9 @@ export function MatchView({
   onSelectEvent: (eventId: string) => void;
 }) {
   const { fixture, currentProbabilities, history, events, annotations, connectionState } = state;
+  const timelineEvents = annotations.length > 0 ? annotationsToTimelineEvents(annotations, fixture) : events;
+  const selectedTimelineEvent =
+    timelineEvents.find((event) => event.eventId === selectedEventId) ?? selectedEvent;
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [eventRailOpen, setEventRailOpen] = useState(true);
   const verticalEventButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -155,8 +159,8 @@ export function MatchView({
                 teamACode={fixture.teamACode}
                 teamBCode={fixture.teamBCode}
                 history={history}
-                events={events}
-                selectedEvent={selectedEvent}
+                events={timelineEvents}
+                selectedEvent={selectedTimelineEvent}
                 connectionState={connectionState}
                 analytics={state.analytics}
                 onSelectEvent={onSelectEvent}

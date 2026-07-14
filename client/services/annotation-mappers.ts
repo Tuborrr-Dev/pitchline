@@ -99,10 +99,15 @@ export function annotationToMatchEvent(annotation: Annotation, fixture: Fixture)
   };
 }
 
+export function isMarketDepthAnnotation(annotation: Annotation) {
+  return annotation.type === "annotation";
+}
+
 export function annotationsToMatchEvents(annotations: Annotation[], fixture: Fixture) {
   const byId = new Map<string, MatchEvent>();
 
   annotations.forEach((annotation) => {
+    if (!isMarketDepthAnnotation(annotation)) return;
     byId.set(annotationEventId(annotation), annotationToMatchEvent(annotation, fixture));
   });
 
@@ -111,4 +116,14 @@ export function annotationsToMatchEvents(annotations: Annotation[], fixture: Fix
     if (minuteDelta !== 0) return minuteDelta;
     return left.eventId.localeCompare(right.eventId);
   });
+}
+
+export function annotationsToTimelineEvents(annotations: Annotation[], fixture: Fixture) {
+  return annotations
+    .map((annotation) => annotationToMatchEvent(annotation, fixture))
+    .sort((left, right) => {
+      const minuteDelta = Number.parseInt(left.minuteLabel, 10) - Number.parseInt(right.minuteLabel, 10);
+      if (minuteDelta !== 0) return minuteDelta;
+      return left.eventId.localeCompare(right.eventId);
+    });
 }
