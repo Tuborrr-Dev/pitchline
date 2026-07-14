@@ -35,10 +35,11 @@ async def run_once():
         )
         fixtures = fx_resp.json()
 
-        watched_resp = await client.get(f"{MAIN_APP_URL}/streams")
-        currently_watching = watched_resp.json()  # {fixture_id: duration_seconds}
+        watched_resp = await get_with_wake_retry(client, f"{MAIN_APP_URL}/streams")
+        currently_watching = watched_resp.json()
 
         now_ms = time.time() * 1000
+        started, stopped = 0, 0
 
         for fx in fixtures:
             fixture_id = fx.get("FixtureId")
@@ -56,16 +57,28 @@ async def run_once():
             key = str(fixture_id)
 
             if should_be_watching and key not in currently_watching:
-                print(f"starting stream for fixture {fixture_id}")
+                print(f"cron: starting stream for fixture {fixture_id}")
                 await client.post(f"{MAIN_APP_URL}/streams/{fixture_id}")
+                started += 1
 
-            if (
-                key in currently_watching
-                and currently_watching[key] > MAX_WATCH_DURATION_SECONDS
-            ):
-                print(f"stopping stream for fixture {fixture_id}")
-                await client.delete(f"{MAIN_APP_URL}/streams/{fixture_id}")
+        for fixture_id_str, duration in currently_watching.items():
+            if duration is not None and duration > MAX_WATCH_DURATION_SECONDS:
+                print(f"cron: stopping stream for fixture {fixture_id_str}")
+                await client.delete(f"{MAIN_APP_URL}/streams/{fixture_id_str}")
+                stopped += 1
+
+        still_watching = len(currently_watching) - stopped
+        if started == 0 and stopped == 0:
+            print(
+                f"cron: checked {len(fixtures)} fixtures, no live match in watch window, {still_watching} already streaming"
+            )
+        else:
+            print(
+                f"cron: checked {len(fixtures)} fixtures, started {started}, stopped {stopped}, {still_watching + started} now streaming"
+            )
 
 
 if __name__ == "__main__":
+    print("cron: run starting")
     asyncio.run(run_once())
+    print("cron: run finished")
