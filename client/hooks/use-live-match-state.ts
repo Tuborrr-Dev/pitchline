@@ -6,6 +6,11 @@ import { startTransition, useEffect, useEffectEvent, useMemo, useState } from "r
 import { ANNOTATION_API_BASE_URL, getApiBaseUrl } from "@/config/api";
 import type { Annotation, LiveMatchState, MatchEvent } from "@/lib/types";
 import {
+  annotationEventId,
+  annotationToMatchEvent,
+  annotationsToMatchEvents,
+} from "@/services/annotation-mappers";
+import {
   fetchAnnotationHistory,
   startAnnotationStream,
   stopAnnotationStream,
@@ -59,73 +64,6 @@ function toDisplayMinute(minute?: string | null) {
   return cleanMinute.includes("'") ? cleanMinute : `${cleanMinute}'`;
 }
 
-function mapActionToEventType(action?: string | null): MatchEvent["type"] {
-  switch ((action ?? "").toLowerCase()) {
-    case "goal":
-    case "owngoal":
-      return "goal";
-    case "redcard":
-    case "yellowredcard":
-      return "red-card";
-    case "halfTime":
-    case "halftime":
-      return "half-time";
-    case "fulltime":
-    case "game_finalised":
-      return "full-time";
-    default:
-      return "status";
-  }
-}
-
-function mapActionToLabel(action?: string | null) {
-  switch ((action ?? "").toLowerCase()) {
-    case "goal":
-      return "Goal update";
-    case "owngoal":
-      return "Own goal";
-    case "redcard":
-      return "Red card";
-    case "yellowredcard":
-      return "Second yellow";
-    case "halftime":
-    case "halfTime":
-      return "Half time";
-    case "fulltime":
-    case "game_finalised":
-      return "Full time";
-    default:
-      return "Match state synced";
-  }
-}
-
-function buildScoreEvent(state: LiveMatchState, payload: ScoreUpdatePayload): MatchEvent {
-  const minuteLabel = toDisplayMinute(payload.minute);
-  const timestamp = toIsoTimestamp(payload.timestamp);
-  const teamAScored = payload.homeScore > state.fixture.scoreA;
-  const teamBScored = payload.awayScore > state.fixture.scoreB;
-  const side = teamAScored ? "teamA" : teamBScored ? "teamB" : "draw";
-  const teamCode =
-    side === "teamA"
-      ? state.fixture.teamACode
-      : side === "teamB"
-        ? state.fixture.teamBCode
-        : undefined;
-
-  return {
-    eventId: `${payload.fixtureId}-${payload.action ?? "state"}-${timestamp}`,
-    fixtureId: payload.fixtureId,
-    type: mapActionToEventType(payload.action),
-    minuteLabel,
-    timestamp,
-    side,
-    teamCode,
-    label: mapActionToLabel(payload.action),
-    detailLabel: `${payload.homeName} ${payload.homeScore} - ${payload.awayScore} ${payload.awayName}`,
-    importance: payload.action?.toLowerCase().includes("goal") ? "high" : "medium",
-  };
-}
-
 function pushEvent(events: MatchEvent[], event: MatchEvent) {
   const nextEvents = [...events, event];
   return nextEvents.slice(-18);
@@ -155,13 +93,29 @@ function isExpectedConnectionShutdown(error: unknown) {
   );
 }
 
+function isSameAnnotation(
+  annotation: Pick<Annotation, "fixture_id" | "source_action" | "source_id">,
+  payload: Pick<Annotation, "fixture_id" | "source_action" | "source_id">,
+) {
+  return (
+    annotation.fixture_id === payload.fixture_id &&
+    annotation.source_action === payload.source_action &&
+    annotation.source_id === payload.source_id
+  );
+}
+
+function upsertAnnotationEvent(events: MatchEvent[], payload: Annotation, fixture: LiveMatchState["fixture"]) {
+  const nextEvent = annotationToMatchEvent(payload, fixture);
+  const nextEvents = events.filter((event) => event.eventId !== nextEvent.eventId);
+  return pushEvent(nextEvents, nextEvent);
+}
+
 function appendAnnotation(current: LiveMatchState, payload: Annotation) {
   if (
     current.annotations.some(
       (annotation) =>
-        annotation.id === payload.id ||
-        (annotation.source_action === payload.source_action &&
-          annotation.source_id === payload.source_id),
+        (payload.id !== undefined && annotation.id === payload.id) ||
+        isSameAnnotation(annotation, payload),
     )
   ) {
     return current;
@@ -170,6 +124,7 @@ function appendAnnotation(current: LiveMatchState, payload: Annotation) {
   return {
     ...current,
     annotations: [...current.annotations, payload],
+    events: upsertAnnotationEvent(current.events, payload, current.fixture),
   };
 }
 
@@ -182,7 +137,6 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
   const applyScoreUpdate = useEffectEvent((payload: ScoreUpdatePayload) => {
     startTransition(() => {
       setState((current) => {
-        const nextEvent = buildScoreEvent(current, payload);
         return {
           ...current,
           fixture: {
@@ -200,9 +154,8 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
               current.currentProbabilities.teamB,
             ),
           },
-          events: pushEvent(current.events, nextEvent),
           connectionState: "live",
-          lastUpdatedAt: nextEvent.timestamp,
+          lastUpdatedAt: toIsoTimestamp(payload.timestamp),
         };
       });
     });
@@ -283,6 +236,10 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
         setState((current) => ({
           ...current,
           annotations: history,
+          events:
+            history.length > 0
+              ? annotationsToMatchEvents(history, current.fixture)
+              : current.events,
         }));
 
         await startAnnotationStream(fixtureId);
@@ -321,12 +278,9 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
             setState((current) => ({
               ...current,
               annotations: current.annotations.map((annotation) =>
-                annotation.fixture_id === payload.fixture_id &&
-                annotation.source_action === payload.source_action &&
-                annotation.source_id === payload.source_id
-                  ? { ...annotation, ...payload }
-                  : annotation,
+                isSameAnnotation(annotation, payload) ? payload : annotation,
               ),
+              events: upsertAnnotationEvent(current.events, payload, current.fixture),
             }));
           } catch (error) {
             console.error("Failed to parse update SSE payload", error);
@@ -338,17 +292,17 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
           try {
             const payload = JSON.parse(event.data) as {
               fixture_id: number;
+              source_action: string;
               source_id: number;
             };
+            const eventId = annotationEventId(payload);
             setState((current) => ({
               ...current,
               annotations: current.annotations.filter(
                 (annotation) =>
-                  !(
-                    annotation.fixture_id === payload.fixture_id &&
-                    annotation.source_id === payload.source_id
-                  ),
+                  !isSameAnnotation(annotation, payload),
               ),
+              events: current.events.filter((matchEvent) => matchEvent.eventId !== eventId),
             }));
           } catch (error) {
             console.error("Failed to parse retract SSE payload", error);

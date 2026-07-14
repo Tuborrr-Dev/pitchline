@@ -17,6 +17,12 @@ function annotationTone(color?: string) {
   }
 }
 
+function annotationBadge(type: Annotation["type"]) {
+  if (type === "annotation") return "AI ANALYST";
+  if (type === "update") return "UPDATED";
+  return "LIVE FEED";
+}
+
 export function CommentaryContent({
   annotations = [],
   events,
@@ -61,7 +67,7 @@ export function CommentaryContent({
                     </p>
                   </div>
                   <span className={cn("shrink-0 border px-2 py-0.5 text-[0.54rem] font-semibold", annotationTone(item.color))}>
-                    {item.type === "annotation" ? "AI ANALYST" : "LIVE FEED"}
+                    {annotationBadge(item.type)}
                   </span>
                 </div>
                 <p className="mt-3 whitespace-pre-wrap text-[0.68rem] leading-6 text-[var(--terminal-text)]">

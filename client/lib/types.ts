@@ -75,22 +75,25 @@ export interface MarketAnalyticsData {
 }
 
 export interface Annotation {
-  id: number;
+  id?: number;
   fixture_id: number;
   source_action: string;
   source_id: number;
-  type: "commentary" | "annotation";
+  source_seconds?: number;
+  type: "commentary" | "annotation" | "update";
   action: string;
-  team?: string;
-  player?: string;
+  team?: string | null;
+  player?: string | null;
   minute?: number;
   phase?: string;
-  home_score?: number;
-  away_score?: number;
+  home_score?: number | null;
+  away_score?: number | null;
   icon?: string;
   color?: string;
   text?: string;
-  outcome?: string;
+  outcome?: string | null;
+  score?: number;
+  reason?: string;
 }
 
 export interface LiveMatchState {

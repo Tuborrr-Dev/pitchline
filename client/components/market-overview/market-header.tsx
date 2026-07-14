@@ -2,6 +2,7 @@
 
 import { Activity, Grid3X3, List } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,6 @@ export function MarketHeader({
   filteredCount,
   isFetching,
   isMobile,
-  setActiveTab,
   setViewMode,
   viewMode,
 }: {
@@ -25,7 +25,6 @@ export function MarketHeader({
   filteredCount: number;
   isFetching: boolean;
   isMobile: boolean;
-  setActiveTab: (tab: MarketTab) => void;
   setViewMode: (mode: ViewMode) => void;
   viewMode: ViewMode;
 }) {
@@ -38,7 +37,7 @@ export function MarketHeader({
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <MarketTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+          <MarketTabs activeTab={activeTab} />
           <div className="flex flex-wrap items-center gap-3">
             <AnimatePresence mode="wait" initial={false}>
               <motion.h1
@@ -60,7 +59,7 @@ export function MarketHeader({
           </div>
           <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
             <span>Total liquidity: $42.52M</span>
-            <span>Active markets: {filteredCount}</span>
+            <span>{activeTab === "history" ? "Settled markets" : "Active markets"}: {filteredCount}</span>
             {isFetching ? <span>Refreshing feed</span> : null}
             {deferredQuery.trim() ? <span>Filter: {deferredQuery}</span> : null}
           </div>
@@ -74,7 +73,7 @@ export function MarketHeader({
             </p>
             <p className="font-mono text-[0.68rem] uppercase text-[var(--terminal-text-muted)]">Latency: 12ms</p>
           </div>
-          {!isMobile ? (
+          {!isMobile && activeTab !== "settings" ? (
             <ViewModeToggle
               effectiveViewMode={effectiveViewMode}
               setViewMode={setViewMode}
@@ -87,35 +86,36 @@ export function MarketHeader({
   );
 }
 
-function MarketTabs({
-  activeTab,
-  setActiveTab,
-}: {
-  activeTab: MarketTab;
-  setActiveTab: (tab: MarketTab) => void;
-}) {
+function MarketTabs({ activeTab }: { activeTab: MarketTab }) {
+  const tabHref: Record<MarketTab, string> = {
+    markets: "/markets",
+    history: "/markets/history",
+    settings: "/markets/settings",
+  };
+
   return (
     <div className="mb-4 flex flex-wrap gap-2">
       {(["markets", "history", "settings"] as const).map((tab) => (
         <Button
           key={tab}
-          type="button"
-          onClick={() => setActiveTab(tab)}
+          asChild
           className={cn(
             "relative h-8 cursor-pointer rounded-none border px-3 font-mono text-[0.7rem] font-semibold uppercase shadow-none",
             activeTab === tab
-              ? "border-[var(--terminal-active-bg)] bg-[var(--terminal-active-bg)] text-[var(--terminal-active-fg)]"
+              ? "border-[var(--terminal-active-bg)] bg-[var(--terminal-active-bg)] text-white hover:bg-[var(--terminal-active-bg)] hover:text-white"
               : "border-[var(--terminal-border)] bg-transparent text-[var(--terminal-text-muted)] hover:bg-[var(--terminal-hover)] hover:text-[var(--terminal-text-strong)]",
           )}
         >
-          {activeTab === tab ? (
-            <motion.span
-              layoutId="market-tab-active"
-              className="absolute inset-0 bg-white/[0.04]"
-              transition={{ duration: 0.16, ease: "easeOut" }}
-            />
-          ) : null}
-          <span className="relative z-10">{tab}</span>
+          <Link href={tabHref[tab]}>
+            {activeTab === tab ? (
+              <motion.span
+                layoutId="market-tab-active"
+                className="absolute inset-0 bg-white/[0.04]"
+                transition={{ duration: 0.16, ease: "easeOut" }}
+              />
+            ) : null}
+            <span className={cn("relative z-10", activeTab === tab && "text-white")}>{tab}</span>
+          </Link>
         </Button>
       ))}
     </div>

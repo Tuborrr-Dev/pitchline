@@ -25,7 +25,7 @@ export function AppHeader() {
   const wallet = useWallet();
   const homeQuery = searchParams.get("q") ?? "";
   const isLanding = pathname === "/";
-  const isMarkets = pathname === "/markets";
+  const isMarkets = pathname.startsWith("/markets");
   const query = isMarkets ? homeQuery : matchQuery;
   const showSearchResults = mobileSearchOpen && query.trim().length > 0;
   const mobileIconVisibility = mobileSearchSettled ? "opacity-100" : "opacity-0 sm:opacity-100";
@@ -65,7 +65,7 @@ export function AppHeader() {
       }
 
       const search = params.toString();
-      router.replace(`/markets${search ? `?${search}` : ""}`);
+      router.replace(`${pathname}${search ? `?${search}` : ""}`);
     });
   }
 
@@ -78,7 +78,7 @@ export function AppHeader() {
 
     const params = new URLSearchParams();
     if (query.trim()) params.set("q", query);
-    router.push(`/markets${params.toString() ? `?${params.toString()}` : ""}`);
+    router.push(`${isMarkets ? pathname : "/markets"}${params.toString() ? `?${params.toString()}` : ""}`);
   }
 
   async function handleWalletConnect() {

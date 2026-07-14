@@ -3,6 +3,7 @@
 import { EyeOff } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
+import { MatchBackButton } from "@/components/match-back-button";
 import { Button } from "@/components/ui/button";
 import type { ConnectionState, LiveMatchState, MatchEvent } from "@/lib/types";
 
@@ -48,6 +49,10 @@ export function DesktopEventRail({
         className="hidden w-[17.5rem] shrink-0 overflow-hidden border-r border-[var(--terminal-border)] bg-[var(--terminal-panel)] xl:block xl:min-h-0"
       >
         <motion.div variants={marketDepthContainerVariants} initial="hidden" animate="visible" exit="exit" className="flex h-full min-h-0 w-full flex-col lg:w-[17.5rem]">
+          <motion.div variants={marketDepthItemVariants} className="border-b border-[var(--terminal-border)] px-3 py-2">
+            <MatchBackButton />
+          </motion.div>
+
           <motion.div variants={marketDepthItemVariants} className="flex items-center justify-between border-b border-[var(--terminal-border)] px-3 py-3">
             <div>
               <p className="font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-text-strong)]">
@@ -113,6 +118,10 @@ export function MobileEventRail({
       exit="exit"
       className="border-b border-[var(--terminal-border)] bg-[var(--terminal-panel)] xl:hidden"
     >
+      <motion.div variants={marketDepthHorizontalItemVariants} className="flex items-center justify-between gap-3 border-b border-[var(--terminal-border)] px-3 py-2">
+        <MatchBackButton />
+      </motion.div>
+
       <motion.div variants={marketDepthHorizontalItemVariants} className="flex items-center justify-between gap-3 px-3 py-2">
         <div>
           <p className="font-mono text-[0.7rem] font-semibold uppercase text-[var(--terminal-text-strong)]">

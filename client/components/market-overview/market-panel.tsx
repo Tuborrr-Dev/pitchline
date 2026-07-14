@@ -11,14 +11,12 @@ import type { MarketOverviewRow, MarketTab, ViewMode } from "./types";
 export function MarketPanel({
   activeTab,
   effectiveViewMode,
-  isDesktopTable,
   isError,
   isInitialLoading,
   rows,
 }: {
   activeTab: MarketTab;
   effectiveViewMode: ViewMode;
-  isDesktopTable: boolean;
   isError: boolean;
   isInitialLoading: boolean;
   rows: MarketOverviewRow[];
@@ -37,13 +35,14 @@ export function MarketPanel({
             <motion.div key="grid" {...panelMotion}>
               <MarketGrid rows={rows} />
             </motion.div>
-          ) : !isDesktopTable ? (
-            <motion.div key="compact-list" {...panelMotion}>
-              <MarketCompactList rows={rows} />
-            </motion.div>
           ) : (
             <motion.div key="list" {...panelMotion}>
-              <MarketTable rows={rows} />
+              <div className="xl:hidden">
+                <MarketCompactList rows={rows} />
+              </div>
+              <div className="hidden xl:block">
+                <MarketTable rows={rows} />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

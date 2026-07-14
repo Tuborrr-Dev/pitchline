@@ -8,6 +8,7 @@ import {
 } from "@/schemas/pitchline";
 import { fetchFinishedFixtureIndex, fetchFixtureIndex } from "@/services/fixture-service";
 import { getJson } from "@/services/pitchline-http";
+import { annotationsToMatchEvents } from "@/services/annotation-mappers";
 import {
   createFixtureFromDto,
   createInitialEvents,
@@ -63,8 +64,11 @@ export async function fetchInitialLiveMatchState(fixtureId: string): Promise<Liv
   const initialHistory = historyToProbabilityPoints(history, resolvedFixture, currentProbabilities);
   const lastTimestamp =
     initialHistory[initialHistory.length - 1]?.timestamp ?? new Date().toISOString();
-  const initialEvents = createInitialEvents(resolvedFixture);
   const initialAnnotations = await fetchAnnotationHistory(fixtureId);
+  const initialEvents =
+    initialAnnotations.length > 0
+      ? annotationsToMatchEvents(initialAnnotations, resolvedFixture)
+      : createInitialEvents(resolvedFixture);
 
   return {
     fixture: resolvedFixture,

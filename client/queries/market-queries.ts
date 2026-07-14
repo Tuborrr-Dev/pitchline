@@ -17,9 +17,10 @@ export function marketOverviewQueryOptions(initialRows?: MarketOverviewRow[]) {
   });
 }
 
-export function finishedMarketOverviewQueryOptions() {
+export function finishedMarketOverviewQueryOptions(initialRows?: MarketOverviewRow[]) {
   return queryOptions({
     queryKey: finishedMarketOverviewQueryKey,
     queryFn: fetchFinishedMarketOverviewRows,
+    initialData: initialRows,
   });
 }
