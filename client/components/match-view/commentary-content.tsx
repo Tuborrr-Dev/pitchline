@@ -1,3 +1,6 @@
+import { MessageSquareDashed } from "lucide-react";
+
+import { TerminalState } from "@/components/terminal-state";
 import type { Annotation, MatchEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +38,15 @@ export function CommentaryContent({
         </p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        {hasAnnotations
+        {!hasAnnotations && commentaryFeed.length === 0 ? (
+          <TerminalState
+            icon={MessageSquareDashed}
+            title="No commentary yet"
+            description="AI commentary will appear here after the annotation service receives match-state signals."
+            tone="gold"
+            className="m-4 min-h-[12rem]"
+          />
+        ) : hasAnnotations
           ? sortedAnnotations.map((item) => {
               const itemId = annotationId(item);
               const hasIcon = Boolean(item.icon?.trim());

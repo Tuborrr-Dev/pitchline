@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Activity } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
 import {
@@ -17,6 +18,7 @@ import {
   type Time,
 } from "lightweight-charts";
 
+import { TerminalState } from "@/components/terminal-state";
 import type { ConnectionState, MarketAnalyticsData, MatchEvent, ProbabilityPoint } from "@/lib/types";
 
 import { ChartHeader } from "./probability-chart/chart-header";
@@ -59,6 +61,7 @@ export function ProbabilityChart({
 }: ProbabilityChartProps) {
   const { resolvedTheme } = useTheme();
   const normalizedHistory = useMemo(() => normalizeChartHistory(history), [history]);
+  const hasHistory = normalizedHistory.length > 0;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const teamASeriesRef = useRef<ISeriesApi<"Area"> | null>(null);
@@ -332,6 +335,17 @@ export function ProbabilityChart({
         <div ref={containerRef} className="h-[calc(100%-8.5rem)] min-h-[14rem] w-full sm:h-[calc(100%-11rem)] sm:min-h-[19rem]" />
 
         <TimeGrid />
+        {!hasHistory ? (
+          <div className="absolute inset-x-3 top-14 z-10 sm:inset-x-5 sm:top-20">
+            <TerminalState
+              icon={Activity}
+              title="Waiting for probability history"
+              description="The chart will render once the match feed returns validated market probability points."
+              tone="blue"
+              className="min-h-[12rem] bg-[var(--terminal-panel)]/95"
+            />
+          </div>
+        ) : null}
         <EventMarkers
           events={events}
           onSelectEvent={onSelectEvent}
