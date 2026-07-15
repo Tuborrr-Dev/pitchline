@@ -11,6 +11,7 @@ import { connectWallet, selectWallet, useWallet } from "@/lib/wallet-session";
 
 import { AppNav } from "./app-header/app-nav";
 import { MarketSearch } from "./app-header/market-search";
+import { NotificationCenter } from "./app-header/notification-center";
 import { WalletControl } from "./app-header/wallet-control";
 
 import { useQuery } from "@tanstack/react-query";
@@ -206,7 +207,8 @@ export function AppHeader() {
             />
           ) : null}
 
-          <motion.div layout>
+          <motion.div layout className="flex items-center gap-2">
+            <NotificationCenter />
             <ThemeToggle />
           </motion.div>
 

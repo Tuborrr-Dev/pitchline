@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Pitchline.Api.Hubs;
+using Pitchline.Infrastructure.Hubs;
 using Pitchline.Infrastructure.Postgres;
 using Pitchline.Infrastructure.Redis;
 using PitchLine.Domain.Analytics;
@@ -95,24 +96,27 @@ public class SignalREventBus(
         await _hub.Clients.Group("lobby").SendAsync("ScoreUpdate", payload, ct);
         await _hub.Clients.All.SendAsync("ScoreUpdate", payload, ct);
 
-    //     // 5. POST to annotation service — fire and forget (significant actions only)
-    //     if (IsAnnotatable(enriched.Score.Action))
-    //     {
-    //         var homePct = await _repo.GetPreviousHomePctAsync(fixtureId);
-    //         var prevHomePct2 = prevState?.HomePct ?? 0m;
-    //         var annotationDelta = Math.Abs(homePct - prevHomePct2);
-    //         var annotationContext = new MatchContextPayload
-    //         {
-    //             IsComeback    = matchContext.isComeback,
-    //             IsLateGoal    = matchContext.isLateGoal,
-    //             IsEqualiser   = matchContext.isEqualiser,
-    //             IsWinningGoal = matchContext.isWinningGoal,
-    //             RedCardActive = matchContext.redCardActive,
-    //         };
-    //         _ = _annotation.SendScoreEventAsync(enriched, scoreBefore, annotationDelta, annotationContext);
-    //     }
-    //     _logger.LogInformation("[BUS] ScoreUpdate published — {Home} {HS}-{AS} {Away} min={Min}",
-    //         enriched.Fixture.HomeName, homeAfter, awayAfter, enriched.Fixture.AwayName, enriched.Score.Minute);
+        // 5. Emit MatchNotification if this is a Goal event
+        if (IsGoal(enriched.Score.Action))
+        {
+            var goalTag = matchContext.isComeback ? "🔥 COMEBACK!" : matchContext.isEqualiser ? "⚖️ EQUALISER!" : matchContext.isWinningGoal ? "⚽ WINNING GOAL!" : "⚽ GOAL!";
+            var notif = new MatchNotificationPayload(
+                Guid.NewGuid().ToString("N"),
+                fixtureId.ToString(),
+                enriched.Fixture.HomeName,
+                enriched.Fixture.AwayName,
+                NotificationType.Goal,
+                NotificationSeverity.Success,
+                $"{goalTag} ({enriched.Score.Minute}')",
+                $"{enriched.Fixture.HomeName} {homeAfter} - {awayAfter} {enriched.Fixture.AwayName}",
+                enriched.Score.Minute,
+                enriched.Score.Ts,
+                matchContext
+            );
+            await _hub.Clients.Group(group).SendAsync("MatchNotification", notif, ct);
+            await _hub.Clients.Group("lobby").SendAsync("MatchNotification", notif, ct);
+            await _hub.Clients.All.SendAsync("MatchNotification", notif, ct);
+        }
     }
 
     public async Task PublishOddsUpdateAsync(EnrichedOddsUpdate enriched, CancellationToken ct = default)
@@ -185,13 +189,71 @@ public class SignalREventBus(
             momentum = new { slope = momentum.Slope, direction = momentum.Direction.ToString() },
             volatility = new { stdDev = volatility.StdDev, level = volatility.Level.ToString() },
             marketFreeze = new { isFrozen = freeze.IsFrozen, secondsSinceUpdate = freeze.SecondsSinceUpdate },
-            peakSwing = new { delta = peakResult.Delta, minute = peakResult.Minute }
+            peakSwing = new { delta = peakResult.Delta, minute = peakResult.Minute, isNewPeak = peakResult.IsNewPeak }
         };
 
         // 5. Push to frontend via SignalR (fixture group, lobby group, & all connected clients)
         await _hub.Clients.Group(group).SendAsync("OddsUpdate", payload, ct);
         await _hub.Clients.Group("lobby").SendAsync("OddsUpdate", payload, ct);
         await _hub.Clients.All.SendAsync("OddsUpdate", payload, ct);
+
+        // 6. Push real-time notifications for Peak Swing, Volatility, and Market Freeze
+        if (peakResult.IsNewPeak || delta >= 10.0m)
+        {
+            var notif = new MatchNotificationPayload(
+                Guid.NewGuid().ToString("N"),
+                fixtureId.ToString(),
+                homeName,
+                awayName,
+                NotificationType.PeakSwing,
+                NotificationSeverity.Info,
+                $"⚡ PEAK SWING: +{delta:F1}% ({minute}')",
+                $"Major probability shift of {delta:F1}% in {homeName} vs {awayName}",
+                minute,
+                enriched.Odds.Ts,
+                new { delta, minute, isNewPeak = peakResult.IsNewPeak }
+            );
+            await _hub.Clients.Group(group).SendAsync("MatchNotification", notif, ct);
+            await _hub.Clients.Group("lobby").SendAsync("MatchNotification", notif, ct);
+        }
+
+        if (volatility.Level is VolatilityLevel.High or VolatilityLevel.Extreme)
+        {
+            var notif = new MatchNotificationPayload(
+                Guid.NewGuid().ToString("N"),
+                fixtureId.ToString(),
+                homeName,
+                awayName,
+                NotificationType.VolatilitySpike,
+                NotificationSeverity.Warning,
+                $"📊 HIGH VOLATILITY ({volatility.Level.ToString().ToUpper()})",
+                $"Volatility StdDev spike of {volatility.StdDev:F2} in {homeName} vs {awayName}",
+                minute,
+                enriched.Odds.Ts,
+                new { stdDev = volatility.StdDev, level = volatility.Level.ToString() }
+            );
+            await _hub.Clients.Group(group).SendAsync("MatchNotification", notif, ct);
+            await _hub.Clients.Group("lobby").SendAsync("MatchNotification", notif, ct);
+        }
+
+        if (freeze.IsFrozen)
+        {
+            var notif = new MatchNotificationPayload(
+                Guid.NewGuid().ToString("N"),
+                fixtureId.ToString(),
+                homeName,
+                awayName,
+                NotificationType.MarketFreeze,
+                NotificationSeverity.Critical,
+                $"⏸️ MARKET SUSPENDED ({freeze.SecondsSinceUpdate}s)",
+                $"Market suspended for {homeName} vs {awayName} (VAR / Key decision)",
+                minute,
+                enriched.Odds.Ts,
+                new { secondsSinceUpdate = freeze.SecondsSinceUpdate }
+            );
+            await _hub.Clients.Group(group).SendAsync("MatchNotification", notif, ct);
+            await _hub.Clients.Group("lobby").SendAsync("MatchNotification", notif, ct);
+        }
 
         // Annotation service only handles score events — odds delta tracked via score handler
 
