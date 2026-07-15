@@ -187,14 +187,17 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
   const applyScoreUpdate = useEffectEvent((payload: ScoreUpdatePayload) => {
     startTransition(() => {
       setState((current) => {
+        const homeName = payload.homeName?.trim() || current.fixture.teamAName;
+        const awayName = payload.awayName?.trim() || current.fixture.teamBName;
+
         return {
           ...current,
           fixture: {
             ...current.fixture,
-            teamAName: payload.homeName,
-            teamACode: deriveTeamCode(payload.homeName),
-            teamBName: payload.awayName,
-            teamBCode: deriveTeamCode(payload.awayName),
+            teamAName: homeName,
+            teamACode: deriveTeamCode(homeName),
+            teamBName: awayName,
+            teamBCode: deriveTeamCode(awayName),
             scoreA: payload.homeScore,
             scoreB: payload.awayScore,
             phase: payload.gameState?.trim() || current.fixture.phase,
@@ -242,14 +245,17 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
               ]
             : current.events;
 
+        const homeName = payload.homeName?.trim() || current.fixture.teamAName;
+        const awayName = payload.awayName?.trim() || current.fixture.teamBName;
+
         return {
           ...current,
           fixture: {
             ...current.fixture,
-            teamAName: payload.homeName,
-            teamACode: deriveTeamCode(payload.homeName),
-            teamBName: payload.awayName,
-            teamBCode: deriveTeamCode(payload.awayName),
+            teamAName: homeName,
+            teamACode: deriveTeamCode(homeName),
+            teamBName: awayName,
+            teamBCode: deriveTeamCode(awayName),
             leadProbability: Math.max(payload.homePct, payload.awayPct),
           },
           currentProbabilities: {

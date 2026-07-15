@@ -145,11 +145,18 @@ public class SignalREventBus(
             await _repo.UpdatePeakSwingAsync(fixtureId, peakResult.Delta, minute);
         }
 
+        var homeName = !string.IsNullOrWhiteSpace(enriched.Fixture.HomeName)
+            ? enriched.Fixture.HomeName
+            : (state?.HomeName ?? "");
+        var awayName = !string.IsNullOrWhiteSpace(enriched.Fixture.AwayName)
+            ? enriched.Fixture.AwayName
+            : (state?.AwayName ?? "");
+
         var payload = new
         {
             fixtureId,
-            homeName = enriched.Fixture.HomeName,
-            awayName = enriched.Fixture.AwayName,
+            homeName,
+            awayName,
             homePct = home,
             drawPct = draw,
             awayPct = away,

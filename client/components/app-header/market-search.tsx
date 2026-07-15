@@ -2,11 +2,15 @@
 
 import { Search, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import type { FormEvent } from "react";
+import { useEffect, useRef, type FormEvent } from "react";
 
 import { cn } from "@/lib/utils";
 
-import { SEARCH_RESULTS } from "./constants";
+export interface SearchResultItem {
+  id: string;
+  label: string;
+  meta: string;
+}
 
 export function MarketSearch({
   mobileIconVisibility,
@@ -17,6 +21,7 @@ export function MarketSearch({
   onResultSelect,
   onSubmit,
   onUpdateQuery,
+  searchResults = [],
   showSearchResults,
 }: {
   mobileIconVisibility: string;
@@ -27,15 +32,21 @@ export function MarketSearch({
   onResultSelect: (fixtureId: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onUpdateQuery: (query: string) => void;
+  searchResults?: SearchResultItem[];
   showSearchResults: boolean;
 }) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (mobileSearchOpen) {
+      inputRef.current?.focus();
+    }
+  }, [mobileSearchOpen]);
+
   return (
     <motion.form
       layout
       onSubmit={onSubmit}
-      onClick={() => {
-        if (!mobileSearchOpen) onOpenMobileSearch();
-      }}
       className={cn(
         "relative flex h-10 min-w-0 items-center gap-2 border border-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[var(--terminal-text-muted)] sm:h-11 sm:min-w-[18rem] sm:justify-start sm:px-3 lg:min-w-[22rem]",
         mobileSearchOpen ? "justify-start px-3" : "justify-center px-0",
@@ -56,10 +67,10 @@ export function MarketSearch({
         <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
       </button>
       <input
+        ref={inputRef}
         value={query}
         onChange={(event) => onUpdateQuery(event.target.value)}
         placeholder="SEARCH MARKETS..."
-        autoFocus={mobileSearchOpen}
         className={cn(
           "w-full bg-transparent font-mono text-[0.72rem] uppercase text-[var(--terminal-text-strong)] outline-none placeholder:text-[var(--terminal-text-muted)] sm:text-[0.78rem]",
           mobileSearchOpen ? "block" : "hidden sm:block",
@@ -94,22 +105,31 @@ export function MarketSearch({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
-            className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-50 border border-[var(--terminal-border)] bg-[var(--terminal-panel)] shadow-[0_18px_40px_var(--terminal-shadow)] sm:hidden"
+            className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-50 max-h-[22rem] overflow-y-auto border border-[var(--terminal-border)] bg-[var(--terminal-panel)] shadow-[0_18px_40px_var(--terminal-shadow)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           >
             <p className="border-b border-[var(--terminal-border)] px-3 py-2 font-mono text-[0.58rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
-              Search results
+              Search results {searchResults.length > 0 ? `(${searchResults.length})` : ""}
             </p>
-            {SEARCH_RESULTS.map((result) => (
-              <button
-                key={result.id}
-                type="button"
-                onClick={() => onResultSelect(result.id)}
-                className="block w-full cursor-pointer border-b border-[var(--terminal-line)] px-3 py-2 text-left font-mono uppercase hover:bg-[var(--terminal-hover)]"
-              >
-                <span className="block text-[0.72rem] font-semibold text-[var(--terminal-text-strong)]">{result.label}</span>
-                <span className="mt-1 block text-[0.58rem] text-[var(--terminal-text-muted)]">{result.meta}</span>
-              </button>
-            ))}
+            {searchResults.length > 0 ? (
+              searchResults.map((result) => (
+                <button
+                  key={result.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onResultSelect(result.id);
+                  }}
+                  className="block w-full cursor-pointer border-b border-[var(--terminal-line)] px-3 py-2.5 text-left font-mono uppercase transition-colors hover:bg-[var(--terminal-hover)]"
+                >
+                  <span className="block text-[0.74rem] font-bold text-[var(--terminal-text-strong)]">{result.label}</span>
+                  <span className="mt-1 block text-[0.60rem] font-semibold text-[var(--terminal-text-muted)]">{result.meta}</span>
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-4 text-center font-mono text-[0.68rem] uppercase text-[var(--terminal-text-muted)]">
+                No matching markets found
+              </div>
+            )}
           </motion.div>
         ) : null}
       </AnimatePresence>

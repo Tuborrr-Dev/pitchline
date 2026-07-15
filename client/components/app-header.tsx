@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { startTransition, useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,9 @@ import { connectWallet, selectWallet, useWallet } from "@/lib/wallet-session";
 import { AppNav } from "./app-header/app-nav";
 import { MarketSearch } from "./app-header/market-search";
 import { WalletControl } from "./app-header/wallet-control";
+
+import { useQuery } from "@tanstack/react-query";
+import { finishedMarketOverviewQueryOptions, marketOverviewQueryOptions } from "@/queries/market-queries";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -26,9 +29,39 @@ export function AppHeader() {
   const homeQuery = searchParams.get("q") ?? "";
   const isLanding = pathname === "/";
   const isMarkets = pathname.startsWith("/markets");
-  const query = isMarkets ? homeQuery : matchQuery;
-  const showSearchResults = mobileSearchOpen && query.trim().length > 0;
+  const [localQuery, setLocalQuery] = useState(homeQuery);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const nextQuery = isMarkets ? homeQuery : "";
+    if (localQuery === nextQuery) return;
+
+    startTransition(() => {
+      setLocalQuery(nextQuery);
+    });
+  }, [homeQuery, isMarkets, localQuery]);
+
+  const query = localQuery;
+  const showSearchResults = query.trim().length > 0;
   const mobileIconVisibility = mobileSearchSettled ? "opacity-100" : "opacity-0 sm:opacity-100";
+
+  const { data: activeRows = [] } = useQuery(marketOverviewQueryOptions());
+  const { data: finishedRows = [] } = useQuery(finishedMarketOverviewQueryOptions());
+
+  const searchResults = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    const allRows = [...activeRows, ...finishedRows];
+    const filtered = allRows.filter((row) => {
+      const matchText = `${row.fixture.teamAName} ${row.fixture.teamACode} ${row.fixture.teamBName} ${row.fixture.teamBCode} ${row.fixture.competition} ${row.fixture.stage}`.toLowerCase();
+      return matchText.includes(q);
+    });
+    return filtered.slice(0, 8).map((row) => ({
+      id: row.fixture.fixtureId,
+      label: `${row.fixture.teamAName || row.fixture.teamACode} VS ${row.fixture.teamBName || row.fixture.teamBCode}`,
+      meta: `${row.fixture.competition}${row.fixture.stage ? ` / ${row.fixture.stage}` : ""}`,
+    }));
+  }, [query, activeRows, finishedRows]);
 
   function setMobileSearchOpenAnimated(open: boolean) {
     setMobileSearchSettled(false);
@@ -51,22 +84,41 @@ export function AppHeader() {
   }, [mobileSearchOpen]);
 
   function updateQuery(nextQuery: string) {
-    if (!isMarkets) {
-      setMatchQuery(nextQuery);
-      return;
+    setLocalQuery(nextQuery);
+
+    if (!isMarkets) return;
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
 
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (nextQuery.trim()) {
-        params.set("q", nextQuery);
-      } else {
-        params.delete("q");
-      }
+    debounceRef.current = setTimeout(() => {
+      startTransition(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (nextQuery.trim()) {
+          params.set("q", nextQuery);
+        } else {
+          params.delete("q");
+        }
 
-      const search = params.toString();
-      router.replace(`${pathname}${search ? `?${search}` : ""}`);
-    });
+        const search = params.toString();
+        router.replace(`${pathname}${search ? `?${search}` : ""}`, { scroll: false });
+      });
+    }, 200);
+  }
+
+  function handleClear() {
+    setLocalQuery("");
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (isMarkets) {
+      startTransition(() => {
+        const params = new URLSearchParams(window.location.search);
+        params.delete("q");
+        const search = params.toString();
+        router.replace(`${pathname}${search ? `?${search}` : ""}`, { scroll: false });
+      });
+    }
   }
 
   function submitSearch(event: React.FormEvent<HTMLFormElement>) {
@@ -77,7 +129,7 @@ export function AppHeader() {
     }
 
     const params = new URLSearchParams();
-    if (query.trim()) params.set("q", query);
+    if (localQuery.trim()) params.set("q", localQuery);
     router.push(`${isMarkets ? pathname : "/markets"}${params.toString() ? `?${params.toString()}` : ""}`);
   }
 
@@ -142,7 +194,7 @@ export function AppHeader() {
               mobileIconVisibility={mobileIconVisibility}
               mobileSearchOpen={mobileSearchOpen}
               query={query}
-              onClear={() => updateQuery("")}
+              onClear={handleClear}
               onOpenMobileSearch={() => setMobileSearchOpenAnimated(true)}
               onResultSelect={(fixtureId) => {
                 setMobileSearchOpenAnimated(false);
@@ -150,6 +202,7 @@ export function AppHeader() {
               }}
               onSubmit={submitSearch}
               onUpdateQuery={updateQuery}
+              searchResults={searchResults}
               showSearchResults={showSearchResults}
             />
           ) : null}

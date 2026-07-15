@@ -399,9 +399,14 @@ public class PostgresRepository(NpgsqlDataSource db, ILogger<PostgresRepository>
         try
         {
             await using var cmd = _db.CreateCommand("""
-                SELECT fixture_id, home_name, away_name, home_score, away_score, phase, minute, home_pct, draw_pct, away_pct, red_card_active
-                FROM fixture_state
-                WHERE fixture_id = $1
+                SELECT 
+                    s.fixture_id, 
+                    COALESCE(NULLIF(s.home_name, ''), m.home_name, ''), 
+                    COALESCE(NULLIF(s.away_name, ''), m.away_name, ''), 
+                    s.home_score, s.away_score, s.phase, s.minute, s.home_pct, s.draw_pct, s.away_pct, s.red_card_active
+                FROM fixture_state s
+                LEFT JOIN fixture_meta m ON s.fixture_id = m.fixture_id
+                WHERE s.fixture_id = $1
             """);
             cmd.Parameters.AddWithValue(fixtureId);
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
