@@ -8,7 +8,9 @@ class Settings(BaseSettings):
     TXLINE_API_KEY: str
     TXLINE_JWT_TOKEN: str
     GEMINI_API_KEY: str
+    GROQ_API_KEY: str
     DATABASE_URL: str
+    MAIN_APP_URL: str
 
     model_config = SettingsConfigDict(
         env_file=".env",

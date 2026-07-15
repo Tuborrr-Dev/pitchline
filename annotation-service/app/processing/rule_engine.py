@@ -13,6 +13,7 @@ NOISE_ACTIONS = {
     "disconnected",
     "coverage_update",
     "clock_adjustment",
+    "status",
     "standby",
     "jersey",
     "venue",
@@ -49,7 +50,6 @@ RULE_COMMENTARY_ACTIONS = {
     "substitution",
     "injury",
     "yellow_card",
-    "status",
     "kickoff",
     "additional_time",
     "halftime_finalised",
@@ -74,6 +74,7 @@ READY_FIELDS = {
     "yellow_card": ("PlayerId",),
     "injury": ("PlayerId", "Outcome"),
     "red_card": ("PlayerId",),
+    "penalty_outcome": ("Outcome", "PlayerId"),
 }
 
 

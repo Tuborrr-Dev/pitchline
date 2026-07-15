@@ -10,6 +10,14 @@ logger = logging.getLogger(__name__)
 
 class HistoryService:
     async def save(self, annotation: dict):
+        # 1. Safely calculate the ordinal minute
+        raw_minute = annotation.get("minute")
+        if raw_minute is not None:
+            ordinal_minute = (raw_minute) + 1
+            # so both the DB and the Live Stream match have ordinal min
+            annotation["minute"] = ordinal_minute
+        else:
+            annotation["minute"] = None
         async with AsyncSessionLocal() as session:
             row = Annotation(
                 fixture_id=annotation["fixture_id"],
@@ -20,7 +28,7 @@ class HistoryService:
                 action=annotation["action"],
                 team=annotation.get("team"),
                 player=annotation.get("player"),
-                minute=annotation.get("minute"),
+                minute=annotation["minute"],
                 phase=annotation.get("phase"),
                 home_score=annotation.get("home_score"),
                 away_score=annotation.get("away_score"),
