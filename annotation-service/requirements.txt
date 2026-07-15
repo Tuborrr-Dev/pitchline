@@ -12,3 +12,4 @@ httpx-sse
 httpx
 asyncpg
 pydantic-settings
+groq
