@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { Activity, Bell, CheckCheck, Flame, PauseCircle, Settings2, Trash2, TrendingUp, Volume2, VolumeX, X } from "lucide-react";
+import { Activity, Bell, CheckCheck, Flame, PauseCircle, Settings2, Trash2, TrendingUp, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useNotifications } from "@/context/notification-provider";
@@ -74,8 +74,8 @@ export function NotificationCenter() {
         whileTap={{ scale: 0.95 }}
         onClick={handleOpenToggle}
         className={cn(
-          "relative flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--terminal-border)] bg-[var(--terminal-bg)] text-slate-300 transition-colors hover:border-emerald-500/40 hover:text-white",
-          isOpen && "border-emerald-500/60 bg-slate-900 text-white shadow-lg shadow-emerald-500/10",
+          "relative flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[var(--terminal-text)] transition-colors hover:border-[var(--terminal-green)] hover:text-[var(--terminal-text-strong)]",
+          isOpen && "border-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-text-strong)] shadow-lg shadow-[var(--terminal-shadow)]",
         )}
         title="Live Notifications"
       >
@@ -95,14 +95,14 @@ export function NotificationCenter() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute right-0 top-11 z-[999] w-[340px] sm:w-[380px] overflow-hidden rounded-xl border border-[var(--terminal-border)] bg-slate-950/95 p-0 shadow-2xl backdrop-blur-xl"
+            className="absolute right-0 top-11 z-[999] w-[340px] overflow-hidden rounded-xl border border-[var(--terminal-border)] bg-[var(--terminal-panel)] p-0 text-[var(--terminal-text)] shadow-2xl shadow-[var(--terminal-shadow)] backdrop-blur-xl sm:w-[380px]"
           >
             {/* Header bar */}
-            <div className="flex items-center justify-between border-b border-[var(--terminal-border)] bg-slate-900/80 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)] px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="font-display font-bold text-sm tracking-wide text-slate-100">MATCH FEED</span>
+                <span className="font-display text-sm font-bold tracking-wide text-[var(--terminal-text-strong)]">MATCH FEED</span>
                 {notifications.length > 0 && (
-                  <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-[10px] text-slate-400">
+                  <span className="rounded bg-[var(--terminal-surface)] px-2 py-0.5 font-mono text-[10px] text-[var(--terminal-text-muted)]">
                     {notifications.length}
                   </span>
                 )}
@@ -112,7 +112,7 @@ export function NotificationCenter() {
                 <button
                   onClick={() => updatePreferences({ audioEnabled: !preferences.audioEnabled })}
                   className={cn(
-                    "p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors",
+                    "rounded-md p-1.5 text-[var(--terminal-text-muted)] transition-colors hover:bg-[var(--terminal-hover)] hover:text-[var(--terminal-text-strong)]",
                     preferences.audioEnabled && "text-emerald-400",
                   )}
                   title={preferences.audioEnabled ? "Mute Audio Cues" : "Unmute Audio Cues"}
@@ -123,8 +123,8 @@ export function NotificationCenter() {
                 <button
                   onClick={() => setShowSettings(!showSettings)}
                   className={cn(
-                    "p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors",
-                    showSettings && "bg-slate-800 text-emerald-400",
+                    "rounded-md p-1.5 text-[var(--terminal-text-muted)] transition-colors hover:bg-[var(--terminal-hover)] hover:text-[var(--terminal-text-strong)]",
+                    showSettings && "bg-[var(--terminal-hover)] text-[var(--terminal-green)]",
                   )}
                   title="Filter Settings"
                 >
@@ -133,7 +133,7 @@ export function NotificationCenter() {
 
                 <button
                   onClick={clearAll}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                  className="rounded-md p-1.5 text-[var(--terminal-text-muted)] transition-colors hover:bg-[var(--terminal-hover)] hover:text-rose-400"
                   title="Clear All Notifications"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -148,46 +148,46 @@ export function NotificationCenter() {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden border-b border-[var(--terminal-border)] bg-slate-900/60 p-3 text-xs text-slate-300"
+                  className="overflow-hidden border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] p-3 text-xs text-[var(--terminal-text)]"
                 >
-                  <div className="font-semibold mb-2 text-slate-200">Alert Toggles</div>
+                  <div className="mb-2 font-semibold text-[var(--terminal-text-strong)]">Alert Toggles</div>
                   <div className="grid grid-cols-2 gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex cursor-pointer items-center gap-2">
                       <input
                         type="checkbox"
                         checked={preferences.goalAlerts}
                         onChange={(e) => updatePreferences({ goalAlerts: e.target.checked })}
-                        className="rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-0"
+                        className="rounded border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-emerald-500 focus:ring-0"
                       />
                       <span>Goal Alerts</span>
                     </label>
 
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex cursor-pointer items-center gap-2">
                       <input
                         type="checkbox"
                         checked={preferences.peakSwingAlerts}
                         onChange={(e) => updatePreferences({ peakSwingAlerts: e.target.checked })}
-                        className="rounded border-slate-700 bg-slate-800 text-cyan-500 focus:ring-0"
+                        className="rounded border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-cyan-500 focus:ring-0"
                       />
                       <span>Peak Swing Alerts</span>
                     </label>
 
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex cursor-pointer items-center gap-2">
                       <input
                         type="checkbox"
                         checked={preferences.volatilityAlerts}
                         onChange={(e) => updatePreferences({ volatilityAlerts: e.target.checked })}
-                        className="rounded border-slate-700 bg-slate-800 text-amber-500 focus:ring-0"
+                        className="rounded border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-amber-500 focus:ring-0"
                       />
                       <span>Volatility Spikes</span>
                     </label>
 
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex cursor-pointer items-center gap-2">
                       <input
                         type="checkbox"
                         checked={preferences.freezeAlerts}
                         onChange={(e) => updatePreferences({ freezeAlerts: e.target.checked })}
-                        className="rounded border-slate-700 bg-slate-800 text-rose-500 focus:ring-0"
+                        className="rounded border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-rose-500 focus:ring-0"
                       />
                       <span>Market Suspensions</span>
                     </label>
@@ -197,16 +197,16 @@ export function NotificationCenter() {
             </AnimatePresence>
 
             {/* Category Filter Tabs */}
-            <div className="flex border-b border-[var(--terminal-border)] bg-slate-900/40 px-2 py-1.5 overflow-x-auto">
+            <div className="flex overflow-x-auto border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-2 py-1.5">
               {(["All", "Goal", "PeakSwing", "VolatilitySpike", "MarketFreeze"] as FilterTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={cn(
-                    "px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap",
+                    "whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
                     activeTab === tab
-                      ? "bg-slate-800 text-slate-100 font-semibold shadow-sm"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50",
+                      ? "bg-[var(--terminal-active-bg)] font-semibold text-[var(--terminal-active-fg)] shadow-sm"
+                      : "text-[var(--terminal-text-muted)] hover:bg-[var(--terminal-hover)] hover:text-[var(--terminal-text-strong)]",
                   )}
                 >
                   {tab === "All"
@@ -223,10 +223,10 @@ export function NotificationCenter() {
             </div>
 
             {/* List Body */}
-            <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-800/40">
+            <div className="max-h-[360px] overflow-y-auto divide-y divide-[var(--terminal-line)]">
               {filteredNotifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-8 text-center text-slate-500 text-xs">
-                  <Bell className="h-6 w-6 mb-2 opacity-40" />
+                <div className="flex flex-col items-center justify-center p-8 text-center text-xs text-[var(--terminal-text-muted)]">
+                  <Bell className="mb-2 h-6 w-6 opacity-40" />
                   <span>No live events recorded yet in session</span>
                 </div>
               ) : (
@@ -234,18 +234,18 @@ export function NotificationCenter() {
                   <div
                     key={item.id}
                     onClick={() => handleItemClick(item)}
-                    className="group flex items-start gap-3 p-3 transition-colors hover:bg-slate-900/60 cursor-pointer"
+                    className="group flex cursor-pointer items-start gap-3 p-3 transition-colors hover:bg-[var(--terminal-hover)]"
                   >
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-800 bg-slate-900">
+                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--terminal-border)] bg-[var(--terminal-surface)]">
                       {getItemIcon(item.type)}
                     </div>
 
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-xs text-slate-200 truncate">{item.title}</span>
-                        <span className="font-mono text-[10px] text-slate-500">{item.minute}</span>
+                        <span className="truncate text-xs font-semibold text-[var(--terminal-text-strong)]">{item.title}</span>
+                        <span className="font-mono text-[10px] text-[var(--terminal-text-muted)]">{item.minute}</span>
                       </div>
-                      <p className="mt-0.5 font-sans text-xs text-slate-400 line-clamp-2">{item.message}</p>
+                      <p className="mt-0.5 line-clamp-2 font-sans text-xs text-[var(--terminal-text-muted)]">{item.message}</p>
                     </div>
                   </div>
                 ))
@@ -254,10 +254,10 @@ export function NotificationCenter() {
 
             {/* Footer */}
             {notifications.length > 0 && (
-              <div className="flex items-center justify-between border-t border-[var(--terminal-border)] bg-slate-900/80 px-3 py-2 text-[11px] text-slate-400">
+              <div className="flex items-center justify-between border-t border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)] px-3 py-2 text-[11px] text-[var(--terminal-text-muted)]">
                 <button
                   onClick={markAllAsRead}
-                  className="flex items-center gap-1 hover:text-slate-200 transition-colors"
+                  className="flex items-center gap-1 transition-colors hover:text-[var(--terminal-text-strong)]"
                 >
                   <CheckCheck className="h-3.5 w-3.5 text-emerald-400" />
                   <span>Mark all as read</span>

@@ -15,19 +15,19 @@ import { getEventPointIndex, logicalIndexToPercent } from "./chart-utils";
 function eventMarkerTone(event: MatchEvent) {
   switch (event.type) {
     case "goal":
-      return "border-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-green)] shadow-[0_0_18px_rgba(25,239,140,0.22)]";
+      return "border-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-green)]";
     case "red-card":
-      return "border-[#ff4b6e] bg-[#3a1622] text-[#ff8aa2] shadow-[0_0_18px_rgba(255,75,110,0.25)]";
+      return "border-[#ff4b6e] bg-[#3a1622] text-[#ff8aa2]";
     case "yellow-card":
-      return "border-[#ffd700] bg-[#302509] text-[#ffe36d] shadow-[0_0_18px_rgba(255,215,0,0.2)]";
+      return "border-[#ffd700] bg-[#302509] text-[#ffe36d]";
     case "penalty-awarded":
     case "penalty-scored":
     case "penalty-missed":
-      return "border-[var(--terminal-blue)] bg-sky-500/10 text-[var(--terminal-blue)] shadow-[0_0_18px_rgba(16,162,204,0.2)]";
+      return "border-[var(--terminal-blue)] bg-sky-500/10 text-[var(--terminal-blue)]";
     case "var":
-      return "border-[var(--terminal-blue)] bg-sky-500/10 text-[var(--terminal-blue)] shadow-[0_0_18px_rgba(127,174,202,0.2)]";
+      return "border-[var(--terminal-blue)] bg-sky-500/10 text-[var(--terminal-blue)]";
     default:
-      return "border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-[var(--terminal-text-strong)] shadow-[0_0_18px_var(--terminal-shadow)]";
+      return "border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-[var(--terminal-text-strong)]";
   }
 }
 

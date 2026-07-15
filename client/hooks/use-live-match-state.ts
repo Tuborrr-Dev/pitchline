@@ -158,40 +158,10 @@ function isSameAnnotation(
   );
 }
 
-function isSameAnnotationRecord(
-  annotation: Pick<
-    Annotation,
-    "fixture_id" | "id" | "minute" | "source_action" | "source_id" | "source_seconds" | "text" | "type"
-  >,
-  payload: Pick<
-    Annotation,
-    "fixture_id" | "id" | "minute" | "source_action" | "source_id" | "source_seconds" | "text" | "type"
-  >,
-) {
-  if (payload.id !== undefined && annotation.id !== undefined) {
-    return annotation.id === payload.id && annotation.type === payload.type;
-  }
-
-  if (annotation.type !== payload.type) {
-    return false;
-  }
-
-  if (payload.type === "commentary") {
-    return (
-      isSameAnnotation(annotation, payload) &&
-      annotation.minute === payload.minute &&
-      annotation.source_seconds === payload.source_seconds &&
-      annotation.text === payload.text
-    );
-  }
-
-  return isSameAnnotation(annotation, payload);
-}
-
 function upsertAnnotationRecord(annotations: Annotation[], payload: Annotation) {
   let didUpdate = false;
   const nextAnnotations = annotations.map((annotation) => {
-    if (!isSameAnnotationRecord(annotation, payload)) return annotation;
+    if (!isSameAnnotation(annotation, payload)) return annotation;
     didUpdate = true;
     return payload;
   });
@@ -216,7 +186,7 @@ function upsertAnnotationEvent(events: MatchEvent[], payload: Annotation, fixtur
 function appendAnnotation(current: LiveMatchState, payload: Annotation) {
   if (
     current.annotations.some(
-      (annotation) => isSameAnnotationRecord(annotation, payload),
+      (annotation) => isSameAnnotation(annotation, payload),
     )
   ) {
     return current;
@@ -359,10 +329,7 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
           return {
             ...current,
             annotations,
-            events:
-              annotations.length > 0
-                ? annotationsToMatchEvents(annotations, current.fixture)
-                : current.events,
+            events: mergeMatchEvents(current.events, annotationsToMatchEvents(annotations, current.fixture)),
           };
         });
 
