@@ -85,13 +85,12 @@ function formatUtcKickoff(kickoffUtc: string) {
 function toMatchStatus(phase: string | null | undefined, kickoffUtc?: string) {
   const value = (phase ?? "").toLowerCase();
   const kickoffTime = kickoffUtc ? new Date(kickoffUtc).getTime() : Number.NaN;
-
-  if (
+  const isExplicitlyUpcoming =
     value.includes("scheduled") ||
     value.includes("not started") ||
-    value.includes("pre") ||
-    (!Number.isNaN(kickoffTime) && kickoffTime > Date.now())
-  ) {
+    value.includes("pre");
+
+  if (isExplicitlyUpcoming || (!value && !Number.isNaN(kickoffTime) && kickoffTime > Date.now())) {
     return "upcoming" satisfies MatchStatus;
   }
 

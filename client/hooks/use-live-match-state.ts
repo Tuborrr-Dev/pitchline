@@ -4,7 +4,7 @@ import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { startTransition, useEffect, useEffectEvent, useMemo, useState } from "react";
 
 import { ANNOTATION_API_BASE_URL, getApiBaseUrl } from "@/config/api";
-import type { Annotation, LiveMatchState, MatchEvent } from "@/lib/types";
+import type { Annotation, LiveMatchState, MatchEvent, MatchStatus } from "@/lib/types";
 import {
   annotationEventId,
   annotationToMatchEvent,
@@ -64,6 +64,16 @@ function toDisplayMinute(minute?: string | null) {
   const cleanMinute = (minute ?? "").trim();
   if (!cleanMinute) return "0'";
   return cleanMinute.includes("'") ? cleanMinute : `${cleanMinute}'`;
+}
+
+function statusFromGameState(gameState?: string | null): MatchStatus {
+  const value = (gameState ?? "").toLowerCase();
+
+  if (value.includes("finished") || value.includes("full") || value === "ft") {
+    return "finished";
+  }
+
+  return "live";
 }
 
 function pushEvent(events: MatchEvent[], event: MatchEvent) {
@@ -233,6 +243,7 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
             teamBCode: deriveTeamCode(awayName),
             scoreA: payload.homeScore,
             scoreB: payload.awayScore,
+            status: statusFromGameState(payload.gameState),
             phase: payload.gameState?.trim() || current.fixture.phase,
             minute: toDisplayMinute(payload.minute),
             leadProbability: Math.max(

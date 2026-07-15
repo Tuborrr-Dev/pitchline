@@ -42,9 +42,13 @@ export function isMatchBreakFixture(fixture: LiveMatchState["fixture"]) {
 export function isPreKickoffFixture(fixture: LiveMatchState["fixture"]) {
   const kickoffTime = new Date(fixture.kickoffUtc).getTime();
   const metadata = `${fixture.status} ${fixture.phase} ${fixture.minute} ${fixture.competition} ${fixture.stage}`.toLowerCase();
-  const kickoffIsFuture = !Number.isNaN(kickoffTime) && kickoffTime > Date.now();
+  const kickoffIsFuture = fixture.status === "upcoming" && !Number.isNaN(kickoffTime) && kickoffTime > Date.now();
 
   if (isMatchBreakFixture(fixture)) {
+    return false;
+  }
+
+  if (fixture.status === "live" || fixture.status === "finished") {
     return false;
   }
 
