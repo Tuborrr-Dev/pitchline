@@ -26,16 +26,24 @@ export function WalletControl({
   wallet: WalletState;
   walletPickerOpen: boolean;
 }) {
+  const isWrongNetwork = wallet.isConnected && !wallet.isSupportedChain;
+  const hasConnectionError = wallet.status === "error" && !isWrongNetwork && Boolean(wallet.error);
+
   return (
     <motion.div layout>
       <Button
         type="button"
         onClick={onConnect}
+        title={isWrongNetwork ? wallet.error ?? `Switch to ${wallet.requiredNetworkName}` : undefined}
         disabled={wallet.status === "checking" || wallet.status === "connecting"}
         className={cn(
           "h-10 min-w-0 cursor-pointer rounded-none border px-3 font-mono text-[0.68rem] font-semibold uppercase shadow-none sm:h-11 sm:px-4 sm:text-[0.78rem]",
           mobileSearchOpen && !isLanding && "w-10 px-0 sm:w-auto sm:px-4",
-          wallet.isConnected
+          isWrongNetwork
+            ? "border-[#ff4b6e] bg-red-500/10 text-[#ff4b6e] hover:bg-red-500/15"
+            : hasConnectionError
+              ? "border-[#ff4b6e] bg-red-500/10 text-[#ff4b6e] hover:bg-red-500/15"
+            : wallet.isConnected
             ? "border-[var(--terminal-green)] bg-[var(--terminal-green)] text-[var(--terminal-inverse-fg)]"
             : "border-[var(--terminal-green)] bg-transparent text-[var(--terminal-green)] hover:bg-emerald-500/10",
           (wallet.status === "checking" || wallet.status === "connecting") && "cursor-wait opacity-80",
@@ -46,14 +54,18 @@ export function WalletControl({
         </span>
         <AnimatePresence mode="wait" initial={false}>
           <motion.span
-            key={wallet.isConnected ? "connected" : wallet.status}
+            key={isWrongNetwork ? "wrong-network" : hasConnectionError ? "wallet-error" : wallet.isConnected ? "connected" : wallet.status}
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.14 }}
             className={cn(mobileSearchOpen && !isLanding ? "hidden sm:inline" : "inline")}
           >
-            {wallet.isConnected
+            {isWrongNetwork
+              ? "Wrong Network"
+              : hasConnectionError
+                ? "Wallet Error"
+              : wallet.isConnected
               ? wallet.addressLabel
               : wallet.status === "checking"
                 ? "Checking..."
@@ -82,7 +94,12 @@ export function WalletControl({
                 wallet.selectedWalletId === provider.id && "bg-[var(--terminal-hover)]",
               )}
             >
-              <span className="text-[0.72rem] font-semibold text-[var(--terminal-text-strong)]">{provider.name}</span>
+              <span className="flex flex-col gap-0.5">
+                <span className="text-[0.72rem] font-semibold text-[var(--terminal-text-strong)]">{provider.name}</span>
+                <span className="text-[0.55rem] text-[var(--terminal-text-muted)]">
+                  {provider.source === "walletconnect" ? "Mobile app or QR" : "Browser extension"}
+                </span>
+              </span>
               <span className="text-[0.58rem] text-[var(--terminal-text-muted)]">
                 {wallet.selectedWalletId === provider.id ? "Selected" : "Use"}
               </span>
@@ -98,3 +115,4 @@ export function WalletControl({
     </motion.div>
   );
 }
+

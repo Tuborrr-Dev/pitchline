@@ -10,13 +10,15 @@ import { useState } from "react";
 import { ConnectWalletModal } from "@/components/landing-page/connect-wallet-modal";
 import { MiniTerminalChart } from "@/components/landing-page/mini-terminal-chart";
 import { Button } from "@/components/ui/button";
-import { connectWallet, selectWallet, useWallet } from "@/lib/wallet-session";
+import { useWalletConnectModal } from "@/components/wallet-connect-provider";
+import { WALLETCONNECT_WALLET_ID, connectWallet, selectWallet, useWallet } from "@/lib/wallet-session";
 
 export function LandingPage() {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
   const [walletOpen, setWalletOpen] = useState(false);
   const wallet = useWallet();
+  const walletConnect = useWalletConnectModal();
   const isDarkTheme = resolvedTheme === "dark";
   const heroImage = isDarkTheme
     ? "/images/pitchline-hero-football.png"
@@ -31,11 +33,20 @@ export function LandingPage() {
   }
 
   async function handleConnect() {
+    if (wallet.selectedWalletId === WALLETCONNECT_WALLET_ID) {
+      await walletConnect.openConnect();
+      return;
+    }
+
     await connectWallet();
   }
 
-  function handleWalletSelection(walletId: string) {
+  async function handleWalletSelection(walletId: string) {
     selectWallet(walletId);
+
+    if (walletId === WALLETCONNECT_WALLET_ID) {
+      await walletConnect.openConnect();
+    }
   }
 
   return (
@@ -156,7 +167,8 @@ export function LandingPage() {
 
       <ConnectWalletModal
         open={walletOpen}
-        connected={wallet.isConnected}
+        connected={wallet.isConnected && wallet.isSupportedChain}
+        wrongNetwork={wallet.isWrongNetwork}
         addressLabel={wallet.addressLabel}
         error={wallet.error}
         isConnecting={wallet.status === "connecting"}
@@ -171,3 +183,4 @@ export function LandingPage() {
     </div>
   );
 }
+

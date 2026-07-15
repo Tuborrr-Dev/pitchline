@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
 import { QueryProvider } from "@/components/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { WalletConnectProvider } from "@/components/wallet-connect-provider";
 import { NotificationToasts } from "@/components/notifications/notification-toasts";
 import { NotificationProvider } from "@/context/notification-provider";
 import "./globals.css";
@@ -49,18 +50,21 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <QueryProvider>
-            <NotificationProvider>
-              <div className="flex h-screen flex-col overflow-hidden">
-                <Suspense fallback={<div className="h-[5.125rem] shrink-0 border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)]" />}>
-                  <AppHeader />
-                </Suspense>
-                <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
-              </div>
-              <NotificationToasts />
-            </NotificationProvider>
+            <WalletConnectProvider>
+              <NotificationProvider>
+                <div className="flex h-screen flex-col overflow-hidden">
+                  <Suspense fallback={<div className="h-[5.125rem] shrink-0 border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)]" />}>
+                    <AppHeader />
+                  </Suspense>
+                  <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+                </div>
+                <NotificationToasts />
+              </NotificationProvider>
+            </WalletConnectProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+

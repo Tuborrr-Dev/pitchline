@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 export function ConnectWalletModal({
   open,
   connected,
+  wrongNetwork,
   addressLabel,
   error,
   isConnecting,
@@ -22,17 +23,20 @@ export function ConnectWalletModal({
 }: {
   open: boolean;
   connected: boolean;
+  wrongNetwork: boolean;
   addressLabel: string | null;
   error: string | null;
   isConnecting: boolean;
   hasProvider: boolean;
-  availableWallets: Array<{ id: string; name: string }>;
+  availableWallets: Array<{ id: string; name: string; source?: string }>;
   selectedWalletId: string | null;
   onClose: () => void;
   onConnect: () => Promise<void>;
   onSelectWallet: (walletId: string) => void;
   onEnterApp: () => void;
 }) {
+  const hasConnectionError = Boolean(error) && !connected && !wrongNetwork;
+
   return (
     <AnimatePresence>
       {open ? (
@@ -56,16 +60,20 @@ export function ConnectWalletModal({
             <div className="p-4">
               <div className="border border-[var(--terminal-border)] bg-[var(--terminal-surface)] p-4">
                 <div className="flex items-center gap-3">
-                  <span className={cn("flex h-10 w-10 items-center justify-center border", connected ? "border-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-green)]" : "border-[var(--terminal-border)] text-[var(--terminal-text-muted)]")}>
-                    {connected ? <Check className="h-5 w-5" /> : <Wallet className="h-5 w-5" />}
+                  <span className={cn("flex h-10 w-10 items-center justify-center border", connected ? "border-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-green)]" : wrongNetwork || hasConnectionError ? "border-red-500/30 bg-red-500/10 text-[#d71945]" : "border-[var(--terminal-border)] text-[var(--terminal-text-muted)]")}>
+                    {connected ? <Check className="h-5 w-5" /> : wrongNetwork || hasConnectionError ? <X className="h-5 w-5" /> : <Wallet className="h-5 w-5" />}
                   </span>
                   <div>
                     <p className="font-display text-[1.35rem] font-bold uppercase text-[var(--terminal-text-strong)]">
-                      {connected ? addressLabel : hasProvider ? "No Wallet Connected" : "Wallet Not Found"}
+                      {connected ? addressLabel : wrongNetwork ? "Wrong Network" : hasConnectionError ? "Connection Error" : hasProvider ? "No Wallet Connected" : "Wallet Not Found"}
                     </p>
                     <p className="font-mono text-[0.7rem] uppercase text-[var(--terminal-text-muted)]">
                       {connected
                         ? "Session unlocked"
+                        : wrongNetwork
+                          ? "Switch to Ethereum mainnet"
+                        : hasConnectionError
+                          ? "Retry the wallet request"
                         : hasProvider
                           ? "Connect to enter the market terminal"
                           : "Install MetaMask or another EVM wallet"}
@@ -114,6 +122,10 @@ export function ConnectWalletModal({
               >
                 {connected
                   ? "Enter Markets"
+                  : wrongNetwork
+                    ? "Switch Network"
+                  : hasConnectionError
+                    ? "Retry Connection"
                   : isConnecting
                     ? "Connecting..."
                     : availableWallets.length > 1 && !selectedWalletId
@@ -130,3 +142,4 @@ export function ConnectWalletModal({
     </AnimatePresence>
   );
 }
+

@@ -12,7 +12,9 @@ Use these docs in this order:
    Chart library decision, constraints, and how the chart should behave.
 4. `WALLET_AUTH_FLOW.md`
    Frontend wallet connect behavior, backend auth boundary, nonce flow, and signature verification model.
-5. `DELIVERY_PLAN.md`
+5. `WALLETCONNECT_MOBILE_PLAN.md`
+   Why WalletConnect is the mobile wallet path, how to add it safely, and how to preserve desktop EVM wallet behavior.
+6. `DELIVERY_PLAN.md`
    Recommended build order, milestones, and implementation sequence.
 
 Scope notes:
