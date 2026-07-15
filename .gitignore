@@ -14,3 +14,9 @@ pitchline/annotation-service/test.py
 *.json
 !app/schemas/*.js
 pitchline/annotation-service/get_events_ALL_fixtures.py
+annotation-service/delete_db.py
+annotation-service/fixture_kickoffs.json
+annotation-service/get_events_ALL_fixtures.py
+annotation-service/stream_BE_SSE.py
+annotation-service/stream_live.py
+annotation-service/ backfill_intervals.py
