@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Pitchline.Api.Hubs;
 using Pitchline.Infrastructure.Postgres;
@@ -12,18 +13,28 @@ public class SignalREventBus(
     MatchStateRepository repo,
     PostgresRepository pg,
     AnnotationWebhookClient annotation,
-    ILogger<SignalREventBus> logger) : IMatchEventBus
+    ILogger<SignalREventBus> logger,
+    IConfiguration config) : IMatchEventBus
 {
     private readonly IHubContext<MatchHub> _hub = hub;
     private readonly MatchStateRepository _repo = repo;
     private readonly PostgresRepository _pg = pg;
     private readonly AnnotationWebhookClient _annotation = annotation;
     private readonly ILogger<SignalREventBus> _logger = logger;
+    private readonly IConfiguration _config = config;
 
     public async Task PublishScoreUpdateAsync(EnrichedScoreUpdate enriched, CancellationToken ct = default)
     {
         var fixtureId = enriched.Score.FixtureId;
         var group = $"fixture:{fixtureId}";
+
+        var enforceKickoff = _config.GetValue("TxLine:EnforceKickoffCheck", true);
+        if (enforceKickoff && DateTimeOffset.UtcNow < enriched.Fixture.KickOff)
+        {
+            _logger.LogInformation("[BUS] Dropping ScoreUpdate for fixture {FixtureId}: kickoff time {KickOff} not reached yet (now: {Now})",
+                fixtureId, enriched.Fixture.KickOff, DateTimeOffset.UtcNow);
+            return;
+        }
 
         // 1. Read previous state BEFORE writing from PostgreSQL
         var scoreBefore = await _pg.GetScoreBeforeAsync(fixtureId, ct);
@@ -108,6 +119,15 @@ public class SignalREventBus(
     {
         var fixtureId = enriched.Odds.FixtureId;
         var group = $"fixture:{fixtureId}";
+
+        var enforceKickoff = _config.GetValue("TxLine:EnforceKickoffCheck", true);
+        if (enforceKickoff && DateTimeOffset.UtcNow < enriched.Fixture.KickOff)
+        {
+            _logger.LogInformation("[BUS] Dropping OddsUpdate for fixture {FixtureId}: kickoff time {KickOff} not reached yet (now: {Now})",
+                fixtureId, enriched.Fixture.KickOff, DateTimeOffset.UtcNow);
+            return;
+        }
+
         var (home, draw, away) = enriched.Odds.ToImpliedProbabilities();
 
         // 1. Read previous probability BEFORE writing from PostgreSQL
