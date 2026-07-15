@@ -13,7 +13,7 @@ function getNotificationConfig(type: NotificationType) {
     case "Goal":
       return {
         icon: Flame,
-        bgGradient: "from-emerald-950/90 via-slate-900/95 to-emerald-900/40",
+        bgSurface: "bg-[var(--terminal-panel)]",
         borderColor: "border-emerald-500/50",
         glowColor: "shadow-emerald-500/20",
         badgeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
@@ -22,7 +22,7 @@ function getNotificationConfig(type: NotificationType) {
     case "PeakSwing":
       return {
         icon: TrendingUp,
-        bgGradient: "from-cyan-950/90 via-slate-900/95 to-indigo-950/40",
+        bgSurface: "bg-[var(--terminal-panel)]",
         borderColor: "border-cyan-500/50",
         glowColor: "shadow-cyan-500/20",
         badgeBg: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
@@ -31,7 +31,7 @@ function getNotificationConfig(type: NotificationType) {
     case "VolatilitySpike":
       return {
         icon: Activity,
-        bgGradient: "from-amber-950/90 via-slate-900/95 to-orange-950/40",
+        bgSurface: "bg-[var(--terminal-panel)]",
         borderColor: "border-amber-500/50",
         glowColor: "shadow-amber-500/20",
         badgeBg: "bg-amber-500/20 text-amber-300 border-amber-500/40",
@@ -40,7 +40,7 @@ function getNotificationConfig(type: NotificationType) {
     case "MarketFreeze":
       return {
         icon: PauseCircle,
-        bgGradient: "from-rose-950/90 via-slate-900/95 to-red-950/40",
+        bgSurface: "bg-[var(--terminal-panel)]",
         borderColor: "border-rose-500/50",
         glowColor: "shadow-rose-500/20",
         badgeBg: "bg-rose-500/20 text-rose-300 border-rose-500/40",
@@ -49,11 +49,11 @@ function getNotificationConfig(type: NotificationType) {
     default:
       return {
         icon: AlertTriangle,
-        bgGradient: "from-slate-900/95 to-slate-950/90",
-        borderColor: "border-slate-700/50",
+        bgSurface: "bg-[var(--terminal-panel)]",
+        borderColor: "border-[var(--terminal-border)]",
         glowColor: "shadow-slate-500/10",
-        badgeBg: "bg-slate-700/30 text-slate-300 border-slate-600/40",
-        progressBg: "bg-slate-400",
+        badgeBg: "bg-[var(--terminal-surface)] text-[var(--terminal-text)] border-[var(--terminal-border)]",
+        progressBg: "bg-[var(--terminal-text-muted)]",
       };
   }
 }
@@ -86,22 +86,22 @@ function ToastCard({ item, onDismiss }: { item: MatchNotificationItem; onDismiss
       exit={{ opacity: 0, scale: 0.9, x: 50 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
       onClick={handleCardClick}
-      className={`pointer-events-auto relative group flex flex-col overflow-hidden rounded-xl border ${config.borderColor} bg-gradient-to-r ${config.bgGradient} backdrop-blur-md p-3.5 shadow-xl ${config.glowColor} cursor-pointer transition-all duration-200 hover:scale-[1.02]`}
+      className={`pointer-events-auto group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border ${config.borderColor} ${config.bgSurface} p-3.5 text-[var(--terminal-text)] shadow-xl ${config.glowColor} backdrop-blur-md transition-all duration-200 hover:scale-[1.02]`}
     >
       <div className="flex items-start gap-3">
         <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${config.badgeBg}`}>
           <Icon className="h-4 w-4" />
         </div>
 
-        <div className="flex-1 min-w-0 pr-5">
+        <div className="min-w-0 flex-1 pr-5">
           <div className="flex items-center justify-between gap-2">
-            <span className="font-semibold text-xs text-slate-100 truncate">{item.title}</span>
-            <span className="shrink-0 text-[10px] font-mono text-slate-400 bg-slate-950/50 px-1.5 py-0.5 rounded border border-slate-800">
+            <span className="truncate text-xs font-semibold text-[var(--terminal-text-strong)]">{item.title}</span>
+            <span className="shrink-0 rounded border border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--terminal-text-muted)]">
               {item.minute}
             </span>
           </div>
 
-          <p className="mt-1 font-sans text-xs text-slate-300 line-clamp-2 leading-relaxed">{item.message}</p>
+          <p className="mt-1 line-clamp-2 font-sans text-xs leading-relaxed text-[var(--terminal-text-muted)]">{item.message}</p>
         </div>
 
         <button
@@ -109,7 +109,7 @@ function ToastCard({ item, onDismiss }: { item: MatchNotificationItem; onDismiss
             e.stopPropagation();
             onDismiss();
           }}
-          className="absolute top-2.5 right-2.5 p-1 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-colors"
+          className="absolute right-2.5 top-2.5 rounded-md p-1 text-[var(--terminal-text-muted)] transition-colors hover:bg-[var(--terminal-hover)] hover:text-[var(--terminal-text-strong)]"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -130,7 +130,7 @@ export function NotificationToasts() {
   const { activeToasts, dismissToast } = useNotifications();
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2.5 w-full max-w-sm px-4 sm:px-0 pointer-events-none">
+    <div className="pointer-events-none fixed right-4 top-4 z-[9999] flex w-full max-w-sm flex-col gap-2.5 px-4 sm:px-0">
       <AnimatePresence mode="popLayout">
         {activeToasts.map((toast) => (
           <ToastCard key={toast.id} item={toast} onDismiss={() => dismissToast(toast.id)} />

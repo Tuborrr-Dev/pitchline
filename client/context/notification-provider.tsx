@@ -139,7 +139,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       connection.off("MatchNotification");
       connection.stop().catch(() => {});
     };
-  }, []);
+  }, [handleIncomingNotification]);
 
   const dismissToast = (id: string) => {
     setActiveToasts((prev) => prev.filter((t) => t.id !== id));

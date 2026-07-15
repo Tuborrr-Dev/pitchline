@@ -4,7 +4,7 @@ import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { startTransition, useEffect, useEffectEvent, useMemo, useState } from "react";
 
 import { ANNOTATION_API_BASE_URL, getApiBaseUrl } from "@/config/api";
-import type { Annotation, LiveMatchState, MatchEvent } from "@/lib/types";
+import type { Annotation, LiveMatchState, MatchEvent, MatchStatus } from "@/lib/types";
 import {
   annotationEventId,
   annotationToMatchEvent,
@@ -64,6 +64,16 @@ function toDisplayMinute(minute?: string | null) {
   const cleanMinute = (minute ?? "").trim();
   if (!cleanMinute) return "0'";
   return cleanMinute.includes("'") ? cleanMinute : `${cleanMinute}'`;
+}
+
+function statusFromGameState(gameState?: string | null): MatchStatus {
+  const value = (gameState ?? "").toLowerCase();
+
+  if (value.includes("finished") || value.includes("full") || value === "ft") {
+    return "finished";
+  }
+
+  return "live";
 }
 
 function pushEvent(events: MatchEvent[], event: MatchEvent) {
@@ -158,40 +168,10 @@ function isSameAnnotation(
   );
 }
 
-function isSameAnnotationRecord(
-  annotation: Pick<
-    Annotation,
-    "fixture_id" | "id" | "minute" | "source_action" | "source_id" | "source_seconds" | "text" | "type"
-  >,
-  payload: Pick<
-    Annotation,
-    "fixture_id" | "id" | "minute" | "source_action" | "source_id" | "source_seconds" | "text" | "type"
-  >,
-) {
-  if (payload.id !== undefined && annotation.id !== undefined) {
-    return annotation.id === payload.id && annotation.type === payload.type;
-  }
-
-  if (annotation.type !== payload.type) {
-    return false;
-  }
-
-  if (payload.type === "commentary") {
-    return (
-      isSameAnnotation(annotation, payload) &&
-      annotation.minute === payload.minute &&
-      annotation.source_seconds === payload.source_seconds &&
-      annotation.text === payload.text
-    );
-  }
-
-  return isSameAnnotation(annotation, payload);
-}
-
 function upsertAnnotationRecord(annotations: Annotation[], payload: Annotation) {
   let didUpdate = false;
   const nextAnnotations = annotations.map((annotation) => {
-    if (!isSameAnnotationRecord(annotation, payload)) return annotation;
+    if (!isSameAnnotation(annotation, payload)) return annotation;
     didUpdate = true;
     return payload;
   });
@@ -216,7 +196,7 @@ function upsertAnnotationEvent(events: MatchEvent[], payload: Annotation, fixtur
 function appendAnnotation(current: LiveMatchState, payload: Annotation) {
   if (
     current.annotations.some(
-      (annotation) => isSameAnnotationRecord(annotation, payload),
+      (annotation) => isSameAnnotation(annotation, payload),
     )
   ) {
     return current;
@@ -263,6 +243,7 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
             teamBCode: deriveTeamCode(awayName),
             scoreA: payload.homeScore,
             scoreB: payload.awayScore,
+            status: statusFromGameState(payload.gameState),
             phase: payload.gameState?.trim() || current.fixture.phase,
             minute: toDisplayMinute(payload.minute),
             leadProbability: Math.max(
@@ -359,10 +340,7 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
           return {
             ...current,
             annotations,
-            events:
-              annotations.length > 0
-                ? annotationsToMatchEvents(annotations, current.fixture)
-                : current.events,
+            events: mergeMatchEvents(current.events, annotationsToMatchEvents(annotations, current.fixture)),
           };
         });
 
