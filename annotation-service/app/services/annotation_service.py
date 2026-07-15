@@ -25,6 +25,13 @@ class AnnotationService:
         self._emitted: set[tuple] = set()
         self.lineup_store = LineupStore()  # (FixtureId, Action, Id) already emitted
 
+    async def restore_lineups(self, fixture_id: int) -> None:
+        data = await self.lineup_store.load(fixture_id)
+        if data is None:
+            return
+        team_names, player_names = data
+        self.entity_resolver.import_lineups(team_names, player_names)
+
     async def process_event(self, event: dict):
         action = event.get("Action")
 
