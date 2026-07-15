@@ -116,9 +116,50 @@ export function MarketOverview({
   });
 
   const effectiveViewMode = isMobile ? "grid" : viewMode;
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    try {
+      sessionStorage.setItem(`pitchline_scroll_${activeTab}`, container.scrollTop.toString());
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    try {
+      const savedScroll = sessionStorage.getItem(`pitchline_scroll_${activeTab}`);
+      if (!savedScroll) return;
+
+      const targetScroll = Number(savedScroll);
+      if (Number.isNaN(targetScroll) || targetScroll <= 0) return;
+
+      container.scrollTop = targetScroll;
+      const t1 = setTimeout(() => { if (container) container.scrollTop = targetScroll; }, 40);
+      const t2 = setTimeout(() => { if (container) container.scrollTop = targetScroll; }, 160);
+      const t3 = setTimeout(() => { if (container) container.scrollTop = targetScroll; }, 360);
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
+    } catch {
+      // Ignore storage errors
+    }
+  }, [activeTab, filteredRows.length]);
 
   return (
-    <div className="h-full overflow-y-auto bg-[var(--background)] pb-20 text-[var(--terminal-text)]">
+    <div
+      ref={scrollContainerRef}
+      onScroll={handleScroll}
+      className="h-full overflow-y-auto bg-[var(--background)] pb-20 text-[var(--terminal-text)]"
+    >
       <main className="w-full overflow-hidden bg-[var(--terminal-bg)]">
         <MarketHeader
           activeTab={activeTab}
