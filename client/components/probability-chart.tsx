@@ -25,7 +25,6 @@ import { ChartHeader } from "./probability-chart/chart-header";
 import {
   buildVix,
   canAnimateLatestPoint,
-  findFocusedPoint,
   getVisibleVixPoints,
   interpolatePoint,
   interpolatePointTime,
@@ -46,6 +45,7 @@ interface ProbabilityChartProps {
   selectedEvent?: MatchEvent | null;
   connectionState: ConnectionState;
   analytics?: MarketAnalyticsData;
+  followLatest?: boolean;
   onSelectEvent?: (eventId: string) => void;
 }
 
@@ -57,6 +57,7 @@ export function ProbabilityChart({
   selectedEvent,
   connectionState,
   analytics,
+  followLatest = true,
   onSelectEvent,
 }: ProbabilityChartProps) {
   const { resolvedTheme } = useTheme();
@@ -76,16 +77,11 @@ export function ProbabilityChart({
   const [visibleLogicalRange, setVisibleLogicalRange] = useState<LogicalRange | null>(null);
   const [renderedHistory, setRenderedHistory] = useState(normalizedHistory);
 
-  const focusedPoint = useMemo(
-    () => findFocusedPoint(renderedHistory, selectedEvent),
-    [renderedHistory, selectedEvent],
-  );
+  const latestPoint = renderedHistory[renderedHistory.length - 1] ?? null;
   const inspectedPoint =
     renderedHistory.find((point) => point.timestamp === hoveredTimestamp) ??
-    focusedPoint ??
-    renderedHistory[renderedHistory.length - 1] ??
+    latestPoint ??
     null;
-  const latestPoint = renderedHistory[renderedHistory.length - 1] ?? null;
   const previousPoint = renderedHistory.length > 1 ? renderedHistory[renderedHistory.length - 2] : null;
   const teamADelta = latestPoint && previousPoint ? latestPoint.teamA - previousPoint.teamA : 0;
   const teamBDelta = latestPoint && previousPoint ? latestPoint.teamB - previousPoint.teamB : 0;
@@ -260,6 +256,10 @@ export function ProbabilityChart({
         didFitContentRef.current = true;
       }
 
+      if (followLatest) {
+        chartRef.current?.timeScale().scrollToRealTime();
+      }
+
       return;
     }
 
@@ -303,6 +303,10 @@ export function ProbabilityChart({
         didFitContentRef.current = true;
       }
 
+      if (followLatest) {
+        chartRef.current?.timeScale().scrollToRealTime();
+      }
+
       if (progress < 1) {
         animationFrameRef.current = requestAnimationFrame(renderFrame);
         return;
@@ -314,7 +318,7 @@ export function ProbabilityChart({
     };
 
     animationFrameRef.current = requestAnimationFrame(renderFrame);
-  }, [normalizedHistory, resolvedTheme]);
+  }, [followLatest, normalizedHistory, resolvedTheme]);
 
   return (
     <motion.section

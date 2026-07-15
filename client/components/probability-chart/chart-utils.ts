@@ -7,18 +7,27 @@ export function toTime(timestamp: string): Time {
 }
 
 export function normalizeChartHistory(history: ProbabilityPoint[]) {
-  const dedupedBySecond = new Map<number, ProbabilityPoint>();
+  let previousSecond = 0;
 
-  history.forEach((point) => {
-    const time = new Date(point.timestamp).getTime();
-    if (Number.isNaN(time)) return;
+  return history.map((point, index) => {
+    const parsedTime = new Date(point.timestamp).getTime();
+    const parsedSecond = Number.isNaN(parsedTime) ? Number.NaN : Math.floor(parsedTime / 1000);
+    const nextSecond = Number.isNaN(parsedSecond) || parsedSecond <= previousSecond
+      ? previousSecond + 1
+      : parsedSecond;
 
-    dedupedBySecond.set(Math.floor(time / 1000), point);
+    previousSecond = nextSecond;
+
+    if (nextSecond === parsedSecond) {
+      return point;
+    }
+
+    return {
+      ...point,
+      timestamp: new Date(nextSecond * 1000).toISOString(),
+      minuteLabel: point.minuteLabel || `${index}'`,
+    };
   });
-
-  return [...dedupedBySecond.entries()]
-    .sort(([left], [right]) => left - right)
-    .map(([, point]) => point);
 }
 
 export function parseMinuteLabel(minuteLabel: string) {

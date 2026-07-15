@@ -13,7 +13,9 @@ import {
   createFixtureFromDto,
   createInitialEvents,
   formatMinuteLabel,
+  historyToMatchEvents,
   historyToProbabilityPoints,
+  mergeMatchEvents,
 } from "@/services/pitchline-mappers";
 
 export async function fetchInitialLiveMatchState(fixtureId: string): Promise<LiveMatchState | null> {
@@ -62,17 +64,31 @@ export async function fetchInitialLiveMatchState(fixtureId: string): Promise<Liv
     : baseFixture;
 
   const initialHistory = historyToProbabilityPoints(history, resolvedFixture, currentProbabilities);
+  const latestHistoryPoint = initialHistory[initialHistory.length - 1];
+  const displayProbabilities = latestHistoryPoint
+    ? {
+        teamA: latestHistoryPoint.teamA,
+        draw: latestHistoryPoint.draw,
+        teamB: latestHistoryPoint.teamB,
+      }
+    : currentProbabilities;
+  const displayFixture = {
+    ...resolvedFixture,
+    leadProbability: Math.max(displayProbabilities.teamA, displayProbabilities.teamB),
+  };
   const lastTimestamp =
     initialHistory[initialHistory.length - 1]?.timestamp ?? new Date().toISOString();
   const initialAnnotations = await fetchAnnotationHistory(fixtureId);
+  const be1Events = historyToMatchEvents(history, displayFixture);
+  const be2Events = annotationsToMatchEvents(initialAnnotations, displayFixture);
   const initialEvents =
-    initialAnnotations.length > 0
-      ? annotationsToMatchEvents(initialAnnotations, resolvedFixture)
-      : createInitialEvents(resolvedFixture);
+    be1Events.length > 0 || be2Events.length > 0
+      ? mergeMatchEvents(be1Events, be2Events)
+      : createInitialEvents(displayFixture);
 
   return {
-    fixture: resolvedFixture,
-    currentProbabilities,
+    fixture: displayFixture,
+    currentProbabilities: displayProbabilities,
     history: initialHistory,
     events: initialEvents,
     annotations: initialAnnotations,

@@ -2,7 +2,6 @@
 
 import { Activity, Grid3X3, List } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -29,12 +28,6 @@ export function MarketHeader({
   setViewMode: (mode: ViewMode) => void;
   viewMode: ViewMode;
 }) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   return (
     <motion.section
       initial={{ opacity: 0, y: 8 }}
@@ -66,7 +59,7 @@ export function MarketHeader({
           </div>
           <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
             <span>{activeTab === "history" ? "Settled markets" : "Active markets"}: {filteredCount}</span>
-            {isMounted && isFetching ? <span>Refreshing feed</span> : null}
+            {isFetching ? <span>Refreshing feed</span> : null}
             {deferredQuery.trim() ? <span>Filter: {deferredQuery}</span> : null}
           </div>
         </div>

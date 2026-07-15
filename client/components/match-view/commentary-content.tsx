@@ -36,7 +36,7 @@ export function CommentaryContent({
                 kind: "annotation" as const,
               }) satisfies CommentaryFeedItem,
           )
-          .sort((left, right) => right.index - left.index)
+          .sort((left, right) => right.annotation.source_id - left.annotation.source_id)
       : events
           .map(
             (event) =>
@@ -110,14 +110,6 @@ export function CommentaryContent({
                   <p className="mt-3 whitespace-pre-wrap text-[0.68rem] leading-6 text-[var(--terminal-text)]">
                     {item.text ?? item.reason ?? item.outcome ?? "Market-state annotation received."}
                   </p>
-                  {item.home_score !== null &&
-                  item.away_score !== null &&
-                  item.home_score !== undefined &&
-                  item.away_score !== undefined ? (
-                    <p className="mt-2 font-mono text-[0.62rem] font-semibold text-[var(--terminal-text-muted)]">
-                      SCORE: {item.home_score} - {item.away_score}
-                    </p>
-                  ) : null}
                 </article>
               );
             }

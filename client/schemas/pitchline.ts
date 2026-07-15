@@ -42,12 +42,21 @@ export const oddsSnapshotSchema = z.object({
   timestamp: z.string(),
 });
 
+export const scoreEventSchema = z.object({
+  eventType: z.string(),
+  homeScore: z.number(),
+  awayScore: z.number(),
+  minute: z.string().nullable(),
+  phase: z.string().nullable(),
+  timestamp: z.string(),
+});
+
 export const matchHistoryResponseSchema = z.object({
   fixtureId: z.string(),
   homeName: z.string(),
   awayName: z.string(),
   oddsHistory: z.array(oddsSnapshotSchema).nullable(),
-  events: z.array(z.unknown()).nullable(),
+  events: z.array(scoreEventSchema).nullable(),
 });
 
 export type BackendFixtureDto = z.infer<typeof fixtureDtoSchema>;

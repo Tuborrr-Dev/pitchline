@@ -21,7 +21,6 @@ export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [matchQuery, setMatchQuery] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileSearchSettled, setMobileSearchSettled] = useState(true);
   const [walletPickerOpen, setWalletPickerOpen] = useState(false);

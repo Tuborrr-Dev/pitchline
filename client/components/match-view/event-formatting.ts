@@ -27,10 +27,26 @@ export function eventCommentary(event: MatchEvent) {
   return event.detailLabel ?? eventDeltaLabel(event);
 }
 
+export function isMatchBreakFixture(fixture: LiveMatchState["fixture"]) {
+  const metadata = `${fixture.status} ${fixture.phase} ${fixture.minute}`.toLowerCase();
+
+  return (
+    metadata.includes("half-time") ||
+    metadata.includes("halftime") ||
+    metadata.includes("interval") ||
+    metadata.includes("break") ||
+    metadata.split(/\s+/).includes("ht")
+  );
+}
+
 export function isPreKickoffFixture(fixture: LiveMatchState["fixture"]) {
   const kickoffTime = new Date(fixture.kickoffUtc).getTime();
   const metadata = `${fixture.status} ${fixture.phase} ${fixture.minute} ${fixture.competition} ${fixture.stage}`.toLowerCase();
   const kickoffIsFuture = !Number.isNaN(kickoffTime) && kickoffTime > Date.now();
+
+  if (isMatchBreakFixture(fixture)) {
+    return false;
+  }
 
   return (
     fixture.status === "upcoming" ||

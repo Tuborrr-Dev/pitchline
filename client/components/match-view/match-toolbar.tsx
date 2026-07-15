@@ -3,18 +3,15 @@
 import { BarChart3, Eye, History, PanelRightOpen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import type { LiveMatchState } from "@/lib/types";
 
 export function MatchToolbar({
   detailsOpen,
   eventRailOpen,
-  fixture,
   onShowEvents,
   onToggleDetails,
 }: {
   detailsOpen: boolean;
   eventRailOpen: boolean;
-  fixture: LiveMatchState["fixture"];
   onShowEvents: () => void;
   onToggleDetails: () => void;
 }) {
@@ -41,9 +38,6 @@ export function MatchToolbar({
         ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-3 font-mono text-[0.62rem] font-semibold uppercase sm:gap-4 sm:text-[0.72rem]">
-        <span className="text-[var(--terminal-green)]">{fixture.teamACode}</span>
-        <span className="text-[#ff4b6e]">{fixture.teamBCode}</span>
-        <span className="text-[#10a2cc]">VIX</span>
         <Button
           type="button"
           onClick={onToggleDetails}
