@@ -71,23 +71,15 @@ function pushEvent(events: MatchEvent[], event: MatchEvent) {
 }
 
 function normalizeHistory(history: LiveMatchState["history"]) {
-  const normalized: LiveMatchState["history"] = [];
-  const indexesByTimestamp = new Map<string, number>();
+  const dedupedByTimestamp = new Map<string, LiveMatchState["history"][number]>();
 
   history.forEach((point) => {
     if (Number.isNaN(new Date(point.timestamp).getTime())) return;
-
-    const existingIndex = indexesByTimestamp.get(point.timestamp);
-    if (existingIndex !== undefined) {
-      normalized[existingIndex] = point;
-      return;
-    }
-
-    indexesByTimestamp.set(point.timestamp, normalized.length);
-    normalized.push(point);
+    dedupedByTimestamp.set(point.timestamp, point);
   });
 
-  return normalized;
+  return [...dedupedByTimestamp.values()]
+    .sort((left, right) => new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime());
 }
 
 function scoreUpdateEventType(action?: string | null): MatchEvent["type"] {
@@ -248,21 +240,27 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
   const applyScoreUpdate = useEffectEvent((payload: ScoreUpdatePayload) => {
     startTransition(() => {
       setState((current) => {
+        const homeName = payload.homeName?.trim() || current.fixture.teamAName;
+        const awayName = payload.awayName?.trim() || current.fixture.teamBName;
         const scoreEvent = payload.action
-          ? scoreUpdateToMatchEvent(payload, current.fixture, {
-              scoreA: current.fixture.scoreA,
-              scoreB: current.fixture.scoreB,
-            })
+          ? scoreUpdateToMatchEvent(
+              { ...payload, homeName, awayName },
+              current.fixture,
+              {
+                scoreA: current.fixture.scoreA,
+                scoreB: current.fixture.scoreB,
+              },
+            )
           : null;
 
         return {
           ...current,
           fixture: {
             ...current.fixture,
-            teamAName: payload.homeName,
-            teamACode: deriveTeamCode(payload.homeName),
-            teamBName: payload.awayName,
-            teamBCode: deriveTeamCode(payload.awayName),
+            teamAName: homeName,
+            teamACode: deriveTeamCode(homeName),
+            teamBName: awayName,
+            teamBCode: deriveTeamCode(awayName),
             scoreA: payload.homeScore,
             scoreB: payload.awayScore,
             phase: payload.gameState?.trim() || current.fixture.phase,
@@ -311,14 +309,17 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
               ]
             : current.events;
 
+        const homeName = payload.homeName?.trim() || current.fixture.teamAName;
+        const awayName = payload.awayName?.trim() || current.fixture.teamBName;
+
         return {
           ...current,
           fixture: {
             ...current.fixture,
-            teamAName: payload.homeName,
-            teamACode: deriveTeamCode(payload.homeName),
-            teamBName: payload.awayName,
-            teamBCode: deriveTeamCode(payload.awayName),
+            teamAName: homeName,
+            teamACode: deriveTeamCode(homeName),
+            teamBName: awayName,
+            teamBCode: deriveTeamCode(awayName),
             leadProbability: Math.max(payload.homePct, payload.awayPct),
           },
           currentProbabilities: {
@@ -537,3 +538,4 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
     [selectedEvent, selectedEventId, state],
   );
 }
+

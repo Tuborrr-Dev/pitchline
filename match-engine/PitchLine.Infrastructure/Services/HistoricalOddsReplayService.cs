@@ -99,6 +99,7 @@ public class HistoricalOddsReplayService(
 
                     updatesToReplay.Add(new OddsUpdate(
                         FixtureId: parsedFixtureId,
+                        MessageId: snapshot.Timestamp.ToUnixTimeMilliseconds().ToString(),
                         SuperOddsType: "1X2_PARTICIPANT_RESULT",
                         MarketPeriod: null,
                         PriceNames: ["part1", "draw", "part2"],
@@ -161,7 +162,7 @@ public class HistoricalOddsReplayService(
     {
         var list = new List<OddsUpdate>();
 
-        for (var intervalIndex = 0; intervalIndex < 26; intervalIndex++)
+        for (var intervalIndex = 0; intervalIndex < 36; intervalIndex++)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -198,7 +199,10 @@ public class HistoricalOddsReplayService(
             }
         }
 
-        return list.OrderBy(u => u.Ts).ToList();
+        return list
+            .OrderBy(u => u.Ts)
+            .DistinctBy(u => u.MessageId)
+            .ToList();
     }
 
     private static bool IsCandidate(OddsUpdate update)

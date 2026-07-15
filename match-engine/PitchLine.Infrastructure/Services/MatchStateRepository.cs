@@ -585,6 +585,56 @@ public class MatchStateRepository(IConnectionMultiplexer redis, PostgresReposito
             _logger.LogWarning(ex, "[REDIS] Failed to update peak swing for {FixtureId}", fixtureId);
         }
     }
+
+    public async Task<int> SyncPostgresToRedisAsync(CancellationToken cancellationToken = default)
+    {
+        var items = await _pg.GetFixturesWithStateAsync(cancellationToken);
+        int syncedCount = 0;
+
+        foreach (var item in items)
+        {
+            try
+            {
+                var metaKey = $"fixture:{item.Meta.FixtureId}:meta";
+                await _db.HashSetAsync(metaKey, new HashEntry[]
+                {
+                    new("fixtureId", item.Meta.FixtureId),
+                    new("homeName",  item.Meta.HomeName),
+                    new("awayName",  item.Meta.AwayName),
+                    new("homeId",    item.Meta.HomeId),
+                    new("awayId",    item.Meta.AwayId),
+                    new("participant1IsHome", item.Meta.Participant1IsHome.ToString().ToLowerInvariant()),
+                    new("kickOff",   item.Meta.KickOff.ToString("O")),
+                });
+                await _db.KeyExpireAsync(metaKey, TimeSpan.FromHours(24));
+
+                var stateKey = $"fixture:{item.Meta.FixtureId}:state";
+                var state = item.State;
+                await _db.HashSetAsync(stateKey, new HashEntry[]
+                {
+                    new("homeName",      item.Meta.HomeName),
+                    new("awayName",      item.Meta.AwayName),
+                    new("homeScore",     (state?.HomeScore ?? 0).ToString()),
+                    new("awayScore",     (state?.AwayScore ?? 0).ToString()),
+                    new("phase",         state?.Phase ?? ""),
+                    new("minute",        state?.Minute ?? ""),
+                    new("homePct",       (state?.HomePct ?? 0m).ToString()),
+                    new("drawPct",       (state?.DrawPct ?? 0m).ToString()),
+                    new("awayPct",       (state?.AwayPct ?? 0m).ToString()),
+                    new("redCardActive", (state?.RedCardActive ?? false).ToString().ToLowerInvariant()),
+                });
+                await _db.KeyExpireAsync(stateKey, TimeSpan.FromHours(24));
+                syncedCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[REDIS] Failed to sync fixture {FixtureId} from Postgres to Redis", item.Meta.FixtureId);
+            }
+        }
+
+        _logger.LogInformation("[REDIS] Synced {Count} fixtures from PostgreSQL to Redis", syncedCount);
+        return syncedCount;
+    }
 }
 
 // ── State record returned by GET /api/match/{id} ──────────────────────────────

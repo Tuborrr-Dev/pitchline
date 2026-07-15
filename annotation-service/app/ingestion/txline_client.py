@@ -22,7 +22,7 @@ class TxLineClient:
 
     async def consume_scores(self, fixture_id: int):
         base_url = f"{settings.TXLINE_BASE_URL}/scores/stream?fixtureId={fixture_id}"
-        last_ts = None  # tracks the latest Ts seen so a reconnect can resume instead of missing a gap
+        last_ts = 0  # tracks the latest Ts seen so a reconnect can resume instead of missing a gap
         while True:
             url = f"{base_url}&Ts={last_ts}" if last_ts is not None else base_url
             try:
@@ -48,6 +48,9 @@ class TxLineClient:
                                 "process_event failed for event: %s", event
                             )
                             continue
+                        if event.get("Action") == "game_finalised":
+                            logger.info(f"Fixture {fixture_id} finished, ending stream")
+                            return  # exits consume_scores() entirely -- no more reconnect attempts
             except Exception as ex:
                 logger.exception(ex)
                 logger.info("Reconnecting in 5 seconds...")

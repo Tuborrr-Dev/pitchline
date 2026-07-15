@@ -8,6 +8,7 @@ public interface IMatchStateRepository
     Task<IEnumerable<string>> GetOddsHistoryAsync(string fixtureId, CancellationToken cancellationToken = default);
     Task<IEnumerable<string>> GetEventLogAsync(string fixtureId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<FixtureMetaAndState>> GetFixturesWithStateAsync(CancellationToken cancellationToken = default);
+    Task<int> SyncPostgresToRedisAsync(CancellationToken cancellationToken = default);
 }
 public record FixtureMetaAndState(
     FixtureMetaSummary Meta,

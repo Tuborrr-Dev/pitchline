@@ -97,16 +97,18 @@ export function TeamLogo({ code, name, className, size = "md" }: TeamLogoProps) 
   }[size];
 
   if (!iso || hasError) {
+    const displayCode = (code && code.trim() ? code : name?.slice(0, 3) || "CLB").toUpperCase().slice(0, 3);
     return (
-      <span
+      <div
         className={cn(
-          "flex shrink-0 items-center justify-center border border-[var(--terminal-border)] bg-[var(--terminal-surface)] font-mono font-semibold uppercase text-[var(--terminal-text-strong)] shadow-inner",
+          "relative flex shrink-0 items-center justify-center border border-[var(--terminal-green)]/40 bg-[linear-gradient(135deg,rgba(16,185,129,0.12)_0%,rgba(15,23,42,0.6)_100%)] font-mono font-bold tracking-wider uppercase text-[var(--terminal-green)] shadow-inner",
           sizeClasses,
           className,
         )}
       >
-        {code.slice(0, 3)}
-      </span>
+        <span className="z-10">{displayCode}</span>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_70%)] pointer-events-none" />
+      </div>
     );
   }
 

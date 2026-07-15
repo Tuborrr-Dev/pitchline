@@ -33,19 +33,39 @@ const teamCodeOverrides: Record<string, string> = {
 };
 
 export function deriveTeamCode(name: string) {
-  const override = teamCodeOverrides[name];
+  if (!name || name.trim() === "") return "CLB";
+  const cleanName = name.trim();
+  const override = teamCodeOverrides[cleanName];
   if (override) return override;
 
-  const letters = name
+  const words = cleanName
     .split(/[\s-]+/)
     .map((part) => part.replace(/[^A-Za-z]/g, ""))
     .filter(Boolean);
 
-  if (letters.length >= 2) {
-    return `${letters[0][0] ?? ""}${letters[1][0] ?? ""}${letters[1][1] ?? ""}`.toUpperCase();
+  if (words.length === 0) return "CLB";
+
+  // Filter out generic club suffixes/prefixes when generating 3-letter code if possible
+  const meaningfulWords = words.filter(
+    (w) => !["FC", "CF", "SC", "AC", "FK", "BK", "SV", "AFC"].includes(w.toUpperCase()),
+  );
+  const targetWords = meaningfulWords.length > 0 ? meaningfulWords : words;
+
+  if (targetWords.length >= 3) {
+    return `${targetWords[0][0]}${targetWords[1][0]}${targetWords[2][0]}`.toUpperCase();
   }
 
-  return name.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() || "CLB";
+  if (targetWords.length === 2) {
+    const first = targetWords[0];
+    const second = targetWords[1];
+    if (first.length >= 2) {
+      return `${first[0]}${first[1]}${second[0]}`.toUpperCase();
+    }
+    return `${first[0]}${second[0]}${second[1] ?? ""}`.toUpperCase();
+  }
+
+  const singleWord = targetWords[0];
+  return singleWord.slice(0, 3).toUpperCase() || "CLB";
 }
 
 function parseMinuteNumber(minute: string) {

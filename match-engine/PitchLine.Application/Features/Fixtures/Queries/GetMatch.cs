@@ -39,10 +39,13 @@ public class GetMatchHandler : IRequestHandler<GetMatchQuery, GetMatchResult?>
 
         var meta = await _repo.GetFixtureMetaAsync(request.FixtureId, ct);
 
+        var homeName = !string.IsNullOrWhiteSpace(state.HomeName) ? state.HomeName : (meta?.HomeName ?? "");
+        var awayName = !string.IsNullOrWhiteSpace(state.AwayName) ? state.AwayName : (meta?.AwayName ?? "");
+
         return new GetMatchResult(
             FixtureId: request.FixtureId,
-            HomeName: state.HomeName,
-            AwayName: state.AwayName,
+            HomeName: homeName,
+            AwayName: awayName,
             HomeScore: state.HomeScore,
             AwayScore: state.AwayScore,
             Phase: state.Phase,

@@ -8,6 +8,11 @@ from app.services.commentary_service import CommentaryService
 
 logger = logging.getLogger(__name__)
 
+DISPLAY_TITLES = {
+    "halftime_finalised": "Half-Time",
+    "game_finalised": "Match End",
+}
+
 
 class AnnotationService:
     def __init__(self):
@@ -84,9 +89,11 @@ class AnnotationService:
             annotation = self.commentary.generate(entity)
 
         annotation["fixture_id"] = entity.get("FixtureId")
-        annotation["source_action"] = entity.get("Action")
+        action = entity.get("Action")
+        annotation["source_action"] = DISPLAY_TITLES.get(action, action)
         annotation["source_id"] = entity.get("Id")
-        annotation["source_seconds"] = entity.get("Clock", {}).get("Seconds")
+        clock = entity.get("Clock") or {}
+        annotation["source_seconds"] = clock.get("Seconds")
         annotation["outcome"] = entity.get("Outcome")
 
         if is_update:

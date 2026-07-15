@@ -7,36 +7,67 @@ from fastapi.responses import StreamingResponse
 
 router = APIRouter()
 
-_subscribers: dict[str, set[asyncio.Queue]] = defaultdict(set)
+_subscribers: dict[int, set[asyncio.Queue]] = defaultdict(set)
 _event_counter = itertools.count(1)
 
 
-async def publish(fixture_id: str, event: dict):
+def _format(event: dict) -> str:
     event_id = next(_event_counter)
     payload = json.dumps(event)
-    message = (
-        f"id: {event_id}\nevent: {event.get('type', 'message')}\ndata: {payload}\n\n"
-    )
+    return f"id: {event_id}\nevent: {event.get('type', 'message')}\ndata: {payload}\n\n"
 
+
+async def publish(fixture_id: int, event: dict):
+    message = _format(event)
     dead_queues = []
     for q in _subscribers[fixture_id]:
         try:
             q.put_nowait(message)
         except asyncio.QueueFull:
-            dead_queues.append(q)  # if there is a slow/stuck client, drop it
-
+            dead_queues.append(q)
     for q in dead_queues:
         _subscribers[fixture_id].discard(q)
 
 
 @router.get("/stream/{fixture_id}")
 async def stream(fixture_id: int, request: Request):
-    queue: asyncio.Queue = asyncio.Queue(maxsize=100)
+    from app.services.history_service import HistoryService
+
+    queue: asyncio.Queue = asyncio.Queue(maxsize=200)
     _subscribers[fixture_id].add(queue)
 
     async def event_generator():
         try:
             yield ": connected\n\n"
+
+            # Replay current DB state on EVERY connect, not just first
+            # load -- Railway hard-closes SSE at 15 minutes regardless of
+            # heartbeats. A reconnecting EventSource gets a brand new,
+            # empty queue with no memory of what it missed. Re-sending
+            # full current state here makes every reconnect self-healing.
+            history_service = HistoryService()
+            rows = await history_service.history(fixture_id)
+            for row in rows:
+                yield _format(
+                    {
+                        "type": row.annotation_type,
+                        "action": row.action,
+                        "team": row.team,
+                        "player": row.player,
+                        "minute": row.minute,
+                        "phase": row.phase,
+                        "home_score": row.home_score,
+                        "away_score": row.away_score,
+                        "icon": row.icon,
+                        "color": row.color,
+                        "text": row.text,
+                        "outcome": row.outcome,
+                        "fixture_id": row.fixture_id,
+                        "source_action": row.source_action,
+                        "source_id": row.source_id,
+                    }
+                )
+
             while True:
                 if await request.is_disconnected():
                     break

@@ -44,7 +44,7 @@ public class HistoricalOddsSeedService(
 
                 var snapshots = new List<OddsSnapshot>();
 
-                for (var intervalIndex = 0; intervalIndex < 26; intervalIndex++)
+                for (var intervalIndex = 0; intervalIndex < 36; intervalIndex++)
                 {
                     ct.ThrowIfCancellationRequested();
 

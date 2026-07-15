@@ -86,6 +86,7 @@ public record ScoreClock(
 /// </summary>
 public record OddsUpdate(
     [property: JsonPropertyName("FixtureId")] int FixtureId,
+    [property: JsonPropertyName("MessageId")] string? MessageId,
     [property: JsonPropertyName("SuperOddsType")] string SuperOddsType,
     [property: JsonPropertyName("MarketPeriod")] string? MarketPeriod,
     [property: JsonPropertyName("PriceNames")] string[] PriceNames,

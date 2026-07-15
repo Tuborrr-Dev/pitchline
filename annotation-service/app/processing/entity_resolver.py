@@ -102,7 +102,7 @@ class EntityResolver:
         if slot is None:
             slot = data.get("Participant")
         if slot is None and event.get("Action") == "kickoff":
-            slot = event.get("Kickoff", {}).get("Team")
+            slot = (event.get("Kickoff") or {}).get("Team")
 
         team_id = (
             self.slot_to_team.get((fixture_id, slot)) if slot is not None else None
@@ -173,7 +173,7 @@ class EntityResolver:
     def find_target(self, fixture_id: int, data: dict) -> Optional[tuple]:
         target_id = data.get("Id")
         target_action = data.get("Action")
-        prev_seconds = data.get("Previous", {}).get("Clock", {}).get("Seconds")
+        prev_seconds = ((data.get("Previous") or {}).get("Clock") or {}).get("Seconds")
         for key, entity in self._store.items():
             fid, action, eid = key
             if fid != fixture_id:

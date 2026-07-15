@@ -92,10 +92,10 @@ class CommentaryService:
         return "Additional time"
 
     def _halftime_finalised(self, event):
-        return "Half-time"
+        return f"[{event.get('HomeScore')}-{event.get('AwayScore')}] Half-time"
 
     def _game_finalised(self, event):
-        return "Full-time"
+        return f"[{event.get('HomeScore')}-{event.get('AwayScore')}] Full-time"
 
     def _penalty_shootout_team(self, event):
         return f"Penalty shootout — {event.get('TeamName')} to take next"
