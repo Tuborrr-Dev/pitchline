@@ -148,7 +148,6 @@ export function MatchView({
           <MatchToolbar
             detailsOpen={detailsOpen}
             eventRailOpen={eventRailOpen}
-            fixture={fixture}
             onShowEvents={() => setEventRailOpen(true)}
             onToggleDetails={() => setDetailsOpen((open) => !open)}
           />

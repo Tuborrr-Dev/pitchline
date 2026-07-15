@@ -7,7 +7,7 @@ import { TeamLogo } from "@/components/team-logo";
 import type { LiveMatchState } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-import { formatKickoffDate, isPreKickoffFixture } from "./event-formatting";
+import { formatKickoffDate, isMatchBreakFixture, isPreKickoffFixture } from "./event-formatting";
 
 export function MatchScoreHeader({
   currentProbabilities,
@@ -19,6 +19,7 @@ export function MatchScoreHeader({
   lastUpdatedAt: string;
 }) {
   const preKickoff = isPreKickoffFixture(fixture);
+  const matchBreak = isMatchBreakFixture(fixture);
   const isFinished = fixture.status === "finished" || fixture.phase === "Finished" || fixture.phase === "FT";
   const hasOdds = currentProbabilities.teamA > 0 || currentProbabilities.teamB > 0;
   const liveTimerText = useMatchTimer({
@@ -32,6 +33,8 @@ export function MatchScoreHeader({
   let centerBadgeText = "";
   if (isFinished) {
     centerBadgeText = "FULL TIME";
+  } else if (matchBreak) {
+    centerBadgeText = structuralTimerLabel(fixture.phase, fixture.minute) ?? "BREAK";
   } else if (preKickoff) {
     centerBadgeText = `KO ${formatKickoffDate(fixture.kickoffUtc)}`;
   } else if (!hasOdds) {
