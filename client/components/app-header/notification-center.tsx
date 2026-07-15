@@ -3,13 +3,27 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { Activity, Bell, CheckCheck, Flame, PauseCircle, Settings2, Trash2, TrendingUp, Volume2, VolumeX } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useNotifications } from "@/context/notification-provider";
-import { MatchNotificationItem, NotificationType } from "@/lib/types/notification";
+import type { MatchNotificationItem, NotificationType } from "@/lib/types/notification";
 import { cn } from "@/lib/utils";
 
 type FilterTab = "All" | "Goal" | "PeakSwing" | "VolatilitySpike" | "MarketFreeze";
+
+const filterTabs: Array<{
+  icon: LucideIcon;
+  label: string;
+  tone: string;
+  value: FilterTab;
+}> = [
+  { icon: Bell, label: "All", tone: "text-[var(--terminal-text-muted)]", value: "All" },
+  { icon: Flame, label: "Goals", tone: "text-emerald-400", value: "Goal" },
+  { icon: TrendingUp, label: "Swings", tone: "text-cyan-400", value: "PeakSwing" },
+  { icon: Activity, label: "Volatility", tone: "text-amber-400", value: "VolatilitySpike" },
+  { icon: PauseCircle, label: "Freeze", tone: "text-rose-400", value: "MarketFreeze" },
+];
 
 function getItemIcon(type: NotificationType) {
   switch (type) {
@@ -41,9 +55,11 @@ export function NotificationCenter() {
         setShowSettings(false);
       }
     }
+
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
@@ -74,15 +90,15 @@ export function NotificationCenter() {
         whileTap={{ scale: 0.95 }}
         onClick={handleOpenToggle}
         className={cn(
-          "relative flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[var(--terminal-text)] transition-colors hover:border-[var(--terminal-green)] hover:text-[var(--terminal-text-strong)]",
-          isOpen && "border-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-text-strong)] shadow-lg shadow-[var(--terminal-shadow)]",
+          "relative flex h-10 w-10 items-center justify-center rounded-none border border-[var(--terminal-border)] bg-[var(--terminal-surface)] p-0 text-[var(--foreground)] shadow-none transition-colors hover:bg-[var(--terminal-panel)] sm:h-11 sm:w-11",
+          isOpen && "border-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-green)]",
         )}
         title="Live Notifications"
       >
         <Bell className="h-4 w-4" />
 
         {unreadCount > 0 ? (
-          <span className="absolute -top-1 -right-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-emerald-500 px-1 font-mono text-[10px] font-bold text-slate-950 shadow-md animate-pulse">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-[1rem] animate-pulse items-center justify-center rounded-full bg-emerald-500 px-1 font-mono text-[10px] font-bold text-slate-950 shadow-md">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         ) : null}
@@ -95,17 +111,22 @@ export function NotificationCenter() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute right-0 top-11 z-[999] w-[340px] overflow-hidden rounded-xl border border-[var(--terminal-border)] bg-[var(--terminal-panel)] p-0 text-[var(--terminal-text)] shadow-2xl shadow-[var(--terminal-shadow)] backdrop-blur-xl sm:w-[380px]"
+            className="absolute right-0 top-11 z-[999] w-[340px] overflow-hidden rounded-lg border border-[var(--terminal-border)] bg-[var(--terminal-panel)] p-0 text-[var(--terminal-text)] shadow-2xl shadow-[var(--terminal-shadow)] backdrop-blur-xl sm:w-[390px]"
           >
-            {/* Header bar */}
-            <div className="flex items-center justify-between border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)] px-4 py-3">
-              <div className="flex items-center gap-2">
-                <span className="font-display text-sm font-bold tracking-wide text-[var(--terminal-text-strong)]">MATCH FEED</span>
-                {notifications.length > 0 && (
-                  <span className="rounded bg-[var(--terminal-surface)] px-2 py-0.5 font-mono text-[10px] text-[var(--terminal-text-muted)]">
+            <div className="flex items-center justify-between border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)] px-3.5 py-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[var(--terminal-green)]">
+                  <Bell className="h-3.5 w-3.5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-display text-sm font-bold leading-none tracking-wide text-[var(--terminal-text-strong)]">MATCH FEED</p>
+                  <p className="mt-0.5 font-mono text-[10px] uppercase text-[var(--terminal-text-muted)]">Live SignalR Feed</p>
+                </div>
+                {notifications.length > 0 ? (
+                  <span className="ml-1 rounded bg-[var(--terminal-surface)] px-2 py-0.5 font-mono text-[10px] text-[var(--terminal-text-muted)]">
                     {notifications.length}
                   </span>
-                )}
+                ) : null}
               </div>
 
               <div className="flex items-center gap-1">
@@ -141,7 +162,6 @@ export function NotificationCenter() {
               </div>
             </div>
 
-            {/* Quick Settings drawer */}
             <AnimatePresence>
               {showSettings && (
                 <motion.div
@@ -156,7 +176,7 @@ export function NotificationCenter() {
                       <input
                         type="checkbox"
                         checked={preferences.goalAlerts}
-                        onChange={(e) => updatePreferences({ goalAlerts: e.target.checked })}
+                        onChange={(event) => updatePreferences({ goalAlerts: event.target.checked })}
                         className="rounded border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-emerald-500 focus:ring-0"
                       />
                       <span>Goal Alerts</span>
@@ -166,7 +186,7 @@ export function NotificationCenter() {
                       <input
                         type="checkbox"
                         checked={preferences.peakSwingAlerts}
-                        onChange={(e) => updatePreferences({ peakSwingAlerts: e.target.checked })}
+                        onChange={(event) => updatePreferences({ peakSwingAlerts: event.target.checked })}
                         className="rounded border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-cyan-500 focus:ring-0"
                       />
                       <span>Peak Swing Alerts</span>
@@ -176,7 +196,7 @@ export function NotificationCenter() {
                       <input
                         type="checkbox"
                         checked={preferences.volatilityAlerts}
-                        onChange={(e) => updatePreferences({ volatilityAlerts: e.target.checked })}
+                        onChange={(event) => updatePreferences({ volatilityAlerts: event.target.checked })}
                         className="rounded border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-amber-500 focus:ring-0"
                       />
                       <span>Volatility Spikes</span>
@@ -186,7 +206,7 @@ export function NotificationCenter() {
                       <input
                         type="checkbox"
                         checked={preferences.freezeAlerts}
-                        onChange={(e) => updatePreferences({ freezeAlerts: e.target.checked })}
+                        onChange={(event) => updatePreferences({ freezeAlerts: event.target.checked })}
                         className="rounded border-[var(--terminal-border)] bg-[var(--terminal-panel)] text-rose-500 focus:ring-0"
                       />
                       <span>Market Suspensions</span>
@@ -196,33 +216,29 @@ export function NotificationCenter() {
               )}
             </AnimatePresence>
 
-            {/* Category Filter Tabs */}
-            <div className="flex overflow-x-auto border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-2 py-1.5">
-              {(["All", "Goal", "PeakSwing", "VolatilitySpike", "MarketFreeze"] as FilterTab[]).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={cn(
-                    "whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
-                    activeTab === tab
-                      ? "bg-[var(--terminal-active-bg)] font-semibold text-[var(--terminal-active-fg)] shadow-sm"
-                      : "text-[var(--terminal-text-muted)] hover:bg-[var(--terminal-hover)] hover:text-[var(--terminal-text-strong)]",
-                  )}
-                >
-                  {tab === "All"
-                    ? "All"
-                    : tab === "Goal"
-                      ? "⚽ Goals"
-                      : tab === "PeakSwing"
-                        ? "⚡ Swings"
-                        : tab === "VolatilitySpike"
-                          ? "📊 Volatility"
-                          : "⏸️ Freeze"}
-                </button>
-              ))}
+            <div className="flex gap-1 overflow-x-auto border-b border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-2 py-1.5">
+              {filterTabs.map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.value;
+
+                return (
+                  <button
+                    key={tab.value}
+                    onClick={() => setActiveTab(tab.value)}
+                    className={cn(
+                      "inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 text-[11px] font-medium transition-colors",
+                      active
+                        ? "bg-[var(--terminal-active-bg)] font-semibold text-[var(--terminal-active-fg)] shadow-sm"
+                        : "text-[var(--terminal-text-muted)] hover:bg-[var(--terminal-hover)] hover:text-[var(--terminal-text-strong)]",
+                    )}
+                  >
+                    <Icon className={cn("h-3.5 w-3.5", active ? "text-current" : tab.tone)} />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* List Body */}
             <div className="max-h-[360px] overflow-y-auto divide-y divide-[var(--terminal-line)]">
               {filteredNotifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 text-center text-xs text-[var(--terminal-text-muted)]">
@@ -231,10 +247,10 @@ export function NotificationCenter() {
                 </div>
               ) : (
                 filteredNotifications.map((item) => (
-                  <div
+                  <button
                     key={item.id}
                     onClick={() => handleItemClick(item)}
-                    className="group flex cursor-pointer items-start gap-3 p-3 transition-colors hover:bg-[var(--terminal-hover)]"
+                    className="group flex w-full cursor-pointer items-start gap-3 p-3 text-left transition-colors hover:bg-[var(--terminal-hover)]"
                   >
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--terminal-border)] bg-[var(--terminal-surface)]">
                       {getItemIcon(item.type)}
@@ -247,12 +263,11 @@ export function NotificationCenter() {
                       </div>
                       <p className="mt-0.5 line-clamp-2 font-sans text-xs text-[var(--terminal-text-muted)]">{item.message}</p>
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
             </div>
 
-            {/* Footer */}
             {notifications.length > 0 && (
               <div className="flex items-center justify-between border-t border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)] px-3 py-2 text-[11px] text-[var(--terminal-text-muted)]">
                 <button
@@ -262,7 +277,7 @@ export function NotificationCenter() {
                   <CheckCheck className="h-3.5 w-3.5 text-emerald-400" />
                   <span>Mark all as read</span>
                 </button>
-                <span>Live SignalR Feed</span>
+                <span>{filteredNotifications.length} visible</span>
               </div>
             )}
           </motion.div>

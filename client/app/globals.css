@@ -228,3 +228,13 @@ textarea {
 .light .bg-black\/45 {
   background-color: rgba(15, 23, 42, 0.32) !important;
 }
+
+@keyframes shrink {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
