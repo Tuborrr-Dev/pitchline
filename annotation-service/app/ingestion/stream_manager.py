@@ -22,10 +22,14 @@ class StreamManager:
         self.watch_started_at = (
             {}
         )  # fixture_id -> monotonic() timestamp, for duration-based stop
+        self.finished_fixtures: set[int] = set()
 
     async def start_stream(self, fixture_id: int):
         if fixture_id in self.tasks:
             return
+        if fixture_id in self.finished_fixtures:
+            return
+        await self.annotation_service.restore_lineups(fixture_id)
         task = asyncio.create_task(self.client.consume_scores(fixture_id))
         task.add_done_callback(lambda t: self._on_stream_done(fixture_id, t))
         self.tasks[fixture_id] = task
@@ -41,6 +45,15 @@ class StreamManager:
             logging.getLogger(__name__).error(
                 "Stream for fixture %s died unexpectedly: %s", fixture_id, exc
             )
+        else:
+            self.finished_fixtures.add(fixture_id)
+
+    async def restore_lineups(self, fixture_id: int) -> None:
+        data = await self.lineup_store.load(fixture_id)
+        if data is None:
+            return
+        team_names, player_names = data
+        self.entity_resolver.import_lineups(team_names, player_names)
 
     async def stop_stream(self, fixture_id: int):
         task = self.tasks.get(fixture_id)

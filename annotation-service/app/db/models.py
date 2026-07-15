@@ -5,6 +5,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.database import Base
 
+from sqlalchemy import JSON  # add to your existing sqlalchemy import line
+
 
 class Annotation(Base):
     __tablename__ = "annotations"
@@ -25,3 +27,10 @@ class Annotation(Base):
     text: Mapped[str | None] = mapped_column(Text)
     source_seconds: Mapped[int | None] = mapped_column(Integer)
     outcome: Mapped[str | None] = mapped_column(String(50))
+
+
+class FixtureLineup(Base):
+    __tablename__ = "fixture_lineups"
+    fixture_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team_names: Mapped[dict] = mapped_column(JSON, default=dict)
+    player_names: Mapped[dict] = mapped_column(JSON, default=dict)

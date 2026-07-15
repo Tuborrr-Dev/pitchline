@@ -23,6 +23,10 @@ same pattern used for corrections.
 
 from typing import Optional
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # StatusId -> Phase name, straight from the TxOdds docs table.
 STATUS_PHASE_MAP = {
     1: "NS",
@@ -55,15 +59,32 @@ class EntityResolver:
         self._scores: dict[int, tuple[int, int]] = {}
         self.home_slot: dict[int, int] = {}
 
-    def learn_lineups(self, event: dict) -> None:
-        """this directly goes to AnnotationService on "lineups" messages."""
+    def learn_lineups(self, event: dict) -> tuple[dict, dict]:
+        """this directly goes to AnnotationService on "lineups" messages.
+        Returns (team_names, player_names) learned from THIS event only,
+        so callers can persist a fixture-scoped snapshot."""
+        local_team_names, local_player_names = {}, {}
         for team in event.get("Lineups") or []:
-            self.team_names[team.get("normativeId")] = team.get("preferredName")
+            tid, tname = team.get("normativeId"), team.get("preferredName")
+            self.team_names[tid] = tname
+            local_team_names[tid] = tname
             for entry in team.get("lineups", []):
                 player = entry.get("player", {})
-                self.player_names[player.get("normativeId")] = player.get(
-                    "preferredName"
-                )
+                pid, pname = player.get("normativeId"), player.get("preferredName")
+                self.player_names[pid] = pname
+                local_player_names[pid] = pname
+        logger.info(
+            "learn_lineups: fixture now has %d teams, %d players known",
+            len(self.team_names),
+            len(self.player_names),
+        )
+        return local_team_names, local_player_names
+
+    def import_lineups(self, team_names: dict, player_names: dict) -> None:
+        """Rehydrates in-memory name maps from a previously-persisted
+        snapshot, e.g. after a mid-match process restart."""
+        self.team_names.update(team_names)
+        self.player_names.update(player_names)
 
     def resolve(self, event: dict) -> dict:
         self._learn_slots(event)

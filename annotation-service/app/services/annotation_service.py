@@ -5,6 +5,7 @@ from app.processing.entity_resolver import EntityResolver
 from app.processing.ai import AIService
 from app.services.history_service import HistoryService
 from app.services.commentary_service import CommentaryService
+from app.services.lineup_store import LineupStore
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +22,17 @@ class AnnotationService:
         self.ai = AIService()
         self.commentary = CommentaryService()
         self.history = HistoryService()
-        self._emitted: set[tuple] = set()  # (FixtureId, Action, Id) already emitted
+        self._emitted: set[tuple] = set()
+        self.lineup_store = LineupStore()  # (FixtureId, Action, Id) already emitted
 
     async def process_event(self, event: dict):
         action = event.get("Action")
 
         if action == "lineups":
-            self.entity_resolver.learn_lineups(event)
+            team_names, player_names = self.entity_resolver.learn_lineups(event)
+            fixture_id = event.get("FixtureId")
+            if fixture_id is not None:
+                await self.lineup_store.save(fixture_id, team_names, player_names)
             return
 
         if action == "action_amend":
