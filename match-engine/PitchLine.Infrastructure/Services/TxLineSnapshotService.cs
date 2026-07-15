@@ -69,6 +69,7 @@ public class TxLineSnapshotService
 
             var oddsUpdate = new OddsUpdate(
                 FixtureId: fixtureNumber,
+                MessageId: null,
                 SuperOddsType: "1X2_PARTICIPANT_RESULT",
                 MarketPeriod: null,
                 PriceNames: ["part1", "draw", "part2"],
