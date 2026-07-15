@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 class StreamManager:
     def __init__(self, annotation_service):
         self.client = TxLineClient(on_event=annotation_service.process_event)
+        self.annotation_service = annotation_service
         self.tasks = {}
         self.watch_started_at = (
             {}
