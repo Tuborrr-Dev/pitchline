@@ -13,6 +13,8 @@ import { AppNav } from "./app-header/app-nav";
 import { MarketSearch } from "./app-header/market-search";
 import { NotificationCenter } from "./app-header/notification-center";
 import { WalletControl } from "./app-header/wallet-control";
+import { useWalletConnectModal } from "@/components/wallet-connect-provider";
+import { WALLETCONNECT_WALLET_ID } from "@/lib/wallet-session";
 
 import { useQuery } from "@tanstack/react-query";
 import { finishedMarketOverviewQueryOptions, marketOverviewQueryOptions } from "@/queries/market-queries";
@@ -26,6 +28,7 @@ export function AppHeader() {
   const [walletPickerOpen, setWalletPickerOpen] = useState(false);
   const controlsRef = useRef<HTMLDivElement | null>(null);
   const wallet = useWallet();
+  const walletConnect = useWalletConnectModal();
   const homeQuery = searchParams.get("q") ?? "";
   const isLanding = pathname === "/";
   const isMarkets = pathname.startsWith("/markets");
@@ -134,15 +137,34 @@ export function AppHeader() {
   }
 
   async function handleWalletConnect() {
-    if (wallet.isConnected || wallet.status === "checking") return;
+    if ((wallet.isConnected && wallet.isSupportedChain) || wallet.status === "checking") return;
+
+    if (wallet.isWrongNetwork) {
+      if (wallet.source === WALLETCONNECT_WALLET_ID) {
+        await walletConnect.openConnect();
+        return;
+      }
+
+      const result = await connectWallet();
+      if (result?.isSupportedChain && isLanding) {
+        setWalletPickerOpen(false);
+        window.setTimeout(() => router.push("/markets"), 260);
+      }
+      return;
+    }
 
     if (wallet.availableWallets.length > 1) {
       setWalletPickerOpen(true);
       return;
     }
 
+    if (wallet.selectedWalletId === WALLETCONNECT_WALLET_ID) {
+      await walletConnect.openConnect();
+      return;
+    }
+
     const result = await connectWallet();
-    if (result && isLanding) {
+    if (result?.isSupportedChain && isLanding) {
       setWalletPickerOpen(false);
       window.setTimeout(() => router.push("/markets"), 260);
     }
@@ -150,8 +172,15 @@ export function AppHeader() {
 
   async function handleWalletSelection(walletId: string) {
     selectWallet(walletId);
+
+    if (walletId === WALLETCONNECT_WALLET_ID) {
+      setWalletPickerOpen(false);
+      await walletConnect.openConnect();
+      return;
+    }
+
     const result = await connectWallet();
-    if (result && isLanding) {
+    if (result?.isSupportedChain && isLanding) {
       setWalletPickerOpen(false);
       window.setTimeout(() => router.push("/markets"), 260);
     }
@@ -226,3 +255,4 @@ export function AppHeader() {
     </motion.header>
   );
 }
+

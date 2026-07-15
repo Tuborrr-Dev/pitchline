@@ -2,17 +2,23 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 
+import { PITCHLINE_REQUIRED_CHAIN_ID, PITCHLINE_REQUIRED_NETWORK_NAME } from "@/config/walletconnect";
+
 const WALLET_EVENT = "pitchline-wallet-change";
 const WALLET_AUTH_KEY = "pitchline.wallet.authorized";
 const WALLET_PROVIDER_KEY = "pitchline.wallet.provider";
 const WALLET_REQUEST_TIMEOUT_MS = 15000;
+export const WALLETCONNECT_WALLET_ID = "walletconnect";
 const listeners = new Set<() => void>();
 
 type WalletStatus = "idle" | "checking" | "connecting" | "connected" | "error";
+type WalletConnectionSource = "injected" | "walletconnect";
 
 type WalletSnapshot = {
+  source: WalletConnectionSource | null;
   hasProvider: boolean;
   isConnected: boolean;
+  isSupportedChain: boolean;
   address: string | null;
   chainId: string | null;
   status: WalletStatus;
@@ -60,6 +66,7 @@ export type WalletOption = {
   name: string;
   icon: string | null;
   rdns: string | null;
+  source: WalletConnectionSource;
 };
 
 type WalletProviderRecord = WalletOption & {
@@ -73,8 +80,10 @@ declare global {
 }
 
 const defaultSnapshot: WalletSnapshot = {
+  source: null,
   hasProvider: false,
   isConnected: false,
+  isSupportedChain: false,
   address: null,
   chainId: null,
   status: "idle",
@@ -86,6 +95,7 @@ const defaultSnapshot: WalletSnapshot = {
 let snapshot = defaultSnapshot;
 let initialized = false;
 let activeConnectRequest: Promise<WalletSnapshot | null> | null = null;
+let walletConnectAvailable = false;
 const discoveredProviders = new Map<string, WalletProviderRecord>();
 const subscribedProviders = new WeakSet<EthereumProvider>();
 
@@ -143,8 +153,10 @@ function persistSelectedWalletId(walletId: string | null) {
 
 function getDisconnectedSnapshot(hasProvider: boolean, error: string | null = null): WalletSnapshot {
   return {
+    source: null,
     hasProvider,
     isConnected: false,
+    isSupportedChain: false,
     address: null,
     chainId: null,
     status: error ? "error" : "idle",
@@ -157,6 +169,26 @@ function getDisconnectedSnapshot(hasProvider: boolean, error: string | null = nu
 function formatWalletAddress(address: string | null) {
   if (!address) return null;
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function normalizeChainId(chainId: string | null) {
+  if (!chainId) return null;
+  const normalized = chainId.trim().toLowerCase();
+  if (/^\d+$/.test(normalized)) {
+    return `0x${Number(normalized).toString(16)}`;
+  }
+  return normalized;
+}
+
+function isSupportedChainId(chainId: string | null) {
+  return normalizeChainId(chainId) === PITCHLINE_REQUIRED_CHAIN_ID;
+}
+
+function getWrongNetworkMessage(chainId: string | null) {
+  const activeChain = normalizeChainId(chainId);
+  return activeChain
+    ? `Wrong network. Switch to ${PITCHLINE_REQUIRED_NETWORK_NAME} (${PITCHLINE_REQUIRED_CHAIN_ID}).`
+    : `Wrong network. Switch to ${PITCHLINE_REQUIRED_NETWORK_NAME}.`;
 }
 
 function slugifyWalletId(name: string) {
@@ -187,19 +219,38 @@ function buildWalletOption(record: WalletProviderRecord): WalletOption {
     name: record.name,
     icon: record.icon,
     rdns: record.rdns,
+    source: "injected",
   };
 }
 
 function getAvailableWallets() {
-  return Array.from(discoveredProviders.values())
+  const injectedWallets = Array.from(discoveredProviders.values())
     .map(buildWalletOption)
     .sort((left, right) => left.name.localeCompare(right.name));
+
+  if (!walletConnectAvailable) {
+    return injectedWallets;
+  }
+
+  return [
+    ...injectedWallets,
+    {
+      id: WALLETCONNECT_WALLET_ID,
+      name: "WalletConnect",
+      icon: null,
+      rdns: "com.walletconnect",
+      source: "walletconnect" as const,
+    },
+  ];
 }
 
 function refreshWalletCatalog(nextError: string | null = snapshot.error) {
   const availableWallets = getAvailableWallets();
   const selectedWalletId = getSelectedWalletId();
-  const hasSelectedWallet = selectedWalletId ? discoveredProviders.has(selectedWalletId) : false;
+  const hasSelectedWallet = selectedWalletId
+    ? discoveredProviders.has(selectedWalletId) ||
+      (walletConnectAvailable && selectedWalletId === WALLETCONNECT_WALLET_ID)
+    : false;
   const resolvedSelectedWalletId = hasSelectedWallet ? selectedWalletId : null;
 
   if (selectedWalletId && !hasSelectedWallet) {
@@ -217,7 +268,13 @@ function refreshWalletCatalog(nextError: string | null = snapshot.error) {
 
 function selectDefaultWalletIfNeeded() {
   const selectedWalletId = getSelectedWalletId();
-  if (selectedWalletId && discoveredProviders.has(selectedWalletId)) return;
+  if (
+    selectedWalletId &&
+    (discoveredProviders.has(selectedWalletId) ||
+      (walletConnectAvailable && selectedWalletId === WALLETCONNECT_WALLET_ID))
+  ) {
+    return;
+  }
 
   const firstWallet = getAvailableWallets()[0];
   if (!firstWallet) return;
@@ -227,6 +284,10 @@ function selectDefaultWalletIfNeeded() {
 
 function getActiveProviderRecord() {
   const selectedWalletId = getSelectedWalletId();
+
+  if (selectedWalletId === WALLETCONNECT_WALLET_ID) {
+    return null;
+  }
 
   if (selectedWalletId && discoveredProviders.has(selectedWalletId)) {
     return discoveredProviders.get(selectedWalletId) ?? null;
@@ -273,6 +334,23 @@ async function requestWithTimeout(provider: EthereumProvider, args: RequestArgum
   ]);
 }
 
+async function switchInjectedProviderToRequiredChain(provider: EthereumProvider) {
+  await requestWithTimeout(
+    provider,
+    {
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: PITCHLINE_REQUIRED_CHAIN_ID }],
+    },
+    `Network switch timed out. Switch to ${PITCHLINE_REQUIRED_NETWORK_NAME} manually.`,
+  );
+
+  return requestWithTimeout(
+    provider,
+    { method: "eth_chainId" },
+    "Network switched, but reading the active network timed out.",
+  ) as Promise<string>;
+}
+
 function subscribeToProvider(providerId: string, provider: EthereumProvider) {
   if (!provider.on || subscribedProviders.has(provider)) return;
   subscribedProviders.add(provider);
@@ -297,11 +375,13 @@ function subscribeToProvider(providerId: string, provider: EthereumProvider) {
 
     setSnapshot({
       ...snapshot,
+      source: "injected",
       hasProvider: true,
       isConnected: true,
+      isSupportedChain: isSupportedChainId(snapshot.chainId),
       address: accounts[0] ?? null,
-      status: "connected",
-      error: null,
+      status: isSupportedChainId(snapshot.chainId) ? "connected" : "error",
+      error: isSupportedChainId(snapshot.chainId) ? null : getWrongNetworkMessage(snapshot.chainId),
     });
   };
 
@@ -311,9 +391,10 @@ function subscribeToProvider(providerId: string, provider: EthereumProvider) {
     setSnapshot({
       ...snapshot,
       hasProvider: true,
-      chainId: nextChainId,
-      status: snapshot.isConnected ? "connected" : snapshot.status,
-      error: null,
+      chainId: normalizeChainId(nextChainId),
+      isSupportedChain: isSupportedChainId(nextChainId),
+      status: snapshot.isConnected ? (isSupportedChainId(nextChainId) ? "connected" : "error") : snapshot.status,
+      error: snapshot.isConnected && !isSupportedChainId(nextChainId) ? getWrongNetworkMessage(nextChainId) : null,
     });
   };
 
@@ -345,6 +426,7 @@ function registerEip6963Provider(detail: Eip6963ProviderDetail) {
     name: detail.info.name,
     icon: detail.info.icon || null,
     rdns: detail.info.rdns || null,
+    source: "injected",
     provider: detail.provider,
   });
 }
@@ -359,6 +441,7 @@ function registerLegacyProvider(provider: EthereumProvider) {
     name,
     icon: null,
     rdns,
+    source: "injected",
     provider,
   });
 }
@@ -366,6 +449,10 @@ function registerLegacyProvider(provider: EthereumProvider) {
 async function syncWalletState() {
   const providerRecord = getActiveProviderRecord();
   const provider = providerRecord?.provider;
+
+  if (getSelectedWalletId() === WALLETCONNECT_WALLET_ID) {
+    return;
+  }
 
   if (!provider) {
     setSnapshot(
@@ -398,12 +485,14 @@ async function syncWalletState() {
 
     setSnapshot({
       ...snapshot,
+      source: "injected",
       hasProvider: true,
       isConnected: true,
+      isSupportedChain: isSupportedChainId(chainId),
       address: accounts[0] ?? null,
-      chainId,
-      status: "connected",
-      error: null,
+      chainId: normalizeChainId(chainId),
+      status: isSupportedChainId(chainId) ? "connected" : "error",
+      error: isSupportedChainId(chainId) ? null : getWrongNetworkMessage(chainId),
       selectedWalletId: providerRecord.id,
     });
   } catch {
@@ -465,12 +554,17 @@ export function useWallet() {
 
   return {
     ...wallet,
+    isWrongNetwork: wallet.isConnected && !wallet.isSupportedChain,
+    requiredChainId: PITCHLINE_REQUIRED_CHAIN_ID,
+    requiredNetworkName: PITCHLINE_REQUIRED_NETWORK_NAME,
     addressLabel: formatWalletAddress(wallet.address),
   };
 }
 
 export function selectWallet(walletId: string) {
-  if (!discoveredProviders.has(walletId)) {
+  const isWalletConnect = walletId === WALLETCONNECT_WALLET_ID && walletConnectAvailable;
+
+  if (!isWalletConnect && !discoveredProviders.has(walletId)) {
     setSnapshot({
       ...snapshot,
       error: "Selected wallet provider is no longer available.",
@@ -483,13 +577,15 @@ export function selectWallet(walletId: string) {
   setSnapshot({
     ...snapshot,
     isConnected: false,
+    isSupportedChain: false,
+    source: null,
     address: null,
     chainId: null,
     status: "idle",
     error: null,
     selectedWalletId: walletId,
     availableWallets: getAvailableWallets(),
-    hasProvider: discoveredProviders.size > 0,
+    hasProvider: discoveredProviders.size > 0 || walletConnectAvailable,
   });
 }
 
@@ -500,6 +596,18 @@ export async function connectWallet() {
 
   const providerRecord = getActiveProviderRecord();
   const provider = providerRecord?.provider;
+
+  if (getSelectedWalletId() === WALLETCONNECT_WALLET_ID) {
+    setSnapshot({
+      ...snapshot,
+      source: "walletconnect",
+      hasProvider: true,
+      selectedWalletId: WALLETCONNECT_WALLET_ID,
+      status: "connecting",
+      error: "Open WalletConnect to continue.",
+    });
+    return null;
+  }
 
   if (!provider) {
     setSnapshot(
@@ -534,20 +642,31 @@ export async function connectWallet() {
         return null;
       }
 
-      const chainId = (await requestWithTimeout(
+      let chainId = (await requestWithTimeout(
         provider,
         { method: "eth_chainId" },
         "Wallet connected, but reading the active network timed out.",
       )) as string;
+
+      if (!isSupportedChainId(chainId)) {
+        try {
+          chainId = await switchInjectedProviderToRequiredChain(provider);
+        } catch {
+          // Keep the connected wallet visible, but block access until the user switches manually.
+        }
+      }
+
       setAuthorizedFlag(true);
 
       const nextSnapshot: WalletSnapshot = {
+        source: "injected",
         hasProvider: true,
         isConnected: true,
+        isSupportedChain: isSupportedChainId(chainId),
         address: accounts[0] ?? null,
-        chainId,
-        status: "connected",
-        error: null,
+        chainId: normalizeChainId(chainId),
+        status: isSupportedChainId(chainId) ? "connected" : "error",
+        error: isSupportedChainId(chainId) ? null : getWrongNetworkMessage(chainId),
         availableWallets: getAvailableWallets(),
         selectedWalletId: providerRecord.id,
       };
@@ -571,5 +690,96 @@ export async function connectWallet() {
 
 export function disconnectWallet() {
   setAuthorizedFlag(false);
-  setSnapshot(getDisconnectedSnapshot(discoveredProviders.size > 0));
+  setSnapshot(getDisconnectedSnapshot(discoveredProviders.size > 0 || walletConnectAvailable));
 }
+
+export function setWalletConnectAvailability(available: boolean) {
+  walletConnectAvailable = available;
+  selectDefaultWalletIfNeeded();
+  refreshWalletCatalog();
+}
+
+export function setWalletConnectOpening() {
+  persistSelectedWalletId(WALLETCONNECT_WALLET_ID);
+  setSnapshot({
+    ...snapshot,
+    source: "walletconnect",
+    hasProvider: true,
+    isSupportedChain: false,
+    selectedWalletId: WALLETCONNECT_WALLET_ID,
+    status: "connecting",
+    error: null,
+  });
+}
+
+export function setWalletConnectError(error: string) {
+  setSnapshot({
+    ...snapshot,
+    source: snapshot.selectedWalletId === WALLETCONNECT_WALLET_ID ? "walletconnect" : snapshot.source,
+    hasProvider: walletConnectAvailable || snapshot.hasProvider,
+    status: "error",
+    error,
+  });
+}
+
+export function syncWalletConnectState({
+  address,
+  chainId,
+  isConnected,
+  status,
+}: {
+  address: string | null;
+  chainId: string | null;
+  isConnected: boolean;
+  status?: "connected" | "disconnected" | "connecting" | "reconnecting";
+}) {
+  if (isConnected) {
+    persistSelectedWalletId(WALLETCONNECT_WALLET_ID);
+    setAuthorizedFlag(true);
+    setSnapshot({
+      ...snapshot,
+      source: "walletconnect",
+      hasProvider: true,
+      isConnected: true,
+      isSupportedChain: isSupportedChainId(chainId),
+      address,
+      chainId: normalizeChainId(chainId),
+      status: isSupportedChainId(chainId) ? "connected" : "error",
+      error: isSupportedChainId(chainId) ? null : getWrongNetworkMessage(chainId),
+      availableWallets: getAvailableWallets(),
+      selectedWalletId: WALLETCONNECT_WALLET_ID,
+    });
+    return;
+  }
+
+  if (snapshot.selectedWalletId !== WALLETCONNECT_WALLET_ID) return;
+
+  if (status === "connecting" || status === "reconnecting") {
+    setSnapshot({
+      ...snapshot,
+      source: "walletconnect",
+      hasProvider: true,
+      status: "connecting",
+      error: null,
+    });
+    return;
+  }
+
+  setAuthorizedFlag(false);
+  setSnapshot({
+    ...getDisconnectedSnapshot(discoveredProviders.size > 0 || walletConnectAvailable),
+    availableWallets: getAvailableWallets(),
+    selectedWalletId: WALLETCONNECT_WALLET_ID,
+  });
+}
+export function resetWalletConnectIfConnecting() {
+  if (snapshot.selectedWalletId !== WALLETCONNECT_WALLET_ID || snapshot.status !== "connecting") return;
+
+  setAuthorizedFlag(false);
+  setSnapshot({
+    ...getDisconnectedSnapshot(discoveredProviders.size > 0 || walletConnectAvailable),
+    availableWallets: getAvailableWallets(),
+    selectedWalletId: WALLETCONNECT_WALLET_ID,
+  });
+}
+
