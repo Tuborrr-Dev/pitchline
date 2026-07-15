@@ -1,0 +1,3893 @@
+{
+  "fixtureId": "18237038",
+  "homeName": "France",
+  "awayName": "Spain",
+  "oddsHistory": [
+    {
+      "homePct": 40.6,
+      "drawPct": 28.9,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-11T01:37:26.415+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 28.9,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-11T01:40:41.305+00:00"
+    },
+    {
+      "homePct": 40.9,
+      "drawPct": 28.9,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-11T08:35:08.243+00:00"
+    },
+    {
+      "homePct": 40.9,
+      "drawPct": 29,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-11T08:38:28.195+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-11T08:39:27.019+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-11T08:44:18.178+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 28.9,
+      "awayPct": 30,
+      "timestamp": "2026-07-11T13:06:49.626+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-11T13:07:52.586+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-11T13:08:13.63+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-11T13:09:19.649+00:00"
+    },
+    {
+      "homePct": 40.4,
+      "drawPct": 29,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-11T13:17:58.841+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-11T13:18:10.932+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-11T13:31:49.69+00:00"
+    },
+    {
+      "homePct": 40.9,
+      "drawPct": 29,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-11T22:17:41.348+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29,
+      "awayPct": 30,
+      "timestamp": "2026-07-11T22:21:11.108+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.1,
+      "awayPct": 30,
+      "timestamp": "2026-07-11T22:23:06.104+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.1,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-11T22:29:49.2+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.1,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-11T22:30:16.985+00:00"
+    },
+    {
+      "homePct": 41.7,
+      "drawPct": 29.1,
+      "awayPct": 29.2,
+      "timestamp": "2026-07-12T13:02:57.557+00:00"
+    },
+    {
+      "homePct": 41.6,
+      "drawPct": 29.1,
+      "awayPct": 29.3,
+      "timestamp": "2026-07-12T13:03:06.137+00:00"
+    },
+    {
+      "homePct": 41.7,
+      "drawPct": 29.1,
+      "awayPct": 29.2,
+      "timestamp": "2026-07-12T13:11:57.585+00:00"
+    },
+    {
+      "homePct": 41.7,
+      "drawPct": 29.1,
+      "awayPct": 29.2,
+      "timestamp": "2026-07-12T13:12:42.694+00:00"
+    },
+    {
+      "homePct": 41.7,
+      "drawPct": 29.1,
+      "awayPct": 29.2,
+      "timestamp": "2026-07-12T13:13:27.578+00:00"
+    },
+    {
+      "homePct": 41.7,
+      "drawPct": 29.1,
+      "awayPct": 29.2,
+      "timestamp": "2026-07-12T13:15:56.112+00:00"
+    },
+    {
+      "homePct": 41.7,
+      "drawPct": 29.1,
+      "awayPct": 29.2,
+      "timestamp": "2026-07-12T13:18:42.699+00:00"
+    },
+    {
+      "homePct": 41.7,
+      "drawPct": 29.1,
+      "awayPct": 29.3,
+      "timestamp": "2026-07-12T13:20:57.63+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.1,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-12T13:41:12.672+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.1,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-12T13:44:57.744+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.1,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-12T13:45:42.713+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.1,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-12T13:50:16.139+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T13:51:42.837+00:00"
+    },
+    {
+      "homePct": 41.4,
+      "drawPct": 29,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T13:55:17.382+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T13:57:03.793+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T13:58:58.287+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T13:59:57.896+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T14:00:42.843+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T14:02:12.846+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-12T14:06:28.836+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-12T14:11:12.832+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T14:17:56.201+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T14:19:27.875+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T14:27:46.211+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-12T14:31:36.214+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T14:46:16.245+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T14:53:57.964+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T14:56:58.008+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T15:00:49.551+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-12T15:02:12.753+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-12T15:05:58.089+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T15:06:43.073+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T15:07:28.175+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T15:11:13.078+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T15:18:35.803+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T15:19:08.5+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-12T15:21:14.107+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-12T15:24:41.162+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-12T15:33:36.407+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.1,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-12T15:34:55.408+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.2,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T15:36:53.355+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T15:37:28.141+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T15:42:59.996+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T15:49:38.433+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T15:50:18.655+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T15:52:28.209+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T15:55:40.487+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T15:56:20.092+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T15:57:43.244+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T16:09:56.351+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T16:11:06.358+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T16:13:26.37+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T16:15:26.376+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T16:18:53.305+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T16:23:16.382+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T16:58:53.494+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T16:59:16.431+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T17:04:43.494+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T17:05:46.438+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T17:31:06.471+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T17:32:13.72+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T17:33:53.548+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T17:34:56.473+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T20:00:34.054+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T20:01:24.149+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T20:15:36.939+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T20:26:24.194+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T20:41:24.401+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-12T20:51:24.299+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T21:57:19.244+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T21:58:05.075+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T22:05:34.576+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-12T22:10:40.088+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-12T23:08:29.35+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-12T23:13:04.972+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.4,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-12T23:30:09.921+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-12T23:32:54.877+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.4,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-12T23:55:14.984+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T00:13:43.897+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.4,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T00:14:30.093+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.4,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T00:18:46.684+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T00:20:55.088+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T00:21:50.098+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.5,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T00:56:59.459+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.5,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T01:00:59.45+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.5,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T01:20:30.458+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.5,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T01:21:25.408+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.5,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T01:22:20.311+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T01:25:04.214+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T01:27:50.32+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T01:29:40.326+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T01:31:29.487+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.4,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T05:51:10.998+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.4,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T05:54:11.28+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.4,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T06:00:01.324+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.4,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T06:05:51.316+00:00"
+    },
+    {
+      "homePct": 41.5,
+      "drawPct": 29.2,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T06:48:21.523+00:00"
+    },
+    {
+      "homePct": 41.4,
+      "drawPct": 29.2,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T06:49:11.589+00:00"
+    },
+    {
+      "homePct": 41.5,
+      "drawPct": 29.2,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T06:56:41.101+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T07:28:01.114+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T07:29:11.664+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T07:31:51.116+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T07:32:11.113+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T07:37:31.716+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T07:45:01.69+00:00"
+    },
+    {
+      "homePct": 41.4,
+      "drawPct": 29.2,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T07:46:52.327+00:00"
+    },
+    {
+      "homePct": 41.4,
+      "drawPct": 29.2,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T07:47:31.665+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T07:55:51.71+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T07:58:31.131+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.2,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T07:59:51.135+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.2,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T08:00:01.788+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:03:31.138+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:07:31.754+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:08:05.253+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:17:31.781+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:20:01.857+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:21:56.332+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:22:09.95+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T08:22:31.85+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:23:21.8+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:31:41.868+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:32:31.877+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T08:39:51.188+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T09:00:21.215+00:00"
+    },
+    {
+      "homePct": 41.4,
+      "drawPct": 29.3,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T09:07:42.292+00:00"
+    },
+    {
+      "homePct": 41.4,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T09:09:53.124+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T09:10:27.162+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T09:14:07.128+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T09:45:23.17+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T09:54:27.276+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T10:21:57.427+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T10:25:37.499+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T10:26:23.212+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T10:31:07.46+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T10:32:02.493+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.4,
+      "timestamp": "2026-07-13T10:35:42.593+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T10:47:37.53+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T10:52:12.497+00:00"
+    },
+    {
+      "homePct": 41.3,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T10:54:57.513+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T10:56:23.279+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:08:42.624+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T11:12:22.669+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.2,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T11:13:17.574+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T11:14:12.559+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T11:15:55.471+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T11:16:57.732+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T11:17:52.58+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:20:37.662+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:22:27.625+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T11:23:22.648+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:24:17.738+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:25:12.949+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T11:28:52.608+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:29:47.636+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:35:45.448+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:36:35.458+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:38:55.452+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.2,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T11:39:59.516+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:40:41.005+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T11:41:42.714+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:48:45.483+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:50:52.75+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T11:55:20.584+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.2,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T12:00:55.482+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.2,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T12:06:27.809+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T12:08:17.792+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T12:11:57.848+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T12:20:45.5+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T12:25:25.512+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T12:45:52.981+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T13:33:33.14+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T13:37:55.631+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T13:50:45.909+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T13:51:03.291+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T13:54:35.652+00:00"
+    },
+    {
+      "homePct": 41.2,
+      "drawPct": 29.3,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-13T13:55:45.639+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T13:56:03.249+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T13:58:03.289+00:00"
+    },
+    {
+      "homePct": 41.1,
+      "drawPct": 29.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-13T14:10:32.837+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T14:19:50.966+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T14:20:55.654+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T14:21:05.663+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T14:25:45.661+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T14:27:03.483+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T14:34:03.534+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T14:35:03.64+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.2,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T14:36:03.621+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T14:37:03.501+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T14:52:15.714+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T14:53:03.544+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:02:25.706+00:00"
+    },
+    {
+      "homePct": 40.9,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:03:03.626+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:04:55.704+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:05:15.714+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:07:25.709+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:14:03.648+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T15:16:35.721+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:17:25.714+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T15:20:55.762+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:21:25.719+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:26:03.71+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-13T15:28:25.735+00:00"
+    },
+    {
+      "homePct": 41,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:29:45.777+00:00"
+    },
+    {
+      "homePct": 40.9,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T15:30:11.622+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.4,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-13T15:33:46.69+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.4,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-13T15:34:03.777+00:00"
+    },
+    {
+      "homePct": 40.8,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T15:35:25.742+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T15:36:03.8+00:00"
+    },
+    {
+      "homePct": 40.8,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T15:42:03.73+00:00"
+    },
+    {
+      "homePct": 40.8,
+      "drawPct": 29.3,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-13T15:48:03.826+00:00"
+    },
+    {
+      "homePct": 40.8,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T15:51:03.811+00:00"
+    },
+    {
+      "homePct": 40.8,
+      "drawPct": 29.3,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-13T15:55:03.84+00:00"
+    },
+    {
+      "homePct": 40.9,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T16:00:35.196+00:00"
+    },
+    {
+      "homePct": 40.8,
+      "drawPct": 29.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-13T16:01:03.96+00:00"
+    },
+    {
+      "homePct": 40.8,
+      "drawPct": 29.3,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-13T16:06:16.772+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T16:10:34.828+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:11:06.25+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:12:03.957+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:15:04.02+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T16:16:35.797+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T16:18:04.263+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T16:19:03.964+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T16:20:03.996+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T16:23:04.065+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T16:27:03.88+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:29:45.818+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:31:03.961+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T16:39:55.826+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:40:03.966+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:41:35.822+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:42:04.41+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:44:15.838+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:45:04.038+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:46:04.6+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:49:45.836+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:50:05.839+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:51:04.114+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:52:04.292+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T16:53:04.073+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.3,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T17:19:35.857+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.3,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T17:24:45.863+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.3,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T17:25:04.168+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.3,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T17:30:04.203+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.3,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T17:33:25.868+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.3,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T17:52:45.895+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.3,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T17:53:25.901+00:00"
+    },
+    {
+      "homePct": 40.4,
+      "drawPct": 29.3,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-13T18:06:15.226+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29.4,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-13T18:07:04.533+00:00"
+    },
+    {
+      "homePct": 40.4,
+      "drawPct": 29.4,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T18:08:04.873+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29.5,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T18:18:43.784+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.6,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T18:19:05.945+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.4,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T19:20:39.609+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.4,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T19:59:24.818+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.4,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-13T20:10:51.199+00:00"
+    },
+    {
+      "homePct": 40.7,
+      "drawPct": 29.4,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-13T20:11:57.24+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T20:12:51.774+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.3,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-13T22:28:55.282+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T22:29:42.583+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T22:31:05.32+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T22:33:15.328+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T22:39:27.091+00:00"
+    },
+    {
+      "homePct": 40.6,
+      "drawPct": 29.3,
+      "awayPct": 30,
+      "timestamp": "2026-07-13T23:26:44.378+00:00"
+    },
+    {
+      "homePct": 40.5,
+      "drawPct": 29.3,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-13T23:33:54.392+00:00"
+    },
+    {
+      "homePct": 40.4,
+      "drawPct": 29.3,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-13T23:45:56.086+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.3,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-13T23:46:55.767+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.3,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-13T23:48:11.097+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.3,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-13T23:49:30.947+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.3,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-13T23:52:26.053+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.4,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-13T23:59:54.418+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.4,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T00:06:24.429+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29.4,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T00:07:58.671+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.4,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T00:08:45.283+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.4,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-14T00:24:54.443+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.4,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T00:26:44.445+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.4,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-14T00:32:25.973+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.4,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T00:33:30.96+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 29.4,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T00:34:52.401+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.4,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-14T00:35:28.392+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T08:45:34.289+00:00"
+    },
+    {
+      "homePct": 39.7,
+      "drawPct": 29.8,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T08:51:40.619+00:00"
+    },
+    {
+      "homePct": 39.7,
+      "drawPct": 29.8,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T08:52:10.733+00:00"
+    },
+    {
+      "homePct": 39.7,
+      "drawPct": 29.8,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-14T08:53:51.071+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 29.8,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-14T08:56:50.653+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T08:57:58.305+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T08:58:00.88+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T09:03:54.121+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 29.8,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T09:04:23.31+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 29.8,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T09:05:05.258+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 29.8,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T09:07:30.136+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 29.8,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T09:09:42.142+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 29.9,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T09:10:23.32+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T09:12:18.232+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T09:13:18.331+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:16:37.022+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.9,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:21:12.247+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:22:59.661+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.7,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T09:26:42.348+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:32:14.676+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:33:24.247+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:38:30.354+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:40:54.361+00:00"
+    },
+    {
+      "homePct": 40.2,
+      "drawPct": 29.7,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:41:54.859+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29.7,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T09:43:59.707+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:44:30.414+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:45:42.409+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.9,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T09:55:59.728+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T09:56:12.423+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.9,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T10:00:44.751+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.9,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T10:02:24.469+00:00"
+    },
+    {
+      "homePct": 30.5,
+      "drawPct": 44.8,
+      "awayPct": 24.8,
+      "timestamp": "2026-07-14T10:06:36.501+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T10:08:54.762+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T10:09:18.601+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T10:11:59.761+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T10:12:09.769+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.9,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T10:13:00.692+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 29.8,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T10:14:42.661+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T10:15:58.404+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T10:16:36.714+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.7,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T10:19:33.42+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 29.8,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T10:20:36.707+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29.8,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T11:07:14.885+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29.8,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T11:13:49.892+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29.8,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T11:14:31.095+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29.8,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T11:16:37.056+00:00"
+    },
+    {
+      "homePct": 40.3,
+      "drawPct": 29.8,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T11:17:13.251+00:00"
+    },
+    {
+      "homePct": 40.4,
+      "drawPct": 29.7,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T11:18:37.137+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 30.2,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T11:41:37.236+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 30.1,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T11:43:44.357+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 30.1,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T11:45:01.233+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 30.1,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T11:46:15.509+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 30.1,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T11:47:55.292+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.2,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T11:48:54.981+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.2,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T11:49:14.964+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T11:51:36.778+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.5,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T11:52:53.294+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T11:54:25.572+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T11:56:58.652+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.5,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T11:57:19.285+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.5,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T11:58:40.452+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.5,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T11:59:13.366+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.5,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T12:00:55.323+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.5,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T12:05:25.28+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.5,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:06:59.998+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.5,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-14T12:07:50.002+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:08:19.999+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:10:55.005+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:11:25.478+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.6,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-14T12:12:55.431+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:15:10.02+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:16:42.677+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:18:31.926+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.6,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-14T12:36:55.641+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.5,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:37:49.659+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.5,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:39:49.663+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.5,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:42:49.659+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:43:24.507+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:44:07.639+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:46:01.7+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.6,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-14T12:47:31.719+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T12:49:55.098+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.6,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-14T12:51:40.104+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.7,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-14T12:54:13.785+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.4,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T14:41:14.561+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.3,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T14:44:44.605+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.3,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T14:47:45.355+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.4,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T14:48:56.601+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T14:52:51.132+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.4,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T14:53:19.302+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T14:57:52.388+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.3,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T14:58:38.656+00:00"
+    },
+    {
+      "homePct": 40.1,
+      "drawPct": 30.3,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T14:59:30.377+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T15:00:56.644+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T15:01:50.659+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T15:03:20.399+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.4,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T15:04:32.804+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.4,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T15:05:44.679+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.4,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T15:08:15.537+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T15:41:50.245+00:00"
+    },
+    {
+      "homePct": 39.9,
+      "drawPct": 30.5,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T15:43:55.664+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T15:44:51.079+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T15:45:33.079+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T15:46:05.137+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.4,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-14T15:49:30.173+00:00"
+    },
+    {
+      "homePct": 40,
+      "drawPct": 30.4,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T15:50:00.922+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.6,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T15:51:25.617+00:00"
+    },
+    {
+      "homePct": 39.7,
+      "drawPct": 30.6,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T15:52:55.531+00:00"
+    },
+    {
+      "homePct": 39.7,
+      "drawPct": 30.5,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T15:54:57.204+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.5,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T15:55:21.112+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.5,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T15:57:39.15+00:00"
+    },
+    {
+      "homePct": 39.7,
+      "drawPct": 30.5,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T15:58:20.582+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.4,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T16:02:27.126+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.4,
+      "awayPct": 29.7,
+      "timestamp": "2026-07-14T16:03:52.227+00:00"
+    },
+    {
+      "homePct": 39.8,
+      "drawPct": 30.4,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T16:04:21.209+00:00"
+    },
+    {
+      "homePct": 39.7,
+      "drawPct": 30.5,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T16:06:57.209+00:00"
+    },
+    {
+      "homePct": 39.7,
+      "drawPct": 30.5,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T16:08:45.199+00:00"
+    },
+    {
+      "homePct": 39.6,
+      "drawPct": 30.5,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T16:11:45.537+00:00"
+    },
+    {
+      "homePct": 39.5,
+      "drawPct": 30.5,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T16:12:09.287+00:00"
+    },
+    {
+      "homePct": 39.5,
+      "drawPct": 30.5,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T16:13:30.613+00:00"
+    },
+    {
+      "homePct": 39.5,
+      "drawPct": 30.5,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T16:14:40.837+00:00"
+    },
+    {
+      "homePct": 39.4,
+      "drawPct": 30.5,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T16:15:25.996+00:00"
+    },
+    {
+      "homePct": 39.5,
+      "drawPct": 30.5,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T16:16:01.093+00:00"
+    },
+    {
+      "homePct": 39.5,
+      "drawPct": 30.6,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T16:17:15.32+00:00"
+    },
+    {
+      "homePct": 39.4,
+      "drawPct": 30.5,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T16:18:45.635+00:00"
+    },
+    {
+      "homePct": 39.4,
+      "drawPct": 30.5,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T16:20:35.987+00:00"
+    },
+    {
+      "homePct": 39.4,
+      "drawPct": 30.5,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T16:21:55.253+00:00"
+    },
+    {
+      "homePct": 39.4,
+      "drawPct": 30.5,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T16:22:57.272+00:00"
+    },
+    {
+      "homePct": 39.3,
+      "drawPct": 30.5,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:23:20.557+00:00"
+    },
+    {
+      "homePct": 39.3,
+      "drawPct": 30.5,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:24:51.378+00:00"
+    },
+    {
+      "homePct": 39.3,
+      "drawPct": 30.5,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:25:41.03+00:00"
+    },
+    {
+      "homePct": 39.3,
+      "drawPct": 30.5,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:26:20.16+00:00"
+    },
+    {
+      "homePct": 39.2,
+      "drawPct": 30.5,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:27:40.423+00:00"
+    },
+    {
+      "homePct": 39.2,
+      "drawPct": 30.6,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T16:28:54.432+00:00"
+    },
+    {
+      "homePct": 39.2,
+      "drawPct": 30.6,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:31:55.587+00:00"
+    },
+    {
+      "homePct": 39.2,
+      "drawPct": 30.6,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:32:25.801+00:00"
+    },
+    {
+      "homePct": 39.2,
+      "drawPct": 30.6,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:33:40.571+00:00"
+    },
+    {
+      "homePct": 39.2,
+      "drawPct": 30.7,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:34:33.344+00:00"
+    },
+    {
+      "homePct": 39.4,
+      "drawPct": 30.6,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T16:36:51.325+00:00"
+    },
+    {
+      "homePct": 39.6,
+      "drawPct": 30.6,
+      "awayPct": 29.8,
+      "timestamp": "2026-07-14T16:38:24.318+00:00"
+    },
+    {
+      "homePct": 39.5,
+      "drawPct": 30.6,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T16:39:44.574+00:00"
+    },
+    {
+      "homePct": 39.4,
+      "drawPct": 30.6,
+      "awayPct": 30,
+      "timestamp": "2026-07-14T16:40:15.973+00:00"
+    },
+    {
+      "homePct": 39,
+      "drawPct": 30.9,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T16:41:56.302+00:00"
+    },
+    {
+      "homePct": 38.9,
+      "drawPct": 30.9,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:42:42.353+00:00"
+    },
+    {
+      "homePct": 38.8,
+      "drawPct": 31,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:43:00.653+00:00"
+    },
+    {
+      "homePct": 38.8,
+      "drawPct": 31,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:44:35.883+00:00"
+    },
+    {
+      "homePct": 38.7,
+      "drawPct": 31.1,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T16:45:16.638+00:00"
+    },
+    {
+      "homePct": 38.7,
+      "drawPct": 31,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T16:46:48.742+00:00"
+    },
+    {
+      "homePct": 38.8,
+      "drawPct": 30.9,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T16:47:10.609+00:00"
+    },
+    {
+      "homePct": 38.8,
+      "drawPct": 30.9,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T16:48:39.365+00:00"
+    },
+    {
+      "homePct": 38.7,
+      "drawPct": 31,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-14T16:49:30.389+00:00"
+    },
+    {
+      "homePct": 38.7,
+      "drawPct": 30.9,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-14T16:52:45.495+00:00"
+    },
+    {
+      "homePct": 38.8,
+      "drawPct": 30.9,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-14T16:53:18.408+00:00"
+    },
+    {
+      "homePct": 38.7,
+      "drawPct": 30.9,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-14T16:54:25.633+00:00"
+    },
+    {
+      "homePct": 38.6,
+      "drawPct": 30.9,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T16:55:48.482+00:00"
+    },
+    {
+      "homePct": 38.6,
+      "drawPct": 30.9,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T16:56:10.228+00:00"
+    },
+    {
+      "homePct": 38.7,
+      "drawPct": 30.9,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T16:57:35.513+00:00"
+    },
+    {
+      "homePct": 38.6,
+      "drawPct": 30.9,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T16:58:46.569+00:00"
+    },
+    {
+      "homePct": 38.6,
+      "drawPct": 30.8,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T17:00:42.518+00:00"
+    },
+    {
+      "homePct": 38.6,
+      "drawPct": 30.9,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T17:01:45.331+00:00"
+    },
+    {
+      "homePct": 38.6,
+      "drawPct": 30.9,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T17:02:40.518+00:00"
+    },
+    {
+      "homePct": 38.5,
+      "drawPct": 30.9,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T17:04:21.004+00:00"
+    },
+    {
+      "homePct": 38.5,
+      "drawPct": 30.9,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T17:05:25.114+00:00"
+    },
+    {
+      "homePct": 38.5,
+      "drawPct": 31,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T17:08:50.779+00:00"
+    },
+    {
+      "homePct": 38.5,
+      "drawPct": 31,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T17:09:42.627+00:00"
+    },
+    {
+      "homePct": 38.5,
+      "drawPct": 30.9,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T17:13:57.013+00:00"
+    },
+    {
+      "homePct": 38.4,
+      "drawPct": 30.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T17:14:55.061+00:00"
+    },
+    {
+      "homePct": 38.4,
+      "drawPct": 30.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T17:16:45.435+00:00"
+    },
+    {
+      "homePct": 38.4,
+      "drawPct": 30.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T17:17:39.662+00:00"
+    },
+    {
+      "homePct": 38.3,
+      "drawPct": 31,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T17:18:40.667+00:00"
+    },
+    {
+      "homePct": 38.4,
+      "drawPct": 31,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T17:20:55.245+00:00"
+    },
+    {
+      "homePct": 38.3,
+      "drawPct": 31,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T17:21:45.034+00:00"
+    },
+    {
+      "homePct": 38.4,
+      "drawPct": 30.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T17:22:48.634+00:00"
+    },
+    {
+      "homePct": 38.4,
+      "drawPct": 30.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T17:23:03.628+00:00"
+    },
+    {
+      "homePct": 38.5,
+      "drawPct": 30.9,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T17:24:42.615+00:00"
+    },
+    {
+      "homePct": 38.4,
+      "drawPct": 30.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T17:25:16.768+00:00"
+    },
+    {
+      "homePct": 38.4,
+      "drawPct": 30.9,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T17:28:55.722+00:00"
+    },
+    {
+      "homePct": 38.3,
+      "drawPct": 30.9,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T17:30:30.145+00:00"
+    },
+    {
+      "homePct": 38.3,
+      "drawPct": 30.9,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T17:31:45.392+00:00"
+    },
+    {
+      "homePct": 38.1,
+      "drawPct": 30.9,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:32:30.545+00:00"
+    },
+    {
+      "homePct": 38,
+      "drawPct": 30.9,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:35:55.597+00:00"
+    },
+    {
+      "homePct": 37.9,
+      "drawPct": 30.9,
+      "awayPct": 31.1,
+      "timestamp": "2026-07-14T17:36:44.881+00:00"
+    },
+    {
+      "homePct": 38,
+      "drawPct": 30.9,
+      "awayPct": 31.1,
+      "timestamp": "2026-07-14T17:37:50.593+00:00"
+    },
+    {
+      "homePct": 37.9,
+      "drawPct": 31.2,
+      "awayPct": 30.9,
+      "timestamp": "2026-07-14T17:38:55.797+00:00"
+    },
+    {
+      "homePct": 37.3,
+      "drawPct": 31.5,
+      "awayPct": 31.2,
+      "timestamp": "2026-07-14T17:39:57.73+00:00"
+    },
+    {
+      "homePct": 37.8,
+      "drawPct": 31.1,
+      "awayPct": 31.1,
+      "timestamp": "2026-07-14T17:40:56.206+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.2,
+      "awayPct": 31.1,
+      "timestamp": "2026-07-14T17:41:42.721+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.2,
+      "awayPct": 31.1,
+      "timestamp": "2026-07-14T17:42:39.734+00:00"
+    },
+    {
+      "homePct": 37.8,
+      "drawPct": 31.2,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:43:30.755+00:00"
+    },
+    {
+      "homePct": 37.9,
+      "drawPct": 31.1,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:44:50.724+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.1,
+      "awayPct": 31.1,
+      "timestamp": "2026-07-14T17:45:57.772+00:00"
+    },
+    {
+      "homePct": 37.8,
+      "drawPct": 31.3,
+      "awayPct": 30.9,
+      "timestamp": "2026-07-14T17:46:55.734+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.3,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:47:33.763+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.3,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:48:30.743+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.3,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:50:35.784+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.3,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:52:54.825+00:00"
+    },
+    {
+      "homePct": 37.8,
+      "drawPct": 31.2,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:53:45.824+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.2,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:54:56.051+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.3,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:55:15.111+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.3,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:57:55.647+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.4,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T17:58:57.828+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.4,
+      "awayPct": 30.9,
+      "timestamp": "2026-07-14T17:59:12.845+00:00"
+    },
+    {
+      "homePct": 37.6,
+      "drawPct": 31.4,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T18:00:06.81+00:00"
+    },
+    {
+      "homePct": 37.6,
+      "drawPct": 31.5,
+      "awayPct": 30.9,
+      "timestamp": "2026-07-14T18:01:50.435+00:00"
+    },
+    {
+      "homePct": 37.8,
+      "drawPct": 31.5,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:02:57.851+00:00"
+    },
+    {
+      "homePct": 37.8,
+      "drawPct": 31.6,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:03:21.849+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.7,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:05:35.16+00:00"
+    },
+    {
+      "homePct": 37.5,
+      "drawPct": 31.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:06:45.054+00:00"
+    },
+    {
+      "homePct": 37.4,
+      "drawPct": 31.8,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T18:07:45.791+00:00"
+    },
+    {
+      "homePct": 37.4,
+      "drawPct": 31.8,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:09:39.85+00:00"
+    },
+    {
+      "homePct": 37.3,
+      "drawPct": 31.9,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T18:11:06.281+00:00"
+    },
+    {
+      "homePct": 37.3,
+      "drawPct": 31.9,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T18:12:57.854+00:00"
+    },
+    {
+      "homePct": 37.2,
+      "drawPct": 32,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T18:14:48.873+00:00"
+    },
+    {
+      "homePct": 37.2,
+      "drawPct": 32,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T18:15:54.894+00:00"
+    },
+    {
+      "homePct": 37.3,
+      "drawPct": 32,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:17:55.683+00:00"
+    },
+    {
+      "homePct": 37.4,
+      "drawPct": 31.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:18:57.974+00:00"
+    },
+    {
+      "homePct": 37.4,
+      "drawPct": 31.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:19:30.298+00:00"
+    },
+    {
+      "homePct": 37.4,
+      "drawPct": 31.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:21:15.334+00:00"
+    },
+    {
+      "homePct": 37.5,
+      "drawPct": 31.9,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:22:23.282+00:00"
+    },
+    {
+      "homePct": 37.6,
+      "drawPct": 31.7,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:23:54.941+00:00"
+    },
+    {
+      "homePct": 37.4,
+      "drawPct": 31.9,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:24:54.923+00:00"
+    },
+    {
+      "homePct": 37.6,
+      "drawPct": 31.8,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:25:51.99+00:00"
+    },
+    {
+      "homePct": 37.6,
+      "drawPct": 31.9,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T18:27:15.921+00:00"
+    },
+    {
+      "homePct": 37.5,
+      "drawPct": 31.8,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:28:09.974+00:00"
+    },
+    {
+      "homePct": 37.5,
+      "drawPct": 31.8,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:30:40.678+00:00"
+    },
+    {
+      "homePct": 37.7,
+      "drawPct": 31.8,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:31:34.905+00:00"
+    },
+    {
+      "homePct": 37.6,
+      "drawPct": 31.8,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:32:12.938+00:00"
+    },
+    {
+      "homePct": 37.6,
+      "drawPct": 31.8,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:33:54.934+00:00"
+    },
+    {
+      "homePct": 37.6,
+      "drawPct": 31.8,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T18:35:29.965+00:00"
+    },
+    {
+      "homePct": 37.4,
+      "drawPct": 31.9,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T18:37:50.609+00:00"
+    },
+    {
+      "homePct": 37.4,
+      "drawPct": 31.8,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T18:38:35.747+00:00"
+    },
+    {
+      "homePct": 37.3,
+      "drawPct": 32,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:39:55.863+00:00"
+    },
+    {
+      "homePct": 37.3,
+      "drawPct": 31.8,
+      "awayPct": 30.9,
+      "timestamp": "2026-07-14T18:40:43.021+00:00"
+    },
+    {
+      "homePct": 37.3,
+      "drawPct": 31.8,
+      "awayPct": 30.9,
+      "timestamp": "2026-07-14T18:41:53.398+00:00"
+    },
+    {
+      "homePct": 37.3,
+      "drawPct": 31.8,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T18:42:40.909+00:00"
+    },
+    {
+      "homePct": 37,
+      "drawPct": 32.2,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T18:43:40.748+00:00"
+    },
+    {
+      "homePct": 36.9,
+      "drawPct": 32.4,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:44:56.164+00:00"
+    },
+    {
+      "homePct": 37.1,
+      "drawPct": 32.2,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:45:42.895+00:00"
+    },
+    {
+      "homePct": 36.6,
+      "drawPct": 32.3,
+      "awayPct": 31.1,
+      "timestamp": "2026-07-14T18:46:57.878+00:00"
+    },
+    {
+      "homePct": 36.9,
+      "drawPct": 32.2,
+      "awayPct": 30.9,
+      "timestamp": "2026-07-14T18:47:58.42+00:00"
+    },
+    {
+      "homePct": 37,
+      "drawPct": 32.1,
+      "awayPct": 30.9,
+      "timestamp": "2026-07-14T18:48:56.497+00:00"
+    },
+    {
+      "homePct": 36.9,
+      "drawPct": 32.1,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T18:49:54.848+00:00"
+    },
+    {
+      "homePct": 37.1,
+      "drawPct": 32.1,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T18:50:56.42+00:00"
+    },
+    {
+      "homePct": 36.9,
+      "drawPct": 31.9,
+      "awayPct": 31.2,
+      "timestamp": "2026-07-14T18:51:45.254+00:00"
+    },
+    {
+      "homePct": 36.9,
+      "drawPct": 32,
+      "awayPct": 31.1,
+      "timestamp": "2026-07-14T18:52:57.895+00:00"
+    },
+    {
+      "homePct": 36.8,
+      "drawPct": 32,
+      "awayPct": 31.2,
+      "timestamp": "2026-07-14T18:53:57.903+00:00"
+    },
+    {
+      "homePct": 36.7,
+      "drawPct": 32,
+      "awayPct": 31.3,
+      "timestamp": "2026-07-14T18:54:56.436+00:00"
+    },
+    {
+      "homePct": 36.7,
+      "drawPct": 32,
+      "awayPct": 31.3,
+      "timestamp": "2026-07-14T18:55:57.917+00:00"
+    },
+    {
+      "homePct": 36.8,
+      "drawPct": 32.2,
+      "awayPct": 31,
+      "timestamp": "2026-07-14T18:56:56.437+00:00"
+    },
+    {
+      "homePct": 36.7,
+      "drawPct": 32,
+      "awayPct": 31.3,
+      "timestamp": "2026-07-14T18:57:57.925+00:00"
+    },
+    {
+      "homePct": 36.7,
+      "drawPct": 32,
+      "awayPct": 31.3,
+      "timestamp": "2026-07-14T18:58:56.272+00:00"
+    },
+    {
+      "homePct": 36.5,
+      "drawPct": 32.1,
+      "awayPct": 31.5,
+      "timestamp": "2026-07-14T18:59:57.938+00:00"
+    },
+    {
+      "homePct": 36.6,
+      "drawPct": 32,
+      "awayPct": 31.4,
+      "timestamp": "2026-07-14T19:00:59.995+00:00"
+    },
+    {
+      "homePct": 36.8,
+      "drawPct": 32.4,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T19:01:58.671+00:00"
+    },
+    {
+      "homePct": 36.9,
+      "drawPct": 32.4,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T19:02:57.746+00:00"
+    },
+    {
+      "homePct": 36.7,
+      "drawPct": 32.6,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T19:03:58.625+00:00"
+    },
+    {
+      "homePct": 36.9,
+      "drawPct": 32.4,
+      "awayPct": 30.8,
+      "timestamp": "2026-07-14T19:04:59.352+00:00"
+    },
+    {
+      "homePct": 37,
+      "drawPct": 32.6,
+      "awayPct": 30.4,
+      "timestamp": "2026-07-14T19:05:54.011+00:00"
+    },
+    {
+      "homePct": 37.2,
+      "drawPct": 32.9,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T19:06:56.033+00:00"
+    },
+    {
+      "homePct": 37.1,
+      "drawPct": 32.8,
+      "awayPct": 30.1,
+      "timestamp": "2026-07-14T19:07:50.532+00:00"
+    },
+    {
+      "homePct": 36.6,
+      "drawPct": 32.9,
+      "awayPct": 30.6,
+      "timestamp": "2026-07-14T19:08:56.396+00:00"
+    },
+    {
+      "homePct": 36,
+      "drawPct": 32.8,
+      "awayPct": 31.2,
+      "timestamp": "2026-07-14T19:09:59.497+00:00"
+    },
+    {
+      "homePct": 36.6,
+      "drawPct": 32.7,
+      "awayPct": 30.7,
+      "timestamp": "2026-07-14T19:10:56.039+00:00"
+    },
+    {
+      "homePct": 36.6,
+      "drawPct": 33.1,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T19:11:54.118+00:00"
+    },
+    {
+      "homePct": 36.6,
+      "drawPct": 33.4,
+      "awayPct": 29.9,
+      "timestamp": "2026-07-14T19:12:59.448+00:00"
+    },
+    {
+      "homePct": 36.2,
+      "drawPct": 33.5,
+      "awayPct": 30.3,
+      "timestamp": "2026-07-14T19:13:58.882+00:00"
+    },
+    {
+      "homePct": 35.8,
+      "drawPct": 33.7,
+      "awayPct": 30.5,
+      "timestamp": "2026-07-14T19:14:54.895+00:00"
+    },
+    {
+      "homePct": 36.2,
+      "drawPct": 33.7,
+      "awayPct": 30.2,
+      "timestamp": "2026-07-14T19:15:57.948+00:00"
+    },
+    {
+      "homePct": 36.8,
+      "drawPct": 33.9,
+      "awayPct": 29.3,
+      "timestamp": "2026-07-14T19:16:53.791+00:00"
+    },
+    {
+      "homePct": 36.2,
+      "drawPct": 34.2,
+      "awayPct": 29.6,
+      "timestamp": "2026-07-14T19:17:59.389+00:00"
+    },
+    {
+      "homePct": 36.4,
+      "drawPct": 34.1,
+      "awayPct": 29.5,
+      "timestamp": "2026-07-14T19:18:57.596+00:00"
+    },
+    {
+      "homePct": 19.6,
+      "drawPct": 26.3,
+      "awayPct": 54.1,
+      "timestamp": "2026-07-14T19:22:58.227+00:00"
+    },
+    {
+      "homePct": 19.3,
+      "drawPct": 27.7,
+      "awayPct": 52.9,
+      "timestamp": "2026-07-14T19:23:59.584+00:00"
+    },
+    {
+      "homePct": 19.8,
+      "drawPct": 27.7,
+      "awayPct": 52.5,
+      "timestamp": "2026-07-14T19:24:59.252+00:00"
+    },
+    {
+      "homePct": 19.9,
+      "drawPct": 27.7,
+      "awayPct": 52.5,
+      "timestamp": "2026-07-14T19:25:59.389+00:00"
+    },
+    {
+      "homePct": 19.9,
+      "drawPct": 27.8,
+      "awayPct": 52.3,
+      "timestamp": "2026-07-14T19:26:58.838+00:00"
+    },
+    {
+      "homePct": 20.3,
+      "drawPct": 27.8,
+      "awayPct": 51.9,
+      "timestamp": "2026-07-14T19:27:58.512+00:00"
+    },
+    {
+      "homePct": 20.1,
+      "drawPct": 27.9,
+      "awayPct": 52,
+      "timestamp": "2026-07-14T19:28:56.534+00:00"
+    },
+    {
+      "homePct": 20.4,
+      "drawPct": 28.2,
+      "awayPct": 51.5,
+      "timestamp": "2026-07-14T19:29:59.471+00:00"
+    },
+    {
+      "homePct": 19.8,
+      "drawPct": 27.8,
+      "awayPct": 52.5,
+      "timestamp": "2026-07-14T19:30:59.787+00:00"
+    },
+    {
+      "homePct": 19.4,
+      "drawPct": 27.6,
+      "awayPct": 53,
+      "timestamp": "2026-07-14T19:31:59.103+00:00"
+    },
+    {
+      "homePct": 18.8,
+      "drawPct": 27.7,
+      "awayPct": 53.5,
+      "timestamp": "2026-07-14T19:32:55.054+00:00"
+    },
+    {
+      "homePct": 18.8,
+      "drawPct": 27.6,
+      "awayPct": 53.6,
+      "timestamp": "2026-07-14T19:33:54.178+00:00"
+    },
+    {
+      "homePct": 18.2,
+      "drawPct": 27.3,
+      "awayPct": 54.5,
+      "timestamp": "2026-07-14T19:34:55.191+00:00"
+    },
+    {
+      "homePct": 18.3,
+      "drawPct": 27.4,
+      "awayPct": 54.3,
+      "timestamp": "2026-07-14T19:35:59.204+00:00"
+    },
+    {
+      "homePct": 18.5,
+      "drawPct": 27.3,
+      "awayPct": 54.2,
+      "timestamp": "2026-07-14T19:36:55.216+00:00"
+    },
+    {
+      "homePct": 18,
+      "drawPct": 26.8,
+      "awayPct": 55.2,
+      "timestamp": "2026-07-14T19:38:58.014+00:00"
+    },
+    {
+      "homePct": 17.7,
+      "drawPct": 26.9,
+      "awayPct": 55.3,
+      "timestamp": "2026-07-14T19:39:56.484+00:00"
+    },
+    {
+      "homePct": 17.7,
+      "drawPct": 27,
+      "awayPct": 55.3,
+      "timestamp": "2026-07-14T19:40:58.323+00:00"
+    },
+    {
+      "homePct": 17.9,
+      "drawPct": 26.5,
+      "awayPct": 55.6,
+      "timestamp": "2026-07-14T19:41:59.991+00:00"
+    },
+    {
+      "homePct": 18,
+      "drawPct": 26.9,
+      "awayPct": 55,
+      "timestamp": "2026-07-14T19:42:58.325+00:00"
+    },
+    {
+      "homePct": 18.2,
+      "drawPct": 27.4,
+      "awayPct": 54.3,
+      "timestamp": "2026-07-14T19:43:58.512+00:00"
+    },
+    {
+      "homePct": 18.2,
+      "drawPct": 27.6,
+      "awayPct": 54.2,
+      "timestamp": "2026-07-14T19:44:59.045+00:00"
+    },
+    {
+      "homePct": 17.6,
+      "drawPct": 27.6,
+      "awayPct": 54.8,
+      "timestamp": "2026-07-14T19:45:58.648+00:00"
+    },
+    {
+      "homePct": 17.1,
+      "drawPct": 27.6,
+      "awayPct": 55.3,
+      "timestamp": "2026-07-14T19:46:58.377+00:00"
+    },
+    {
+      "homePct": 17.2,
+      "drawPct": 27.9,
+      "awayPct": 54.9,
+      "timestamp": "2026-07-14T19:47:59.15+00:00"
+    },
+    {
+      "homePct": 16.7,
+      "drawPct": 27.8,
+      "awayPct": 55.6,
+      "timestamp": "2026-07-14T19:48:58.532+00:00"
+    },
+    {
+      "homePct": 17,
+      "drawPct": 27.3,
+      "awayPct": 55.7,
+      "timestamp": "2026-07-14T19:49:57.234+00:00"
+    },
+    {
+      "homePct": 17,
+      "drawPct": 27.1,
+      "awayPct": 55.9,
+      "timestamp": "2026-07-14T19:50:59.26+00:00"
+    },
+    {
+      "homePct": 17.2,
+      "drawPct": 27.5,
+      "awayPct": 55.3,
+      "timestamp": "2026-07-14T19:51:56.435+00:00"
+    },
+    {
+      "homePct": 17.4,
+      "drawPct": 27.2,
+      "awayPct": 55.4,
+      "timestamp": "2026-07-14T19:52:51.445+00:00"
+    },
+    {
+      "homePct": 17.4,
+      "drawPct": 27.5,
+      "awayPct": 55,
+      "timestamp": "2026-07-14T19:53:45.53+00:00"
+    },
+    {
+      "homePct": 17.5,
+      "drawPct": 27.7,
+      "awayPct": 54.8,
+      "timestamp": "2026-07-14T19:54:53.534+00:00"
+    },
+    {
+      "homePct": 17.6,
+      "drawPct": 27.4,
+      "awayPct": 55,
+      "timestamp": "2026-07-14T19:55:39.491+00:00"
+    },
+    {
+      "homePct": 17.8,
+      "drawPct": 26.9,
+      "awayPct": 55.4,
+      "timestamp": "2026-07-14T19:56:43.671+00:00"
+    },
+    {
+      "homePct": 17.9,
+      "drawPct": 27.5,
+      "awayPct": 54.6,
+      "timestamp": "2026-07-14T19:57:57.044+00:00"
+    },
+    {
+      "homePct": 18.2,
+      "drawPct": 27.8,
+      "awayPct": 54.1,
+      "timestamp": "2026-07-14T19:58:57.854+00:00"
+    },
+    {
+      "homePct": 18.4,
+      "drawPct": 27.7,
+      "awayPct": 53.9,
+      "timestamp": "2026-07-14T19:59:47.008+00:00"
+    },
+    {
+      "homePct": 18.1,
+      "drawPct": 28.2,
+      "awayPct": 53.6,
+      "timestamp": "2026-07-14T20:00:39.547+00:00"
+    },
+    {
+      "homePct": 18.4,
+      "drawPct": 28.5,
+      "awayPct": 53.1,
+      "timestamp": "2026-07-14T20:01:52.566+00:00"
+    },
+    {
+      "homePct": 18.7,
+      "drawPct": 28.6,
+      "awayPct": 52.7,
+      "timestamp": "2026-07-14T20:03:58.793+00:00"
+    },
+    {
+      "homePct": 17.9,
+      "drawPct": 27.9,
+      "awayPct": 54.2,
+      "timestamp": "2026-07-14T20:04:56.754+00:00"
+    },
+    {
+      "homePct": 17.9,
+      "drawPct": 27.6,
+      "awayPct": 54.4,
+      "timestamp": "2026-07-14T20:05:55.389+00:00"
+    },
+    {
+      "homePct": 18.4,
+      "drawPct": 27.2,
+      "awayPct": 54.4,
+      "timestamp": "2026-07-14T20:06:56.66+00:00"
+    },
+    {
+      "homePct": 17.8,
+      "drawPct": 27.9,
+      "awayPct": 54.3,
+      "timestamp": "2026-07-14T20:07:47.961+00:00"
+    },
+    {
+      "homePct": 17.7,
+      "drawPct": 28,
+      "awayPct": 54.2,
+      "timestamp": "2026-07-14T20:08:59.738+00:00"
+    },
+    {
+      "homePct": 17.1,
+      "drawPct": 28,
+      "awayPct": 54.9,
+      "timestamp": "2026-07-14T20:09:59.702+00:00"
+    },
+    {
+      "homePct": 17,
+      "drawPct": 28.1,
+      "awayPct": 54.9,
+      "timestamp": "2026-07-14T20:10:57.907+00:00"
+    },
+    {
+      "homePct": 16.9,
+      "drawPct": 28,
+      "awayPct": 55.1,
+      "timestamp": "2026-07-14T20:11:58.364+00:00"
+    },
+    {
+      "homePct": 16.4,
+      "drawPct": 28,
+      "awayPct": 55.6,
+      "timestamp": "2026-07-14T20:12:59.673+00:00"
+    },
+    {
+      "homePct": 16,
+      "drawPct": 28,
+      "awayPct": 56,
+      "timestamp": "2026-07-14T20:13:56.771+00:00"
+    },
+    {
+      "homePct": 15.9,
+      "drawPct": 28,
+      "awayPct": 56.1,
+      "timestamp": "2026-07-14T20:14:59.989+00:00"
+    },
+    {
+      "homePct": 15.6,
+      "drawPct": 27.7,
+      "awayPct": 56.8,
+      "timestamp": "2026-07-14T20:15:59.339+00:00"
+    },
+    {
+      "homePct": 15.1,
+      "drawPct": 28,
+      "awayPct": 56.9,
+      "timestamp": "2026-07-14T20:16:58.043+00:00"
+    },
+    {
+      "homePct": 14.6,
+      "drawPct": 27.9,
+      "awayPct": 57.5,
+      "timestamp": "2026-07-14T20:17:59.486+00:00"
+    },
+    {
+      "homePct": 14.6,
+      "drawPct": 28.2,
+      "awayPct": 57.3,
+      "timestamp": "2026-07-14T20:18:48.005+00:00"
+    },
+    {
+      "homePct": 3.4,
+      "drawPct": 10.9,
+      "awayPct": 85.6,
+      "timestamp": "2026-07-14T20:20:58.434+00:00"
+    },
+    {
+      "homePct": 3.4,
+      "drawPct": 10.8,
+      "awayPct": 85.8,
+      "timestamp": "2026-07-14T20:21:58.774+00:00"
+    },
+    {
+      "homePct": 3,
+      "drawPct": 10.1,
+      "awayPct": 87,
+      "timestamp": "2026-07-14T20:23:59.792+00:00"
+    },
+    {
+      "homePct": 2.8,
+      "drawPct": 9.7,
+      "awayPct": 87.4,
+      "timestamp": "2026-07-14T20:24:59.246+00:00"
+    },
+    {
+      "homePct": 2.8,
+      "drawPct": 9.4,
+      "awayPct": 87.8,
+      "timestamp": "2026-07-14T20:25:56.133+00:00"
+    },
+    {
+      "homePct": 2.7,
+      "drawPct": 9.4,
+      "awayPct": 87.9,
+      "timestamp": "2026-07-14T20:26:58.807+00:00"
+    },
+    {
+      "homePct": 2.5,
+      "drawPct": 8.9,
+      "awayPct": 88.5,
+      "timestamp": "2026-07-14T20:27:58.925+00:00"
+    },
+    {
+      "homePct": 2.4,
+      "drawPct": 8.8,
+      "awayPct": 88.8,
+      "timestamp": "2026-07-14T20:28:58.311+00:00"
+    },
+    {
+      "homePct": 2.3,
+      "drawPct": 8.6,
+      "awayPct": 89.1,
+      "timestamp": "2026-07-14T20:29:58.3+00:00"
+    },
+    {
+      "homePct": 2.4,
+      "drawPct": 8.3,
+      "awayPct": 89.4,
+      "timestamp": "2026-07-14T20:30:57.966+00:00"
+    },
+    {
+      "homePct": 2.3,
+      "drawPct": 8.5,
+      "awayPct": 89.2,
+      "timestamp": "2026-07-14T20:31:57.21+00:00"
+    },
+    {
+      "homePct": 2.2,
+      "drawPct": 8.3,
+      "awayPct": 89.4,
+      "timestamp": "2026-07-14T20:32:59.405+00:00"
+    },
+    {
+      "homePct": 2.2,
+      "drawPct": 8.5,
+      "awayPct": 89.3,
+      "timestamp": "2026-07-14T20:33:59.385+00:00"
+    },
+    {
+      "homePct": 2.4,
+      "drawPct": 8.1,
+      "awayPct": 89.5,
+      "timestamp": "2026-07-14T20:34:59.872+00:00"
+    },
+    {
+      "homePct": 2.4,
+      "drawPct": 8.3,
+      "awayPct": 89.4,
+      "timestamp": "2026-07-14T20:35:59.512+00:00"
+    },
+    {
+      "homePct": 2.2,
+      "drawPct": 8.1,
+      "awayPct": 89.7,
+      "timestamp": "2026-07-14T20:36:56.35+00:00"
+    },
+    {
+      "homePct": 2.1,
+      "drawPct": 7.9,
+      "awayPct": 90,
+      "timestamp": "2026-07-14T20:37:59.555+00:00"
+    },
+    {
+      "homePct": 2,
+      "drawPct": 7.3,
+      "awayPct": 90.7,
+      "timestamp": "2026-07-14T20:38:57.706+00:00"
+    },
+    {
+      "homePct": 1.8,
+      "drawPct": 7.1,
+      "awayPct": 91.1,
+      "timestamp": "2026-07-14T20:39:58.056+00:00"
+    },
+    {
+      "homePct": 1.6,
+      "drawPct": 6.3,
+      "awayPct": 92.1,
+      "timestamp": "2026-07-14T20:41:55.796+00:00"
+    }
+  ],
+  "events": [
+    {
+      "eventType": "goal",
+      "homeScore": 0,
+      "awayScore": 2,
+      "minute": "57",
+      "phase": "2nd Half",
+      "timestamp": "2026-07-14T20:19:36.027+00:00"
+    },
+    {
+      "eventType": "goal",
+      "homeScore": 0,
+      "awayScore": 2,
+      "minute": "57",
+      "phase": "2nd Half",
+      "timestamp": "2026-07-14T20:21:18.302+00:00"
+    },
+    {
+      "eventType": "goal",
+      "homeScore": 0,
+      "awayScore": 2,
+      "minute": "57",
+      "phase": "2nd Half",
+      "timestamp": "2026-07-14T20:21:21.148+00:00"
+    },
+    {
+      "eventType": "goal",
+      "homeScore": 0,
+      "awayScore": 3,
+      "minute": "60",
+      "phase": "2nd Half",
+      "timestamp": "2026-07-14T20:22:29.958+00:00"
+    }
+  ]
+}

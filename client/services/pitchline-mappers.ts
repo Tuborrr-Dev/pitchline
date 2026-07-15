@@ -279,6 +279,95 @@ export function historyToProbabilityPoints(
   );
 }
 
+function normalizeEventType(eventType: string): MatchEvent["type"] {
+  const value = eventType.replace(/([a-z])([A-Z])/g, "$1_$2").replace(/[-\s]+/g, "_").toLowerCase();
+
+  if (value.includes("goal")) return "goal";
+  if (value.includes("yellow") && value.includes("card")) return "yellow-card";
+  if (value.includes("red") && value.includes("card")) return "red-card";
+  if (value.includes("penalty")) {
+    if (value.includes("miss")) return "penalty-missed";
+    if (value.includes("scor")) return "penalty-scored";
+    return "penalty-awarded";
+  }
+  if (value.includes("var")) return "var";
+  if (value.includes("half")) return "half-time";
+  if (value.includes("full") || value.includes("final")) return "full-time";
+
+  return "status";
+}
+
+function eventImportance(type: MatchEvent["type"]): MatchEvent["importance"] {
+  if (type === "goal" || type === "red-card" || type.startsWith("penalty")) return "high";
+  if (type === "yellow-card" || type === "var") return "medium";
+  if (type === "half-time" || type === "full-time") return "structural";
+  return "low";
+}
+
+function scoreEventSide(
+  event: NonNullable<BackendMatchHistoryDto["events"]>[number],
+  previousEvent: NonNullable<BackendMatchHistoryDto["events"]>[number] | undefined,
+): MatchEvent["side"] {
+  const previousHomeScore = previousEvent?.homeScore ?? 0;
+  const previousAwayScore = previousEvent?.awayScore ?? 0;
+  const homeDelta = event.homeScore - previousHomeScore;
+  const awayDelta = event.awayScore - previousAwayScore;
+
+  if (homeDelta > awayDelta) return "teamA";
+  if (awayDelta > homeDelta) return "teamB";
+  return "draw";
+}
+
+function eventTitle(eventType: string) {
+  return eventType
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+export function historyToMatchEvents(history: BackendMatchHistoryDto | null, fixture: Fixture) {
+  const events = history?.events ?? [];
+
+  return events.map((event, index) => {
+    const type = normalizeEventType(event.eventType);
+    const side = scoreEventSide(event, events[index - 1]);
+    const teamCode =
+      side === "teamA" ? fixture.teamACode : side === "teamB" ? fixture.teamBCode : undefined;
+    const minuteLabel = formatMinuteLabel(
+      fixture.status,
+      event.minute ?? undefined,
+      fixture.kickoffUtc,
+    );
+
+    return {
+      eventId: `${fixture.fixtureId}-be1-${event.eventType}-${event.timestamp}-${index}`,
+      fixtureId: fixture.fixtureId,
+      type,
+      minuteLabel,
+      timestamp: event.timestamp,
+      side,
+      teamCode,
+      label: type === "goal" ? `${teamCode ?? "MKT"} goal` : eventTitle(event.eventType),
+      detailLabel: `${event.phase ?? fixture.phase} / ${event.homeScore} - ${event.awayScore}`,
+      importance: eventImportance(type),
+    } satisfies MatchEvent;
+  });
+}
+
+export function mergeMatchEvents(...eventGroups: MatchEvent[][]) {
+  const byId = new Map<string, MatchEvent>();
+
+  eventGroups.flat().forEach((event) => {
+    byId.set(event.eventId, event);
+  });
+
+  return [...byId.values()].sort((left, right) => {
+    const timeDelta = new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime();
+    if (!Number.isNaN(timeDelta) && timeDelta !== 0) return timeDelta;
+    return left.eventId.localeCompare(right.eventId);
+  });
+}
+
 export function createSystemEvent(
   fixture: Fixture,
   label: string,

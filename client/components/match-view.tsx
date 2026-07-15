@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import type { LiveMatchState, MatchEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { annotationsToTimelineEvents } from "@/services/annotation-mappers";
+import { mergeMatchEvents } from "@/services/pitchline-mappers";
 
 import {
   DesktopDetailsPanel,
@@ -23,18 +24,23 @@ import { MatchToolbar } from "./match-view/match-toolbar";
 import { ProbabilityChart } from "./probability-chart";
 
 export function MatchView({
+  followLatest = true,
   state,
   selectedEvent,
   selectedEventId,
   onSelectEvent,
 }: {
+  followLatest?: boolean;
   state: LiveMatchState;
   selectedEvent: MatchEvent | null;
   selectedEventId: string | null;
   onSelectEvent: (eventId: string) => void;
 }) {
   const { fixture, currentProbabilities, history, events, annotations, connectionState } = state;
-  const timelineEvents = annotations.length > 0 ? annotationsToTimelineEvents(annotations, fixture) : events;
+  const timelineEvents =
+    annotations.length > 0
+      ? mergeMatchEvents(events, annotationsToTimelineEvents(annotations, fixture))
+      : events;
   const selectedTimelineEvent =
     timelineEvents.find((event) => event.eventId === selectedEventId) ?? selectedEvent;
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -138,7 +144,7 @@ export function MatchView({
             </Button>
           ) : null}
 
-          <MatchScoreHeader currentProbabilities={currentProbabilities} fixture={fixture} />
+          <MatchScoreHeader currentProbabilities={currentProbabilities} fixture={fixture} lastUpdatedAt={state.lastUpdatedAt} />
           <MatchToolbar
             detailsOpen={detailsOpen}
             eventRailOpen={eventRailOpen}
@@ -163,6 +169,7 @@ export function MatchView({
                 selectedEvent={selectedTimelineEvent}
                 connectionState={connectionState}
                 analytics={state.analytics}
+                followLatest={followLatest}
                 onSelectEvent={onSelectEvent}
               />
             </motion.div>

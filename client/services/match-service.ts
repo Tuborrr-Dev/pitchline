@@ -13,7 +13,9 @@ import {
   createFixtureFromDto,
   createInitialEvents,
   formatMinuteLabel,
+  historyToMatchEvents,
   historyToProbabilityPoints,
+  mergeMatchEvents,
 } from "@/services/pitchline-mappers";
 
 export async function fetchInitialLiveMatchState(fixtureId: string): Promise<LiveMatchState | null> {
@@ -77,9 +79,11 @@ export async function fetchInitialLiveMatchState(fixtureId: string): Promise<Liv
   const lastTimestamp =
     initialHistory[initialHistory.length - 1]?.timestamp ?? new Date().toISOString();
   const initialAnnotations = await fetchAnnotationHistory(fixtureId);
+  const be1Events = historyToMatchEvents(history, displayFixture);
+  const be2Events = annotationsToMatchEvents(initialAnnotations, displayFixture);
   const initialEvents =
-    initialAnnotations.length > 0
-      ? annotationsToMatchEvents(initialAnnotations, displayFixture)
+    be1Events.length > 0 || be2Events.length > 0
+      ? mergeMatchEvents(be1Events, be2Events)
       : createInitialEvents(displayFixture);
 
   return {

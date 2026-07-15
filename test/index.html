@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Match Odds Graph</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="summary">
+        <div>
+          <p class="eyebrow">Match odds history</p>
+          <h1 id="matchTitle">Loading match data...</h1>
+        </div>
+        <div class="score" id="scoreBox">--</div>
+      </section>
+
+      <section class="chart-panel">
+        <div class="chart-header">
+          <div class="legend" id="legend"></div>
+          <div class="range" id="rangeLabel"></div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="oddsChart" width="1200" height="620"></canvas>
+          <div class="tooltip" id="tooltip" hidden></div>
+        </div>
+      </section>
+
+      <section class="events-panel">
+        <h2>Match Events</h2>
+        <div id="eventsList" class="events-list"></div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

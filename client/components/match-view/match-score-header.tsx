@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useEffect, useMemo, useState } from "react";
 
 import { TeamLogo } from "@/components/team-logo";
 import type { LiveMatchState } from "@/lib/types";
@@ -11,13 +12,21 @@ import { formatKickoffDate, isPreKickoffFixture } from "./event-formatting";
 export function MatchScoreHeader({
   currentProbabilities,
   fixture,
+  lastUpdatedAt,
 }: {
   currentProbabilities: LiveMatchState["currentProbabilities"];
   fixture: LiveMatchState["fixture"];
+  lastUpdatedAt: string;
 }) {
   const preKickoff = isPreKickoffFixture(fixture);
   const isFinished = fixture.status === "finished" || fixture.phase === "Finished" || fixture.phase === "FT";
   const hasOdds = currentProbabilities.teamA > 0 || currentProbabilities.teamB > 0;
+  const liveTimerText = useMatchTimer({
+    enabled: fixture.status === "live" && !preKickoff && !isFinished,
+    lastUpdatedAt,
+    minute: fixture.minute,
+    phase: fixture.phase,
+  });
 
   // Determine center badge text
   let centerBadgeText = "";
@@ -28,7 +37,7 @@ export function MatchScoreHeader({
   } else if (!hasOdds) {
     centerBadgeText = "MARKET PENDING";
   } else {
-    centerBadgeText = `Market edge ${Math.abs(currentProbabilities.teamA - currentProbabilities.teamB).toFixed(1)} pts`;
+    centerBadgeText = liveTimerText;
   }
 
   // Determine team subtitles
@@ -87,6 +96,68 @@ export function MatchScoreHeader({
       />
     </motion.section>
   );
+}
+
+function parseElapsedSeconds(minute: string) {
+  const cleanMinute = minute.trim().toLowerCase();
+  const stoppageMatch = cleanMinute.match(/(\d+)\s*\+\s*(\d+)/);
+  if (stoppageMatch) {
+    return (Number(stoppageMatch[1]) + Number(stoppageMatch[2])) * 60;
+  }
+
+  const minuteValue = Number.parseInt(cleanMinute.replace(/\D/g, ""), 10);
+  return Number.isNaN(minuteValue) ? null : minuteValue * 60;
+}
+
+function structuralTimerLabel(phase: string, minute: string) {
+  const value = `${phase} ${minute}`.toLowerCase();
+
+  if (value.includes("half-time") || value.includes("halftime") || value.includes("interval")) return "HT";
+  if (value.includes("pen")) return "PEN";
+  if (value.includes("suspend") || value.includes("delay")) return "SUSP";
+  if (value.includes("full") || value.includes("final") || value === "ft") return "FT";
+
+  return null;
+}
+
+function formatElapsedTime(totalSeconds: number) {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function useMatchTimer({
+  enabled,
+  lastUpdatedAt,
+  minute,
+  phase,
+}: {
+  enabled: boolean;
+  lastUpdatedAt: string;
+  minute: string;
+  phase: string;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+  const frozenLabel = structuralTimerLabel(phase, minute);
+  const baseElapsedSeconds = useMemo(() => parseElapsedSeconds(minute), [minute]);
+  const lastUpdatedTime = useMemo(() => new Date(lastUpdatedAt).getTime(), [lastUpdatedAt]);
+
+  useEffect(() => {
+    if (!enabled || frozenLabel || baseElapsedSeconds === null || Number.isNaN(lastUpdatedTime)) {
+      return;
+    }
+
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [baseElapsedSeconds, enabled, frozenLabel, lastUpdatedTime]);
+
+  if (frozenLabel) return frozenLabel;
+  if (!enabled || baseElapsedSeconds === null || Number.isNaN(lastUpdatedTime)) return minute || "LIVE";
+
+  const secondsSinceUpdate = Math.max(0, (now - lastUpdatedTime) / 1000);
+  return formatElapsedTime(baseElapsedSeconds + secondsSinceUpdate);
 }
 
 function TeamPlate({
