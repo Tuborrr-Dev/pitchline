@@ -32,6 +32,7 @@ public class TxLineStreamService(
     private readonly TxLineSnapshotService _snapshot = snapshot;
     private readonly IMatchStateRepository _repo = repo;
     private readonly ILogger<TxLineStreamService> _logger = logger;
+    private readonly IConfiguration _config = config;
     private readonly string _apiToken = config["TxLine:ApiToken"]
                     ?? throw new InvalidOperationException("TxLine:ApiToken is not configured.");
     private readonly string _jwt = config["TxLine:Jwt"]
@@ -158,6 +159,14 @@ public class TxLineStreamService(
             return;
         }
 
+        var enforceKickoff = _config.GetValue<bool>("TxLine:EnforceKickoffCheck", true);
+        if (enforceKickoff && DateTimeOffset.UtcNow < fixture.KickOff)
+        {
+            _logger.LogInformation("[SCORE] Ignoring event for fixture {FixtureId}: kickoff time {KickOff} not reached yet (now: {Now})",
+                update.FixtureId, fixture.KickOff, DateTimeOffset.UtcNow);
+            return;
+        }
+
         await _bus.PublishScoreUpdateAsync(new EnrichedScoreUpdate(update, fixture), ct);
     }
 
@@ -177,6 +186,14 @@ public class TxLineStreamService(
         }
 
         if (fixture is null) return;
+
+        var enforceKickoff = _config.GetValue<bool>("TxLine:EnforceKickoffCheck", true);
+        if (enforceKickoff && DateTimeOffset.UtcNow < fixture.KickOff)
+        {
+            _logger.LogInformation("[ODDS] Ignoring event for fixture {FixtureId}: kickoff time {KickOff} not reached yet (now: {Now})",
+                update.FixtureId, fixture.KickOff, DateTimeOffset.UtcNow);
+            return;
+        }
 
         await _bus.PublishOddsUpdateAsync(new EnrichedOddsUpdate(update, fixture), ct);
     }
