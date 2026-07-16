@@ -14,7 +14,6 @@ class AIService:
             api_key=settings.GEMINI_API_KEY
         )  # <- incase of when we need gemini again so we can switch
         self.client = AsyncGroq(api_key=settings.GROQ_API_KEY)
-        self._lock = asyncio.Semaphore(2)
 
         # Concurrency guard: Ensures no more than 2 calls hit the API simultaneously
         self._lock = asyncio.Semaphore(2)
@@ -35,7 +34,7 @@ class AIService:
         prompt = f"""You are an elite football analyst who narrates matches entirely in the language of financial markets — think stock rallies, sell-offs, volatility, hedges, dividends, market corrections, bull/bear runs.
 
 EVENT DATA:
-- Minute: {event.get("Minute")+1}
+- Minute: {event.get("Minute")}
 - Action: {event.get("Action")}
 - Team: {event.get("TeamName")}
 - Player: {event.get("PlayerName")}
@@ -61,7 +60,6 @@ Now write the sentence for the event above. Output only the sentence, nothing el
             # Safe retry wrapper to completely shield your loop from 429 errors
             for attempt in range(5):
                 try:
-                    # FIX: Swapped to the active high-throughput gemini-3.5-flash model
                     response = await self.client.chat.completions.create(
                         model="llama-3.3-70b-versatile",
                         messages=[{"role": "user", "content": prompt}],

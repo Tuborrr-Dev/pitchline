@@ -152,7 +152,9 @@ class EntityResolver:
             event["HomeScore"], event["AwayScore"] = p2_goals, p1_goals
         clock = event.get("Clock")
         seconds = clock.get("Seconds") if clock else None
-        event["Minute"] = seconds // 60 if seconds is not None else None
+        event["Minute"] = (
+            (seconds // 60) + 1 if seconds is not None else None
+        )  # ordinal minutes
 
     def _key(self, event: dict) -> tuple:
         return (event.get("FixtureId"), event.get("Action"), event.get("Id"))

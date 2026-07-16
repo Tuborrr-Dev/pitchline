@@ -38,9 +38,6 @@ class CommentaryService:
         return f"Free kick — {event.get('TeamName')}"
 
     def _shot(self, event):
-        return f"Shot — {event.get('TeamName')}"
-
-    def _shot(self, event):
         team = event.get("TeamName")
         outcome = event.get("Outcome")
         outcome_text = {
