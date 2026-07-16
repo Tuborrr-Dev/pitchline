@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "app/services/fixture_watcher_cron.py",
+    "startCommand": "python app/services/fixture_watcher_cron.py",
     "cronSchedule": "*/20 * * * *"
   }
 }
