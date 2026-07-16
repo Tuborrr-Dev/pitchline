@@ -11,7 +11,7 @@ pitchline/annotation-service/test.py
 **/.DS_Store
 
 
-*.json
+
 !app/schemas/*.js
 pitchline/annotation-service/get_events_ALL_fixtures.py
 annotation-service/delete_db.py
