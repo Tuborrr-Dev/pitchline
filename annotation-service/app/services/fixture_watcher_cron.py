@@ -10,6 +10,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger("app.cron.fixture_watcher")
+headers = {"X-Cron-Secret": settings.CRON_INTERNAL_SECRET}
 
 WATCHED_COMPETITION_IDS = {
     72
@@ -48,7 +49,9 @@ async def run_once():
         )
         fixtures = fx_resp.json()
 
-        watched_resp = await get_with_wake_retry(client, f"{MAIN_APP_URL}/streams")
+        watched_resp = await get_with_wake_retry(
+            client, f"{MAIN_APP_URL}/streams", headers=headers
+        )
         currently_watching = watched_resp.json()
 
         now_ms = time.time() * 1000
@@ -87,7 +90,9 @@ async def run_once():
             logger.info(
                 f"opening stream {fixture_id} and connecting them to annotation service"
             )
-            resp = await client.post(f"{MAIN_APP_URL}/streams/{fixture_id}")
+            resp = await client.post(
+                f"{MAIN_APP_URL}/streams/{fixture_id}", headers=headers
+            )
             if resp.status_code == 200:
                 logger.info(
                     f"connected annotation service to SSE for fixture id {fixture_id}"
@@ -101,7 +106,9 @@ async def run_once():
         for fixture_id_str, duration in currently_watching.items():
             if duration is not None and duration > MAX_WATCH_DURATION_SECONDS:
                 logger.info(f"cron: stopping stream for fixture {fixture_id_str}")
-                await client.delete(f"{MAIN_APP_URL}/streams/{fixture_id_str}")
+                await client.delete(
+                    f"{MAIN_APP_URL}/streams/{fixture_id_str}", headers=headers
+                )
                 stopped += 1
 
         still_watching = len(currently_watching) - stopped

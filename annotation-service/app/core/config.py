@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str
     DATABASE_URL: str
     MAIN_APP_URL: str
+    CRON_INTERNAL_SECRET: str
 
     model_config = SettingsConfigDict(
         env_file=".env",

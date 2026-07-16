@@ -3,6 +3,8 @@ import logging
 from fastapi import APIRouter, Request
 from app.schemas.models import AnnotationOut, StreamActionOut
 from app.services.history_service import HistoryService
+from fastapi import Header, HTTPException
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -35,16 +37,24 @@ async def get_history(fixture_id: int):
     ]
 
 
-@router.post("/streams/{fixture_id}", response_model=StreamActionOut)
-async def start_stream(fixture_id: int, request: Request):
+@router.post("/streams/{fixture_id}")
+async def start_stream(
+    fixture_id: int, request: Request, x_cron_secret: str = Header(None)
+):
+    if x_cron_secret != settings.CRON_INTERNAL_SECRET:
+        raise HTTPException(status_code=403, detail="forbidden")
     await request.app.state.stream_manager.start_stream(fixture_id)
-    return StreamActionOut(status="watching", fixture_id=fixture_id)
+    return {"status": "watching", "fixture_id": fixture_id}
 
 
-@router.delete("/streams/{fixture_id}", response_model=StreamActionOut)
-async def stop_stream(fixture_id: int, request: Request):
+@router.delete("/streams/{fixture_id}")
+async def stop_stream(
+    fixture_id: int, request: Request, x_cron_secret: str = Header(None)
+):
+    if x_cron_secret != settings.CRON_INTERNAL_SECRET:
+        raise HTTPException(status_code=403, detail="forbidden")
     await request.app.state.stream_manager.stop_stream(fixture_id)
-    return StreamActionOut(status="stopped", fixture_id=fixture_id)
+    return {"status": "stopped", "fixture_id": fixture_id}
 
 
 @router.get("/streams")
