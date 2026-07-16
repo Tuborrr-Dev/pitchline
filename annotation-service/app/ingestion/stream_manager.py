@@ -11,6 +11,7 @@ import asyncio
 import time
 from app.ingestion.txline_client import TxLineClient
 import logging
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +21,7 @@ class StreamManager:
         self.client = TxLineClient(on_event=annotation_service.process_event)
         self.annotation_service = annotation_service
         self.tasks = {}
-        self.watch_started_at = (
-            {}
-        )  # fixture_id -> monotonic() timestamp, for duration-based stop
+        self.watch_started_at = {}
         self.finished_fixtures: set[int] = set()
 
     async def start_stream(self, fixture_id: int):
@@ -36,6 +35,11 @@ class StreamManager:
         self.tasks[fixture_id] = task
         self.watch_started_at[fixture_id] = time.monotonic()
 
+        started_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        logger.info(
+            f"stream now open for fixture {fixture_id}, started at {started_at}"
+        )
+
     def _on_stream_done(self, fixture_id: int, task: asyncio.Task):
         self.tasks.pop(fixture_id, None)
         self.watch_started_at.pop(fixture_id, None)
@@ -48,13 +52,6 @@ class StreamManager:
             )
         else:
             self.finished_fixtures.add(fixture_id)
-
-    async def restore_lineups(self, fixture_id: int) -> None:
-        data = await self.lineup_store.load(fixture_id)
-        if data is None:
-            return
-        team_names, player_names = data
-        self.entity_resolver.import_lineups(team_names, player_names)
 
     async def stop_stream(self, fixture_id: int):
         task = self.tasks.get(fixture_id)
