@@ -58,6 +58,7 @@ class EntityResolver:
         self.slot_to_team: dict[tuple, int] = {}
         self._scores: dict[int, tuple[int, int]] = {}
         self.home_slot: dict[int, int] = {}
+        self._shootout_scores: dict[int, tuple[int, int]] = {}
 
     def learn_lineups(self, event: dict) -> tuple[dict, dict]:
         """this directly goes to AnnotationService on "lineups" messages.
@@ -115,6 +116,11 @@ class EntityResolver:
         p2 = score.get("Participant2", {}).get("Total", {}).get("Goals", 0)
         self._scores[fixture_id] = (p1, p2)
 
+        p1_pe = score.get("Participant1", {}).get("PE", {}).get("Goals")
+        p2_pe = score.get("Participant2", {}).get("PE", {}).get("Goals")
+        if p1_pe is not None or p2_pe is not None:
+            self._shootout_scores[fixture_id] = (p1_pe or 0, p2_pe or 0)
+
     def _enrich(self, event: dict) -> None:
         data = event.get("Data", {}) or {}
         fixture_id = event.get("FixtureId")
@@ -134,6 +140,24 @@ class EntityResolver:
             event["Side"] = "neutral"
         else:
             event["Side"] = "home" if slot == home_slot else "away"
+
+        away_slot = 2 if home_slot == 1 else (1 if home_slot == 2 else None)
+        event["HomeTeamName"] = self.team_names.get(
+            self.slot_to_team.get((fixture_id, home_slot))
+        )
+        event["AwayTeamName"] = self.team_names.get(
+            self.slot_to_team.get((fixture_id, away_slot))
+        )
+
+        shootout = self._shootout_scores.get(fixture_id)
+        if shootout:
+            p1_pe, p2_pe = shootout
+            if home_slot == 1:
+                event["HomeShootoutScore"], event["AwayShootoutScore"] = p1_pe, p2_pe
+            else:
+                event["HomeShootoutScore"], event["AwayShootoutScore"] = p2_pe, p1_pe
+        else:
+            event["HomeShootoutScore"] = event["AwayShootoutScore"] = None
 
         event["PlayerName"] = self.player_names.get(data.get("PlayerId"))
         event["PlayerInName"] = self.player_names.get(data.get("PlayerInId"))

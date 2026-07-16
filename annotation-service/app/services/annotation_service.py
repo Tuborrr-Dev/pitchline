@@ -14,6 +14,12 @@ DISPLAY_TITLES = {
     "game_finalised": "Match End",
 }
 
+STATUS_TITLES = {
+    6: "Extra Time",
+    8: "Half-Time (ET)",
+    11: "Penalties",
+}
+
 
 class AnnotationService:
     def __init__(self):
@@ -50,6 +56,10 @@ class AnnotationService:
             await self.history.discard(event)
             return
 
+        if action == "status":
+            await self._handle_period_transition(event)
+            return
+
         # Step 1: Ignore events we don't care about
         if not self.rule_engine.should_process(event):
             return
@@ -67,6 +77,31 @@ class AnnotationService:
 
         self._emitted.add(key)
         await self._emit(entity, is_update=False)
+
+    async def _handle_period_transition(self, event: dict):
+        """The feed's generic 'status' action fires on every phase change. Most
+        of those we already never touch. These 3 StatusIds are the only ones with
+        no other signal (extra time start, HT of ET, going to penalties)."""
+        if event.get("StatusId") not in STATUS_TITLES:
+            return
+
+        key = (event.get("FixtureId"), "status", event.get("Id"))
+        if key in self._emitted:
+            return
+        self._emitted.add(key)
+
+        entity = self.entity_resolver.resolve(event)["entity"]
+        annotation = self.commentary.generate_period_transition(entity)
+        if annotation is None:
+            return
+
+        annotation["fixture_id"] = entity.get("FixtureId")
+        annotation["source_action"] = STATUS_TITLES[event.get("StatusId")]
+        annotation["source_id"] = entity.get("Id")
+        clock = entity.get("Clock") or {}
+        annotation["source_seconds"] = clock.get("Seconds")
+        annotation["outcome"] = None
+        await self.history.save(annotation)
 
     # ------------------------------------------------------------------
     async def _handle_amend(self, event: dict):

@@ -25,6 +25,7 @@ class Significance:
         "penalty_shootout_team": "target",
         "var": "video",
         "var_end": "video",
+        "penalty_outcome": "target",
     }
 
     def style_rule_tier(self, event: dict) -> dict:

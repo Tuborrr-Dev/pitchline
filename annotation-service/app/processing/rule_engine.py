@@ -109,6 +109,8 @@ class RuleEngine:
         rule-templated commentary and a Gemini call."""
         action = event.get("Action")
         data = event.get("Data", {})
+        if action == "penalty_outcome" and event.get("StatusId") in (11, 12):
+            return False
         if action in AI_ACTIONS:
             return True
         if action == "var_end":

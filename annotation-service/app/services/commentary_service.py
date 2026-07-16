@@ -9,6 +9,25 @@ class CommentaryService:
     def __init__(self):
         self.significance = Significance()
 
+    def generate_period_transition(self, event: dict) -> dict | None:
+        text = self.PERIOD_TRANSITION_TEXT.get(event.get("StatusId"))
+        if text is None:
+            return None
+        home, away = event.get("HomeScore"), event.get("AwayScore")
+        return {
+            "type": "commentary",
+            "action": "status",
+            "team": None,
+            "player": None,
+            "minute": event.get("Minute"),
+            "phase": event.get("Phase"),
+            "home_score": home,
+            "away_score": away,
+            "icon": "clock",
+            "color": "gray",
+            "text": f"[{home}-{away}] {text}",
+        }
+
     def generate(self, event: dict) -> dict:
         action = event.get("Action")
         handler = self._HANDLERS.get(action)
@@ -92,7 +111,27 @@ class CommentaryService:
         return f"[{event.get('HomeScore')}-{event.get('AwayScore')}] Half-time"
 
     def _game_finalised(self, event):
-        return f"[{event.get('HomeScore')}-{event.get('AwayScore')}] Full-time"
+        home, away = event.get("HomeScore"), event.get("AwayScore")
+        hs, aws = event.get("HomeShootoutScore"), event.get("AwayShootoutScore")
+        if hs is not None and aws is not None:
+            winner = (
+                event.get("HomeTeamName") if hs > aws else event.get("AwayTeamName")
+            )
+            return f"[{home}-{away}] Full-time — {winner} win {hs}-{aws} on penalties"
+        return f"[{home}-{away}] Full-time"
+
+    def _penalty_outcome(self, event):
+        team = event.get("TeamName")
+        player = event.get("PlayerName")
+        who = player or team
+        label = {"Scored": "scores", "Missed": "misses", "Saved": "saved"}.get(
+            event.get("Outcome"), event.get("Outcome") or "penalty"
+        )
+        return (
+            f"Penalty shootout — {who}: {label}"
+            if who
+            else f"Penalty shootout: {label}"
+        )
 
     def _penalty_shootout_team(self, event):
         return f"Penalty shootout — {event.get('TeamName')} to take next"
@@ -123,4 +162,11 @@ class CommentaryService:
         "penalty_shootout_team": _penalty_shootout_team,
         "var": _var,
         "var_end": _var_end,
+        "penalty_outcome": _penalty_outcome,
+    }
+
+    PERIOD_TRANSITION_TEXT = {
+        6: "Still level — the match goes to Extra-Time",
+        8: "Half-time in Extra-Time",
+        11: "Extra time over — penalties will decide",
     }

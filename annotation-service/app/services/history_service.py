@@ -13,8 +13,7 @@ class HistoryService:
         # 1. Safely calculate the ordinal minute
         raw_minute = annotation.get("minute")
         if raw_minute is not None:
-            ordinal_minute = (raw_minute) + 1
-            # so both the DB and the Live Stream match have ordinal min
+            ordinal_minute = raw_minute
             annotation["minute"] = ordinal_minute
         else:
             annotation["minute"] = None
