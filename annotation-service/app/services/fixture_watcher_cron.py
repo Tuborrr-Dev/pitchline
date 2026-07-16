@@ -4,6 +4,11 @@ import time
 import logging
 from app.core.config import settings
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+
 logger = logging.getLogger("app.cron.fixture_watcher")
 
 WATCHED_COMPETITION_IDS = {
