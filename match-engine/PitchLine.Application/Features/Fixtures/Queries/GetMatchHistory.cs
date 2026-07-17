@@ -22,7 +22,8 @@ public record OddsSnapshot(
     decimal HomePct,
     decimal DrawPct,
     decimal AwayPct,
-    DateTimeOffset Timestamp
+    DateTimeOffset Timestamp,
+    string? Minute = null
 );
 
 public record ScoreEventDto(
@@ -59,7 +60,12 @@ public class GetMatchHistoryHandler : IRequestHandler<GetMatchHistoryQuery, GetM
         var oddsHistory = rawOdds
             .Select(json => JsonSerializer.Deserialize<OddsSnapshot>(json, JsonOptions))
             .Where(s => s is not null)
-            .Select(s => s!);
+            .Select(s =>
+            {
+                var elapsed = Math.Max(0, (int)Math.Round((s!.Timestamp - meta.KickOff).TotalMinutes));
+                var minStr = s.Minute ?? $"{elapsed}'";
+                return s with { Minute = minStr };
+            });
 
         // Deserialize score events
         var events = rawEvents

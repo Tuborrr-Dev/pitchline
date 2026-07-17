@@ -50,6 +50,11 @@ public class FixtureMetadataService(
                 if (competitionId != 72) continue;
 
                 var id = fixture.GetProperty("FixtureId").GetInt32();
+                if (id == 17588400 || id == 17588394)
+                {
+                    _logger.LogInformation("[FIXTURES] Skipping filtered fixture {FixtureId}", id);
+                    continue;
+                }
 
                 var existing = await _pg.GetFixtureMetaAsync(id.ToString(), ct);
                 if (existing is not null) continue;
