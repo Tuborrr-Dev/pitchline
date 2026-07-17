@@ -7,6 +7,9 @@ from app.services.history_service import HistoryService
 from app.services.commentary_service import CommentaryService
 from app.services.lineup_store import LineupStore
 
+import time
+from collections import deque
+
 logger = logging.getLogger(__name__)
 
 DISPLAY_TITLES = {
@@ -30,6 +33,7 @@ class AnnotationService:
         self.history = HistoryService()
         self._emitted: set[tuple] = set()
         self.lineup_store = LineupStore()  # (FixtureId, Action, Id) already emitted
+        self._latencies: deque[float] = deque(maxlen=50)
 
     async def restore_lineups(self, fixture_id: int) -> None:
         data = await self.lineup_store.load(fixture_id)
@@ -135,6 +139,8 @@ class AnnotationService:
         else:
             annotation = self.commentary.generate(entity)
 
+        self._record_latency(entity)
+
         annotation["fixture_id"] = entity.get("FixtureId")
         action = entity.get("Action")
         annotation["source_action"] = DISPLAY_TITLES.get(action, action)
@@ -147,3 +153,17 @@ class AnnotationService:
             await self.history.update(annotation)
         else:
             await self.history.save(annotation)
+
+    # ----------------------------------------------------
+    def _record_latency(self, entity: dict):
+        ts = entity.get("Ts")
+        if ts is None:
+            return
+        latency_ms = (time.time() * 1000) - ts
+        if latency_ms >= 0:  # guard against clock skew producing a negative
+            self._latencies.append(latency_ms)
+
+    def average_latency_ms(self) -> float | None:
+        if not self._latencies:
+            return None
+        return round(sum(self._latencies) / len(self._latencies), 1)

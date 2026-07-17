@@ -68,6 +68,13 @@ async def list_streams(request: Request):
     }
 
 
+@router.get("/latency")
+async def get_latency(request: Request):
+    annotation_service = request.app.state.annotation_service
+    avg = annotation_service.average_latency_ms()
+    return {"avg_latency_ms": avg}
+
+
 # ----------------------------
 # this is strictly for testing
 """import json
