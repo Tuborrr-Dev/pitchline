@@ -44,6 +44,7 @@ export function MatchView({
   const selectedTimelineEvent =
     timelineEvents.find((event) => event.eventId === selectedEventId) ?? selectedEvent;
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [mobilePrioritizedEventId, setMobilePrioritizedEventId] = useState<string | null>(null);
   const [eventRailOpen, setEventRailOpen] = useState(true);
   const verticalEventButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const horizontalEventButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -128,6 +129,7 @@ export function MatchView({
               fixture={fixture}
               onSelectEvent={(eventId) => {
                 onSelectEvent(eventId);
+                setMobilePrioritizedEventId(eventId);
                 setDetailsOpen(true);
               }}
               onToggle={() => setEventRailOpen(false)}
@@ -152,7 +154,10 @@ export function MatchView({
             detailsOpen={detailsOpen}
             eventRailOpen={eventRailOpen}
             onShowEvents={() => setEventRailOpen(true)}
-            onToggleDetails={() => setDetailsOpen((open) => !open)}
+            onToggleDetails={() => {
+              setMobilePrioritizedEventId(null);
+              setDetailsOpen((open) => !open);
+            }}
           />
 
           <motion.section
@@ -187,8 +192,12 @@ export function MatchView({
 
       <MobileDetailsDrawer
         annotations={annotations}
-        onClose={() => setDetailsOpen(false)}
+        onClose={() => {
+          setDetailsOpen(false);
+          setMobilePrioritizedEventId(null);
+        }}
         open={detailsOpen}
+        prioritizeSelected={mobilePrioritizedEventId === selectedEventId}
         selectedEventId={selectedEventId}
       />
       <MobileCommentaryToast

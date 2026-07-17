@@ -11,9 +11,11 @@ type CommentaryFeedItem =
 
 export function CommentaryContent({
   annotations = [],
+  prioritizeSelected = false,
   selectedEventId,
 }: {
   annotations?: Annotation[];
+  prioritizeSelected?: boolean;
   selectedEventId: string | null;
 }) {
   const commentaryFeed: CommentaryFeedItem[] =
@@ -27,9 +29,12 @@ export function CommentaryContent({
           }) satisfies CommentaryFeedItem,
       )
       .sort((left, right) => {
-        const leftSelected = selectedEventId === annotationId(left.annotation);
-        const rightSelected = selectedEventId === annotationId(right.annotation);
-        if (leftSelected !== rightSelected) return leftSelected ? -1 : 1;
+        if (prioritizeSelected) {
+          const leftSelected = selectedEventId === annotationId(left.annotation);
+          const rightSelected = selectedEventId === annotationId(right.annotation);
+          if (leftSelected !== rightSelected) return leftSelected ? -1 : 1;
+        }
+
         return right.annotation.source_id - left.annotation.source_id;
       });
 
