@@ -12,7 +12,6 @@ import type { MarketTab, ViewMode } from "./types";
 
 export function MarketHeader({
   activeTab,
-  deferredQuery,
   effectiveViewMode,
   filteredCount,
   isFetching,
@@ -21,7 +20,6 @@ export function MarketHeader({
   viewMode,
 }: {
   activeTab: MarketTab;
-  deferredQuery: string;
   effectiveViewMode: ViewMode;
   filteredCount: number;
   isFetching: boolean;
@@ -57,7 +55,6 @@ export function MarketHeader({
           <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
             <span>{activeTab === "history" ? "Settled markets" : "Active markets"}: {filteredCount}</span>
             {isFetching ? <span>Refreshing feed</span> : null}
-            {deferredQuery.trim() ? <span>Filter: {deferredQuery}</span> : null}
           </div>
         </div>
 

@@ -1,8 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
-import { useDeferredValue, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { MarketHeader } from "@/components/market-overview/market-header";
 import { MarketPanel } from "@/components/market-overview/market-panel";
@@ -61,8 +60,6 @@ export function MarketOverview({
   );
   const [optimisticViewMode, setOptimisticViewMode] = useState<ViewMode | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const searchParams = useSearchParams();
-  const deferredQuery = useDeferredValue(searchParams.get("q") ?? "");
 
   const {
     data: fetchedActiveRows = activeTab === "markets" ? initialRows : [],
@@ -86,18 +83,6 @@ export function MarketOverview({
   const isError = activeTab === "history" ? isFinishedError : isMarketsError;
   const isFetching = activeTab === "history" ? isFinishedFetching : isMarketsFetching;
   const isInitialLoading = isFetching && rows.length === 0;
-  const hasSearchQuery = deferredQuery.trim().length > 0;
-
-  const filteredRows = useMemo(() => {
-    const normalizedQuery = deferredQuery.trim().toLowerCase();
-    if (!normalizedQuery) return rows;
-    return rows.filter((row) =>
-      [row.eventPair, row.eventSubLabel, row.statusLabel]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery),
-    );
-  }, [deferredQuery, rows]);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 639px)");
@@ -156,7 +141,7 @@ export function MarketOverview({
     } catch {
       // Ignore storage errors
     }
-  }, [activeTab, filteredRows.length]);
+  }, [activeTab, rows.length]);
 
   return (
     <div
@@ -167,9 +152,8 @@ export function MarketOverview({
       <main className="w-full overflow-hidden bg-[var(--terminal-bg)]">
         <MarketHeader
           activeTab={activeTab}
-          deferredQuery={deferredQuery}
           effectiveViewMode={effectiveViewMode}
-          filteredCount={filteredRows.length}
+          filteredCount={rows.length}
           isFetching={isFetching}
           isMobile={isMobile}
           setViewMode={handleViewModeChange}
@@ -180,8 +164,8 @@ export function MarketOverview({
           effectiveViewMode={effectiveViewMode}
           isError={isError}
           isInitialLoading={isInitialLoading}
-          hasSearchQuery={hasSearchQuery}
-          rows={filteredRows}
+          hasSearchQuery={false}
+          rows={rows}
         />
       </main>
     </div>

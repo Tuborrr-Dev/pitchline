@@ -4,6 +4,8 @@ import type { AppKitNetwork } from "@reown/appkit/networks";
 export const REOWN_PROJECT_ID = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID?.trim() ?? "";
 
 export const walletConnectEnabled = REOWN_PROJECT_ID.length > 0;
+export const PITCHLINE_APP_URL = process.env.NEXT_PUBLIC_PITCHLINE_APP_URL?.trim() ?? "";
+export const PITCHLINE_APP_ICON_URL = process.env.NEXT_PUBLIC_PITCHLINE_APP_ICON_URL?.trim() ?? "";
 
 export const PITCHLINE_REQUIRED_CHAIN_ID = "0x1";
 export const PITCHLINE_REQUIRED_NETWORK_NAME = "Ethereum mainnet";
@@ -13,7 +15,7 @@ export const pitchlineEvmNetworks = [mainnet] as [AppKitNetwork, ...AppKitNetwor
 export const walletConnectMetadata = {
   name: "PITCHLINE",
   description: "Real-time football probability terminal built for chart-native match analysis.",
-  url: "https://pitchline.app",
-  icons: ["https://pitchline.app/icon.png"],
+  url: PITCHLINE_APP_URL,
+  icons: PITCHLINE_APP_ICON_URL ? [PITCHLINE_APP_ICON_URL] : [],
 };
 

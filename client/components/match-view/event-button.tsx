@@ -39,6 +39,7 @@ export function EventButton({
   const hasAnnotationIcon = event.annotationIcon === undefined
     ? Boolean(event.annotationAction)
     : Boolean(event.annotationIcon.trim());
+  const detailText = event.detailLabel?.trim();
 
   return (
     <motion.button
@@ -65,11 +66,21 @@ export function EventButton({
             <AnnotationGlyph action={event.annotationAction} icon={event.annotationIcon} className="h-3.5 w-3.5" />
           </span>
         ) : null}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-[0.64rem] font-semibold sm:text-[0.72rem]">{event.label}</p>
           <p className="mt-1 truncate text-[0.6rem] sm:text-[0.68rem]">{secondaryLabel}</p>
         </div>
       </div>
+      {detailText ? (
+        <p
+          className={cn(
+            "mt-2 whitespace-pre-wrap text-[0.58rem] leading-4 text-[var(--terminal-text-muted)] sm:text-[0.64rem]",
+            orientation === "horizontal" && "line-clamp-2 whitespace-normal",
+          )}
+        >
+          {detailText}
+        </p>
+      ) : null}
     </motion.button>
   );
 }

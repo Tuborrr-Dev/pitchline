@@ -118,7 +118,7 @@ export function MarketSearch({
         onKeyDown={handleKeyDown}
         placeholder="SEARCH MARKETS..."
         className={cn(
-          "w-full bg-transparent font-mono text-[0.72rem] uppercase text-[var(--terminal-text-strong)] outline-none placeholder:text-[var(--terminal-text-muted)] sm:text-[0.78rem]",
+          "w-full bg-transparent font-mono text-[16px] uppercase text-[var(--terminal-text-strong)] outline-none placeholder:text-[var(--terminal-text-muted)] sm:text-[0.78rem]",
           mobileSearchOpen ? "block" : "hidden sm:block",
         )}
       />
