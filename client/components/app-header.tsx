@@ -3,8 +3,8 @@
 import { AnimatePresence, motion } from "motion/react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { startTransition, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -107,7 +107,6 @@ function scoreSearchResult(item: IndexedSearchRow, query: string) {
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileSearchSettled, setMobileSearchSettled] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -117,22 +116,10 @@ export function AppHeader() {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const wallet = useWallet();
   const walletConnect = useWalletConnectModal();
-  const homeQuery = searchParams.get("q") ?? "";
   const isLanding = pathname === "/";
-  const isMarkets = pathname.startsWith("/markets");
   const isMatchRoute = pathname.startsWith("/match/");
-  const [localQuery, setLocalQuery] = useState(homeQuery);
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(homeQuery);
-  const debounceRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
-
-  useEffect(() => {
-    const nextQuery = isMarkets ? homeQuery : "";
-    if (localQuery === nextQuery) return;
-
-    startTransition(() => {
-      setLocalQuery(nextQuery);
-    });
-  }, [homeQuery, isMarkets, localQuery]);
+  const [localQuery, setLocalQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
   const query = localQuery;
   const showSearchResults = searchResultsOpen && query.trim().length > 0 && debouncedSearchQuery.trim().length > 0;
@@ -207,41 +194,12 @@ export function AppHeader() {
   function updateQuery(nextQuery: string) {
     setLocalQuery(nextQuery);
     setSearchResultsOpen(nextQuery.trim().length > 0);
-
-    if (!isMarkets) return;
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    debounceRef.current = setTimeout(() => {
-      startTransition(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (nextQuery.trim()) {
-          params.set("q", nextQuery);
-        } else {
-          params.delete("q");
-        }
-
-        const search = params.toString();
-        router.replace(`${pathname}${search ? `?${search}` : ""}`, { scroll: false });
-      });
-    }, 200);
   }
 
   function handleClear() {
     setLocalQuery("");
+    setDebouncedSearchQuery("");
     setSearchResultsOpen(false);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (isMarkets) {
-      startTransition(() => {
-        const params = new URLSearchParams(window.location.search);
-        params.delete("q");
-        const search = params.toString();
-        router.replace(`${pathname}${search ? `?${search}` : ""}`, { scroll: false });
-      });
-    }
   }
 
   function submitSearch(event: React.FormEvent<HTMLFormElement>) {
@@ -251,10 +209,15 @@ export function AppHeader() {
       return;
     }
 
-    const params = new URLSearchParams();
-    if (localQuery.trim()) params.set("q", localQuery);
-    setSearchResultsOpen(false);
-    router.push(`${isMarkets ? pathname : "/markets"}${params.toString() ? `?${params.toString()}` : ""}`);
+    if (searchResults[0]) {
+      setSearchResultsOpen(false);
+      setLocalQuery("");
+      setDebouncedSearchQuery("");
+      router.push(searchResults[0].href);
+      return;
+    }
+
+    setSearchResultsOpen(localQuery.trim().length > 0);
   }
 
   async function handleWalletConnect() {
@@ -369,6 +332,8 @@ export function AppHeader() {
                         setMobileMenuOpen(false);
                         setMobileSearchOpenAnimated(false);
                         setSearchResultsOpen(false);
+                        setLocalQuery("");
+                        setDebouncedSearchQuery("");
                         router.push(href);
                       }}
                       onSubmit={submitSearch}
@@ -432,6 +397,8 @@ export function AppHeader() {
               onResultSelect={(href) => {
                 setMobileSearchOpenAnimated(false);
                 setSearchResultsOpen(false);
+                setLocalQuery("");
+                setDebouncedSearchQuery("");
                 router.push(href);
               }}
               onSubmit={submitSearch}

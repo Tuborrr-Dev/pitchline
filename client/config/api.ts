@@ -1,11 +1,21 @@
 import axios from "axios";
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_PITCHLINE_API_BASE_URL ?? "https://pitchline.onrender.com";
+function requiredPublicEnv(name: string, value: string | undefined) {
+  const trimmedValue = value?.trim();
+  if (!trimmedValue) {
+    throw new Error(`${name} is not configured.`);
+  }
+  return trimmedValue;
+}
 
-export const ANNOTATION_API_BASE_URL = (
-  process.env.NEXT_PUBLIC_ANNOTATION_API_BASE_URL ??
-  "https://annotation-service-production.up.railway.app"
+export const API_BASE_URL = requiredPublicEnv(
+  "NEXT_PUBLIC_PITCHLINE_API_BASE_URL",
+  process.env.NEXT_PUBLIC_PITCHLINE_API_BASE_URL,
+);
+
+export const ANNOTATION_API_BASE_URL = requiredPublicEnv(
+  "NEXT_PUBLIC_ANNOTATION_API_BASE_URL",
+  process.env.NEXT_PUBLIC_ANNOTATION_API_BASE_URL,
 ).replace(/\/$/, "");
 
 export const apiClient = axios.create({

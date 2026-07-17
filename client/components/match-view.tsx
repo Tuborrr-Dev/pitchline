@@ -126,7 +126,10 @@ export function MatchView({
               connectionState={connectionState}
               events={events}
               fixture={fixture}
-              onSelectEvent={onSelectEvent}
+              onSelectEvent={(eventId) => {
+                onSelectEvent(eventId);
+                setDetailsOpen(true);
+              }}
               onToggle={() => setEventRailOpen(false)}
               selectedEventId={selectedEventId}
               setEventRef={setEventButtonRef}

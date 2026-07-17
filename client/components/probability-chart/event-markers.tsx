@@ -14,7 +14,7 @@ import { FootballActionIcon, footballIconName } from "../match-view/annotation-u
 import { logicalIndexToPercent } from "./chart-utils";
 
 const CLUSTER_DISTANCE_MINUTES = 5;
-const MAX_CLUSTER_EVENTS = 10;
+const MAX_VISIBLE_CLUSTER_EVENTS = 3;
 
 type PositionedEvent = {
   clusterId: string;
@@ -31,6 +31,7 @@ type EventCluster = {
   events: PositionedEvent[];
   left: number;
   offsetX: number;
+  totalSize: number;
 };
 
 function eventMarkerTone(event: MatchEvent) {
@@ -84,6 +85,66 @@ function EventMarkerTooltip({ event }: { event: MatchEvent }) {
 
 function minuteValue(value: string) {
   return Number.parseInt(value.replace(/\D/g, ""), 10) || 0;
+}
+
+function eventPriority(event: MatchEvent) {
+  const metadata = [
+    event.type,
+    event.annotationAction,
+    event.annotationIcon,
+    event.label,
+    event.detailLabel,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (metadata.includes("goal")) return 0;
+  if (metadata.includes("red-card") || metadata.includes("red_card") || metadata.includes("red card")) return 1;
+  if (metadata.includes("penalty")) return 2;
+  if (metadata.includes("yellow-card") || metadata.includes("yellow_card") || metadata.includes("yellow card")) return 3;
+  if (event.importance === "high") return 4;
+  if (event.type === "var") return 5;
+  if (event.importance === "medium") return 6;
+  if (event.importance === "structural") return 8;
+  return 7;
+}
+
+function pickVisibleClusterEvents(group: PositionedEvent[]) {
+  return [...group]
+    .sort((left, right) => {
+      const priorityDelta = eventPriority(left.event) - eventPriority(right.event);
+      if (priorityDelta !== 0) return priorityDelta;
+      if (left.minute !== right.minute) return left.minute - right.minute;
+      return left.index - right.index;
+    })
+    .slice(0, MAX_VISIBLE_CLUSTER_EVENTS)
+    .sort((left, right) => {
+      if (left.minute !== right.minute) return left.minute - right.minute;
+      return left.index - right.index;
+    });
+}
+
+function sortChronologically(events: PositionedEvent[]) {
+  return [...events].sort((left, right) => {
+    if (left.minute !== right.minute) return left.minute - right.minute;
+    return left.index - right.index;
+  });
+}
+
+function overflowOffset(index: number) {
+  const direction = index % 2 === 0 ? 1 : -1;
+  const distance = Math.floor(index / 2) + 1;
+  return direction * distance * 34;
+}
+
+function primaryClusterEvent(cluster: EventCluster) {
+  return [...cluster.events].sort((left, right) => {
+    const priorityDelta = eventPriority(left.event) - eventPriority(right.event);
+    if (priorityDelta !== 0) return priorityDelta;
+    if (left.minute !== right.minute) return left.minute - right.minute;
+    return left.index - right.index;
+  })[0]?.event;
 }
 
 function buildEventIndexes(events: MatchEvent[], renderedHistory: ProbabilityPoint[]) {
@@ -149,26 +210,39 @@ function buildEventClusters(positionedEvents: PositionedEvent[]) {
   const clusters: EventCluster[] = [];
 
   minuteGroups.forEach((group, groupIndex) => {
-    const chunkCount = Math.ceil(group.length / MAX_CLUSTER_EVENTS);
+    const visibleEvents = pickVisibleClusterEvents(group);
+    const visibleIds = new Set(visibleEvents.map((item) => item.event.eventId));
+    const overflowEvents = sortChronologically(group.filter((item) => !visibleIds.has(item.event.eventId)));
+    const events = visibleEvents.map((item, index) => ({
+      ...item,
+      clusterId: `${groupIndex}`,
+      clusterIndex: index,
+      clusterSize: group.length,
+    }));
+    const left = group.reduce((sum, item) => sum + item.left, 0) / group.length;
 
-    for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex += 1) {
-      const chunk = group.slice(chunkIndex * MAX_CLUSTER_EVENTS, (chunkIndex + 1) * MAX_CLUSTER_EVENTS);
-      const midpoint = (chunkCount - 1) / 2;
-      const events = chunk.map((item, index) => ({
-        ...item,
-        clusterId: `${groupIndex}-${chunkIndex}`,
-        clusterIndex: index,
-        clusterSize: chunk.length,
-      }));
-      const left = events.reduce((sum, item) => sum + item.left, 0) / events.length;
+    clusters.push({
+      clusterId: `${groupIndex}`,
+      events,
+      left,
+      offsetX: 0,
+      totalSize: group.length,
+    });
 
+    overflowEvents.forEach((item, overflowIndex) => {
       clusters.push({
-        clusterId: `${groupIndex}-${chunkIndex}`,
-        events,
-        left,
-        offsetX: (chunkIndex - midpoint) * 34,
+        clusterId: `${groupIndex}-overflow-${item.event.eventId}`,
+        events: [{
+          ...item,
+          clusterId: `${groupIndex}-overflow-${item.event.eventId}`,
+          clusterIndex: 0,
+          clusterSize: 1,
+        }],
+        left: item.left,
+        offsetX: overflowOffset(overflowIndex),
+        totalSize: 1,
       });
-    }
+    });
   });
 
   return clusters.sort((left, right) => {
@@ -178,7 +252,7 @@ function buildEventClusters(positionedEvents: PositionedEvent[]) {
 }
 
 function ClusterSummaryIcon({ cluster }: { cluster: EventCluster }) {
-  const primaryEvent = cluster.events[0]?.event;
+  const primaryEvent = primaryClusterEvent(cluster);
   if (!primaryEvent) return <ShieldAlert className="h-3.5 w-3.5" strokeWidth={2} />;
 
   return <EventMarkerIcon event={primaryEvent} />;
@@ -213,7 +287,7 @@ export function EventMarkers({
             const isSelected = cluster.events.some((item) => item.event.eventId === selectedEvent?.eventId);
             const singleEvent = cluster.events.length === 1 ? cluster.events[0] : null;
             const event = singleEvent?.event;
-            const toneEvent = event ?? cluster.events[0]?.event;
+            const toneEvent = event ?? primaryClusterEvent(cluster);
             const zIndex = isExpanded ? 50 : isSelected ? 35 : 20;
 
             if (singleEvent && event) {
@@ -275,11 +349,11 @@ export function EventMarkers({
                     eventMarkerTone(toneEvent),
                     isSelected && "ring-2 ring-white/80",
                   )}
-                  aria-label={`${cluster.events.length} clustered events`}
+                  aria-label={`${cluster.totalSize} clustered events`}
                 >
                   <ClusterSummaryIcon cluster={cluster} />
                   <span className="pointer-events-none absolute -right-1.5 -top-2.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full border border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)] px-1 font-mono text-[0.52rem] font-bold text-[var(--terminal-text-strong)]">
-                    {cluster.events.length}
+                    {cluster.totalSize}
                   </span>
                 </motion.button>
 

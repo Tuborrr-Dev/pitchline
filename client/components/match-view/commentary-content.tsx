@@ -26,7 +26,12 @@ export function CommentaryContent({
             kind: "annotation" as const,
           }) satisfies CommentaryFeedItem,
       )
-      .sort((left, right) => right.annotation.source_id - left.annotation.source_id);
+      .sort((left, right) => {
+        const leftSelected = selectedEventId === annotationId(left.annotation);
+        const rightSelected = selectedEventId === annotationId(right.annotation);
+        if (leftSelected !== rightSelected) return leftSelected ? -1 : 1;
+        return right.annotation.source_id - left.annotation.source_id;
+      });
 
   return (
     <section className="flex min-h-0 flex-1 flex-col border border-[var(--terminal-border)] bg-[var(--terminal-panel)]">
