@@ -34,7 +34,7 @@ export function EventButton({
   const isAnnotationEvent = Boolean(event.annotationColor || event.annotationIcon || event.annotationType);
   const tone = event.annotationColor ? annotationTone(event.annotationColor) : eventTone(event);
   const secondaryLabel = isAnnotationEvent
-    ? event.teamCode ?? "market"
+    ? event.teamCode
     : eventDeltaLabel(event);
   const hasAnnotationIcon = event.annotationIcon === undefined
     ? Boolean(event.annotationAction)
@@ -68,7 +68,9 @@ export function EventButton({
         ) : null}
         <div className="min-w-0 flex-1">
           <p className="truncate text-[0.64rem] font-semibold sm:text-[0.72rem]">{event.label}</p>
-          <p className="mt-1 truncate text-[0.6rem] sm:text-[0.68rem]">{secondaryLabel}</p>
+          {secondaryLabel ? (
+            <p className="mt-1 truncate text-[0.6rem] sm:text-[0.68rem]">{secondaryLabel}</p>
+          ) : null}
         </div>
       </div>
       {detailText ? (

@@ -79,6 +79,7 @@ export function ProbabilityChart({
   const previousThemeRef = useRef<string | undefined>(undefined);
   const [hoveredTimestamp, setHoveredTimestamp] = useState<string | null>(null);
   const [isChartDragging, setIsChartDragging] = useState(false);
+  const [chartPointerZone, setChartPointerZone] = useState<"plot" | "time-axis" | "price-axis">("plot");
   const [visibleLogicalRange, setVisibleLogicalRange] = useState<LogicalRange | null>(null);
   const [renderedHistory, setRenderedHistory] = useState(normalizedHistory);
 
@@ -397,12 +398,30 @@ export function ProbabilityChart({
       <div className="relative min-h-0 flex-1 overflow-hidden bg-[var(--terminal-panel)]">
         <div
           ref={containerRef}
+          onPointerMove={(event) => {
+            const bounds = event.currentTarget.getBoundingClientRect();
+            const x = event.clientX - bounds.left;
+            const y = event.clientY - bounds.top;
+            const nextZone = y >= bounds.height - 32
+              ? "time-axis"
+              : x >= bounds.width - 48
+                ? "price-axis"
+                : "plot";
+            setChartPointerZone(nextZone);
+          }}
+          onPointerLeave={() => {
+            setChartPointerZone("plot");
+            setIsChartDragging(false);
+          }}
           onPointerDown={(event) => {
-            if (event.button === 0) setIsChartDragging(true);
+            if (event.button === 0 && chartPointerZone === "plot") setIsChartDragging(true);
           }}
           className={cn(
-            "h-[calc(100%-8.5rem)] min-h-[14rem] w-full cursor-crosshair sm:h-[calc(100%-11rem)] sm:min-h-[19rem] [&_*]:!cursor-crosshair",
-            isChartDragging && "cursor-grabbing [&_*]:!cursor-grabbing",
+            "h-[calc(100%-8.5rem)] min-h-[14rem] w-full sm:h-[calc(100%-11rem)] sm:min-h-[19rem]",
+            chartPointerZone === "time-axis" && "cursor-ew-resize [&_*]:!cursor-ew-resize",
+            chartPointerZone === "price-axis" && "cursor-ns-resize [&_*]:!cursor-ns-resize",
+            chartPointerZone === "plot" && "cursor-crosshair [&_*]:!cursor-crosshair",
+            isChartDragging && chartPointerZone === "plot" && "cursor-grabbing [&_*]:!cursor-grabbing",
           )}
         />
 
