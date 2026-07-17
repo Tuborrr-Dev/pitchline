@@ -1,14 +1,16 @@
 "use client";
 
-import { ArrowRight, Check, Wallet, X } from "lucide-react";
+import { ArrowRight, Check, LogOut, Wallet, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
+import { WalletDisconnectConfirmation } from "@/components/wallet-disconnect-confirmation";
 import { cn } from "@/lib/utils";
 
 export function ConnectWalletModal({
   open,
   connected,
+  canDisconnect,
   wrongNetwork,
   addressLabel,
   error,
@@ -18,11 +20,13 @@ export function ConnectWalletModal({
   selectedWalletId,
   onClose,
   onConnect,
+  onDisconnect,
   onSelectWallet,
   onEnterApp,
 }: {
   open: boolean;
   connected: boolean;
+  canDisconnect: boolean;
   wrongNetwork: boolean;
   addressLabel: string | null;
   error: string | null;
@@ -32,6 +36,7 @@ export function ConnectWalletModal({
   selectedWalletId: string | null;
   onClose: () => void;
   onConnect: () => Promise<void>;
+  onDisconnect: () => Promise<void>;
   onSelectWallet: (walletId: string) => void;
   onEnterApp: () => void;
 }) {
@@ -135,6 +140,15 @@ export function ConnectWalletModal({
                         : "Install Wallet"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
+              {canDisconnect ? (
+                <WalletDisconnectConfirmation
+                  onConfirm={() => void onDisconnect()}
+                  className="mt-3 h-11 w-full cursor-pointer rounded-none border border-[var(--terminal-border)] bg-[var(--terminal-surface)] font-mono text-[0.76rem] font-semibold uppercase text-[var(--terminal-text)] shadow-none hover:bg-[var(--terminal-hover)]"
+                >
+                  Disconnect Wallet
+                  <LogOut className="h-4 w-4" />
+                </WalletDisconnectConfirmation>
+              ) : null}
             </div>
           </motion.div>
         </motion.div>

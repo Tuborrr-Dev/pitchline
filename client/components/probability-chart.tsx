@@ -68,7 +68,8 @@ export function ProbabilityChart({
   const hasHistory = normalizedHistory.length > 0;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const teamASeriesRef = useRef<ISeriesApi<"Area"> | null>(null);
+  const dominantFillSeriesRef = useRef<ISeriesApi<"Area"> | null>(null);
+  const teamASeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const teamBSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const drawSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const historyRef = useRef<ProbabilityPoint[]>(normalizedHistory);
@@ -163,7 +164,7 @@ export function ProbabilityChart({
             }
           }
 
-          const roundedMinute = Math.max(10, Math.round(closest.minute / 10) * 10);
+          const roundedMinute = Math.max(0, Math.round(closest.minute / 10) * 10);
           return `${roundedMinute}'`;
         },
       },
@@ -172,19 +173,26 @@ export function ProbabilityChart({
       },
     });
 
-    const teamASeries = chart.addSeries(AreaSeries, {
-      lineColor: "#00ff87",
+    const dominantFillSeries = chart.addSeries(AreaSeries, {
+      lineColor: "rgba(0, 0, 0, 0)",
       topColor: "rgba(0, 255, 135, 0.27)",
       bottomColor: "rgba(0, 255, 135, 0.02)",
+      lineWidth: 1,
+      lineType: LineType.Curved,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+    const teamASeries = chart.addSeries(LineSeries, {
+      color: "#00ff87",
       lineWidth: 3,
-      lineType: LineType.WithSteps,
+      lineType: LineType.Curved,
       priceLineVisible: false,
       lastValueVisible: false,
     });
     const teamBSeries = chart.addSeries(LineSeries, {
       color: "#ff4b6e",
       lineWidth: 3,
-      lineType: LineType.WithSteps,
+      lineType: LineType.Curved,
       priceLineVisible: false,
       lastValueVisible: false,
     });
@@ -192,7 +200,7 @@ export function ProbabilityChart({
       color: "#9ed2ef",
       lineWidth: 2,
       lineStyle: 0,
-      lineType: LineType.WithSteps,
+      lineType: LineType.Curved,
       priceLineVisible: false,
       lastValueVisible: false,
     });
@@ -237,6 +245,7 @@ export function ProbabilityChart({
     resizeObserver.observe(container);
     didFitContentRef.current = false;
     chartRef.current = chart;
+    dominantFillSeriesRef.current = dominantFillSeries;
     teamASeriesRef.current = teamASeries;
     teamBSeriesRef.current = teamBSeries;
     drawSeriesRef.current = drawSeries;
@@ -253,6 +262,7 @@ export function ProbabilityChart({
       }
       chart.remove();
       chartRef.current = null;
+      dominantFillSeriesRef.current = null;
       teamASeriesRef.current = null;
       teamBSeriesRef.current = null;
       drawSeriesRef.current = null;
@@ -260,7 +270,12 @@ export function ProbabilityChart({
   }, [resolvedTheme]);
 
   useEffect(() => {
-    if (!teamASeriesRef.current || !teamBSeriesRef.current || !drawSeriesRef.current) return;
+    if (
+      !dominantFillSeriesRef.current ||
+      !teamASeriesRef.current ||
+      !teamBSeriesRef.current ||
+      !drawSeriesRef.current
+    ) return;
 
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -271,6 +286,7 @@ export function ProbabilityChart({
 
     if (themeChanged) {
       const seriesData = toSeriesData(normalizedHistory);
+      dominantFillSeriesRef.current.setData(seriesData.dominantFill);
       teamASeriesRef.current.setData(seriesData.teamA);
       teamBSeriesRef.current.setData(seriesData.teamB);
       drawSeriesRef.current.setData(seriesData.draw);
@@ -289,6 +305,7 @@ export function ProbabilityChart({
 
     if (!shouldAnimateLatestPoint) {
       const seriesData = toSeriesData(normalizedHistory);
+      dominantFillSeriesRef.current.setData(seriesData.dominantFill);
       teamASeriesRef.current.setData(seriesData.teamA);
       teamBSeriesRef.current.setData(seriesData.teamB);
       drawSeriesRef.current.setData(seriesData.draw);
@@ -336,6 +353,7 @@ export function ProbabilityChart({
       const animatedHistory = [...animationBaseHistory, animatedPoint];
       const animatedSeriesData = toSeriesData(animatedHistory);
 
+      dominantFillSeriesRef.current?.setData(animatedSeriesData.dominantFill);
       teamASeriesRef.current?.setData(animatedSeriesData.teamA);
       teamBSeriesRef.current?.setData(animatedSeriesData.teamB);
       drawSeriesRef.current?.setData(animatedSeriesData.draw);
