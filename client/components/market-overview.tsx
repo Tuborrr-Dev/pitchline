@@ -1,19 +1,50 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAnimationFrame } from "motion/react";
 import { useSearchParams } from "next/navigation";
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { MarketHeader } from "@/components/market-overview/market-header";
 import { MarketPanel } from "@/components/market-overview/market-panel";
-import { MarketTicker } from "@/components/market-overview/market-ticker";
 import type { MarketOverviewRow, MarketTab, ViewMode } from "@/components/market-overview/types";
 import { useMarketOverviewStream } from "@/hooks/use-market-overview-stream";
 import {
   finishedMarketOverviewQueryOptions,
   marketOverviewQueryOptions,
 } from "@/queries/market-queries";
+
+const VIEW_MODE_STORAGE_KEY = "pitchline_market_overview_view_mode";
+const viewModeListeners = new Set<() => void>();
+
+function isViewMode(value: string | null): value is ViewMode {
+  return value === "list" || value === "grid";
+}
+
+function getStoredViewMode(): ViewMode {
+  if (typeof window === "undefined") return "list" satisfies ViewMode;
+
+  try {
+    const storedViewMode = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    return isViewMode(storedViewMode) ? storedViewMode : "list";
+  } catch {
+    return "list" satisfies ViewMode;
+  }
+}
+
+function subscribeToViewMode(listener: () => void) {
+  viewModeListeners.add(listener);
+  return () => viewModeListeners.delete(listener);
+}
+
+function saveStoredViewMode(mode: ViewMode) {
+  try {
+    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+  } catch {
+    // Ignore storage errors and keep the in-memory UI responsive.
+  }
+
+  viewModeListeners.forEach((listener) => listener());
+}
 
 export function MarketOverview({
   initialRows,
@@ -23,10 +54,13 @@ export function MarketOverview({
   initialTab?: MarketTab;
 }) {
   const activeTab = initialTab;
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const viewMode = useSyncExternalStore<ViewMode>(
+    subscribeToViewMode,
+    getStoredViewMode,
+    () => "list" satisfies ViewMode,
+  );
+  const [optimisticViewMode, setOptimisticViewMode] = useState<ViewMode | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const tickerRef = useRef<HTMLDivElement | null>(null);
-  const tickerPauseUntilRef = useRef(0);
   const searchParams = useSearchParams();
   const deferredQuery = useDeferredValue(searchParams.get("q") ?? "");
 
@@ -80,42 +114,12 @@ export function MarketOverview({
     };
   }, []);
 
-  useEffect(() => {
-    const ticker = tickerRef.current;
-    if (!ticker || !isMobile) return;
-
-    const pauseAutoScroll = () => {
-      tickerPauseUntilRef.current = window.performance.now() + 1800;
-    };
-
-    ticker.addEventListener("touchstart", pauseAutoScroll, { passive: true });
-    ticker.addEventListener("touchmove", pauseAutoScroll, { passive: true });
-    ticker.addEventListener("pointerdown", pauseAutoScroll, { passive: true });
-    ticker.addEventListener("wheel", pauseAutoScroll, { passive: true });
-
-    return () => {
-      ticker.removeEventListener("touchstart", pauseAutoScroll);
-      ticker.removeEventListener("touchmove", pauseAutoScroll);
-      ticker.removeEventListener("pointerdown", pauseAutoScroll);
-      ticker.removeEventListener("wheel", pauseAutoScroll);
-    };
-  }, [isMobile]);
-
-  useAnimationFrame((time, delta) => {
-    const ticker = tickerRef.current;
-    if (!ticker || !isMobile) return;
-
-    const halfWidth = ticker.scrollWidth / 2;
-    if (halfWidth <= 0) return;
-    if (time < tickerPauseUntilRef.current) return;
-
-    ticker.scrollLeft += delta * 0.1;
-    if (ticker.scrollLeft >= halfWidth) {
-      ticker.scrollLeft -= halfWidth;
-    }
-  });
-
-  const effectiveViewMode = isMobile ? "grid" : viewMode;
+  const selectedViewMode = optimisticViewMode ?? viewMode;
+  const effectiveViewMode: ViewMode = isMobile ? "grid" : selectedViewMode;
+  const handleViewModeChange = (mode: ViewMode) => {
+    setOptimisticViewMode(mode);
+    saveStoredViewMode(mode);
+  };
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const handleScroll = () => {
@@ -158,7 +162,7 @@ export function MarketOverview({
     <div
       ref={scrollContainerRef}
       onScroll={handleScroll}
-      className="h-full overflow-y-auto bg-[var(--background)] pb-20 text-[var(--terminal-text)]"
+      className="h-full overflow-y-auto bg-[var(--background)] text-[var(--terminal-text)]"
     >
       <main className="w-full overflow-hidden bg-[var(--terminal-bg)]">
         <MarketHeader
@@ -168,8 +172,8 @@ export function MarketOverview({
           filteredCount={filteredRows.length}
           isFetching={isFetching}
           isMobile={isMobile}
-          setViewMode={setViewMode}
-          viewMode={viewMode}
+          setViewMode={handleViewModeChange}
+          viewMode={selectedViewMode}
         />
         <MarketPanel
           activeTab={activeTab}
@@ -179,8 +183,8 @@ export function MarketOverview({
           hasSearchQuery={hasSearchQuery}
           rows={filteredRows}
         />
-        <MarketTicker tickerRef={tickerRef} />
       </main>
     </div>
   );
 }
+

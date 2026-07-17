@@ -11,16 +11,8 @@ import {
   annotationsToMatchEvents,
   isMarketDepthAnnotation,
 } from "@/services/annotation-mappers";
-import {
-  fetchAnnotationHistory,
-  startAnnotationStream,
-  stopAnnotationStream,
-} from "@/services/match-service";
-import {
-  createSystemEvent,
-  deriveTeamCode,
-  mergeMatchEvents,
-} from "@/services/pitchline-mappers";
+import { fetchAnnotationHistory } from "@/services/match-service";
+import { deriveTeamCode, mergeMatchEvents } from "@/services/pitchline-mappers";
 
 type ScoreUpdatePayload = {
   fixtureId: string;
@@ -90,60 +82,6 @@ function normalizeHistory(history: LiveMatchState["history"]) {
 
   return [...dedupedByTimestamp.values()]
     .sort((left, right) => new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime());
-}
-
-function scoreUpdateEventType(action?: string | null): MatchEvent["type"] {
-  const value = (action ?? "").replace(/([a-z])([A-Z])/g, "$1_$2").replace(/[-\s]+/g, "_").toLowerCase();
-
-  if (value.includes("goal")) return "goal";
-  if (value.includes("yellow") && value.includes("card")) return "yellow-card";
-  if (value.includes("red") && value.includes("card")) return "red-card";
-  if (value.includes("penalty")) {
-    if (value.includes("miss")) return "penalty-missed";
-    if (value.includes("scor")) return "penalty-scored";
-    return "penalty-awarded";
-  }
-  if (value.includes("var")) return "var";
-  if (value.includes("half")) return "half-time";
-  if (value.includes("full") || value.includes("final")) return "full-time";
-
-  return "status";
-}
-
-function scoreUpdateToMatchEvent(
-  payload: ScoreUpdatePayload,
-  fixture: LiveMatchState["fixture"],
-  previousScore: Pick<LiveMatchState["fixture"], "scoreA" | "scoreB">,
-) {
-  const type = scoreUpdateEventType(payload.action);
-  const homeDelta = payload.homeScore - previousScore.scoreA;
-  const awayDelta = payload.awayScore - previousScore.scoreB;
-  const side =
-    homeDelta > awayDelta
-      ? "teamA"
-      : awayDelta > homeDelta
-        ? "teamB"
-        : "draw";
-  const teamCode =
-    side === "teamA" ? deriveTeamCode(payload.homeName) : side === "teamB" ? deriveTeamCode(payload.awayName) : undefined;
-  const timestamp = toIsoTimestamp(payload.timestamp);
-
-  return {
-    eventId: `${payload.fixtureId}-be1-${payload.action ?? "score"}-${timestamp}`,
-    fixtureId: String(payload.fixtureId),
-    type,
-    minuteLabel: toDisplayMinute(payload.minute),
-    timestamp,
-    side,
-    teamCode,
-    label: type === "goal" ? `${teamCode ?? "MKT"} goal` : (payload.action ?? "Score update").replace(/[-_]+/g, " "),
-    detailLabel: `${payload.gameState?.trim() || fixture.phase} / ${payload.homeScore} - ${payload.awayScore}`,
-    importance: type === "goal" || type === "red-card" || type.startsWith("penalty")
-      ? "high"
-      : type === "half-time" || type === "full-time"
-        ? "structural"
-        : "medium",
-  } satisfies MatchEvent;
 }
 
 function isExpectedConnectionShutdown(error: unknown) {
@@ -222,17 +160,6 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
       setState((current) => {
         const homeName = payload.homeName?.trim() || current.fixture.teamAName;
         const awayName = payload.awayName?.trim() || current.fixture.teamBName;
-        const scoreEvent = payload.action
-          ? scoreUpdateToMatchEvent(
-              { ...payload, homeName, awayName },
-              current.fixture,
-              {
-                scoreA: current.fixture.scoreA,
-                scoreB: current.fixture.scoreB,
-              },
-            )
-          : null;
-
         return {
           ...current,
           fixture: {
@@ -251,7 +178,6 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
               current.currentProbabilities.teamB,
             ),
           },
-          events: scoreEvent ? pushEvent(current.events, scoreEvent) : current.events,
           connectionState: "live",
           lastUpdatedAt: toIsoTimestamp(payload.timestamp),
         };
@@ -277,19 +203,6 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
             : [...current.history, nextPoint],
         );
 
-        const seededEvent =
-          current.events.length === 0
-            ? [
-                createSystemEvent(
-                  current.fixture,
-                  "Live odds tracking active",
-                  "Connected to the backend feed. Waiting for score-led moments.",
-                  timestamp,
-                  minuteLabel,
-                ),
-              ]
-            : current.events;
-
         const homeName = payload.homeName?.trim() || current.fixture.teamAName;
         const awayName = payload.awayName?.trim() || current.fixture.teamBName;
 
@@ -309,7 +222,6 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
             teamB: payload.awayPct,
           },
           history,
-          events: seededEvent,
           connectionState: "live",
           lastUpdatedAt: timestamp,
           analytics: {
@@ -343,9 +255,6 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
             events: mergeMatchEvents(current.events, annotationsToMatchEvents(annotations, current.fixture)),
           };
         });
-
-        await startAnnotationStream(fixtureId);
-        if (isDisposed) return;
 
         eventSource = new EventSource(`${ANNOTATION_API_BASE_URL}/stream/${fixtureId}`);
 
@@ -420,7 +329,6 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
     return () => {
       isDisposed = true;
       eventSource?.close();
-      void stopAnnotationStream(fixtureId);
     };
   }, [enabled, initialState.fixture.fixtureId]);
 

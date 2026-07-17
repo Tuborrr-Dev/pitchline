@@ -76,6 +76,14 @@ const teamIsoMap: Record<string, string> = {
   JOR: "jo", JORDAN: "jo",
 };
 
+export function getTeamFlagUrl(code: string, name?: string) {
+  const cleanKey = (name || code).toUpperCase().trim();
+  const codeKey = code.toUpperCase().trim();
+  const iso = teamIsoMap[cleanKey] || teamIsoMap[codeKey];
+
+  return iso ? `https://flagcdn.com/w640/${iso}.png` : null;
+}
+
 interface TeamLogoProps {
   code: string;
   name?: string;

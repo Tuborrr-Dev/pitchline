@@ -11,11 +11,10 @@ import { cn } from "@/lib/utils";
 
 import { FootballActionIcon, footballIconName } from "../match-view/annotation-ui";
 
-import { getEventPointIndex, logicalIndexToPercent } from "./chart-utils";
+import { logicalIndexToPercent } from "./chart-utils";
 
-const CLUSTER_DISTANCE_PERCENT = 2.4;
-const CLUSTER_X_GAP = 28;
-const CLUSTER_Y_GAP = 11;
+const CLUSTER_DISTANCE_MINUTES = 5;
+const MAX_CLUSTER_EVENTS = 10;
 
 type PositionedEvent = {
   clusterId: string;
@@ -24,6 +23,14 @@ type PositionedEvent = {
   event: MatchEvent;
   index: number;
   left: number;
+  minute: number;
+};
+
+type EventCluster = {
+  clusterId: string;
+  events: PositionedEvent[];
+  left: number;
+  offsetX: number;
 };
 
 function eventMarkerTone(event: MatchEvent) {
@@ -75,67 +82,106 @@ function EventMarkerTooltip({ event }: { event: MatchEvent }) {
   );
 }
 
+function minuteValue(value: string) {
+  return Number.parseInt(value.replace(/\D/g, ""), 10) || 0;
+}
+
+function buildEventIndexes(events: MatchEvent[], renderedHistory: ProbabilityPoint[]) {
+  const minuteIndexes = renderedHistory.map((point, index) => ({
+    index,
+    minute: minuteValue(point.minuteLabel),
+  }));
+
+  return events.map((event) => {
+    const eventMinute = minuteValue(event.minuteLabel);
+    let pointIndex = 0;
+
+    for (const point of minuteIndexes) {
+      if (point.minute <= eventMinute) {
+        pointIndex = point.index;
+      }
+    }
+
+    return pointIndex;
+  });
+}
+
 function buildPositionedEvents(
   events: MatchEvent[],
   renderedHistory: ProbabilityPoint[],
   visibleLogicalRange: LogicalRange | null,
 ) {
+  const eventIndexes = buildEventIndexes(events, renderedHistory);
   const positioned = events.map((event, index) => {
-    const pointIndex = getEventPointIndex(renderedHistory, event);
+    const pointIndex = eventIndexes[index] ?? 0;
     const left = logicalIndexToPercent(pointIndex, visibleLogicalRange, renderedHistory.length);
 
-    return { event, index, left };
+    return { event, index, left, minute: minuteValue(event.minuteLabel) };
   });
 
-  const sorted = [...positioned].sort((left, right) => {
-    if (left.left !== right.left) return left.left - right.left;
+  return positioned.map((item) => ({
+    ...item,
+    clusterId: item.event.eventId,
+    clusterIndex: 0,
+    clusterSize: 1,
+  }));
+}
+
+function buildEventClusters(positionedEvents: PositionedEvent[]) {
+  const sorted = [...positionedEvents].sort((left, right) => {
+    if (left.minute !== right.minute) return left.minute - right.minute;
     return left.index - right.index;
   });
-
-  const clusters: Array<typeof positioned> = [];
+  const minuteGroups: PositionedEvent[][] = [];
 
   sorted.forEach((item) => {
-    const cluster = clusters[clusters.length - 1];
-    const previous = cluster?.[cluster.length - 1];
+    const group = minuteGroups[minuteGroups.length - 1];
+    const first = group?.[0];
 
-    if (cluster && previous && Math.abs(item.left - previous.left) <= CLUSTER_DISTANCE_PERCENT) {
-      cluster.push(item);
+    if (group && first && item.minute - first.minute <= CLUSTER_DISTANCE_MINUTES) {
+      group.push(item);
       return;
     }
 
-    clusters.push([item]);
+    minuteGroups.push([item]);
   });
 
-  const byEventId = new Map<string, PositionedEvent>();
+  const clusters: EventCluster[] = [];
 
-  clusters.forEach((cluster) => {
-    const clusterId = cluster.map((item) => item.event.eventId).join(":");
+  minuteGroups.forEach((group, groupIndex) => {
+    const chunkCount = Math.ceil(group.length / MAX_CLUSTER_EVENTS);
 
-    cluster.forEach((item, clusterIndex) => {
-      byEventId.set(item.event.eventId, {
+    for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex += 1) {
+      const chunk = group.slice(chunkIndex * MAX_CLUSTER_EVENTS, (chunkIndex + 1) * MAX_CLUSTER_EVENTS);
+      const midpoint = (chunkCount - 1) / 2;
+      const events = chunk.map((item, index) => ({
         ...item,
-        clusterId,
-        clusterIndex,
-        clusterSize: cluster.length,
+        clusterId: `${groupIndex}-${chunkIndex}`,
+        clusterIndex: index,
+        clusterSize: chunk.length,
+      }));
+      const left = events.reduce((sum, item) => sum + item.left, 0) / events.length;
+
+      clusters.push({
+        clusterId: `${groupIndex}-${chunkIndex}`,
+        events,
+        left,
+        offsetX: (chunkIndex - midpoint) * 34,
       });
-    });
+    }
   });
 
-  return events.map((event) => byEventId.get(event.eventId)).filter(Boolean) as PositionedEvent[];
+  return clusters.sort((left, right) => {
+    if (left.left !== right.left) return left.left - right.left;
+    return left.clusterId.localeCompare(right.clusterId);
+  });
 }
 
-function clusterOffset(positionedEvent: PositionedEvent, isExpanded: boolean) {
-  if (!isExpanded || positionedEvent.clusterSize <= 1) {
-    return { x: 0, y: 0 };
-  }
+function ClusterSummaryIcon({ cluster }: { cluster: EventCluster }) {
+  const primaryEvent = cluster.events[0]?.event;
+  if (!primaryEvent) return <ShieldAlert className="h-3.5 w-3.5" strokeWidth={2} />;
 
-  const midpoint = (positionedEvent.clusterSize - 1) / 2;
-  const distanceFromMidpoint = positionedEvent.clusterIndex - midpoint;
-
-  return {
-    x: distanceFromMidpoint * CLUSTER_X_GAP,
-    y: (positionedEvent.clusterIndex % 2 === 0 ? -1 : 1) * CLUSTER_Y_GAP,
-  };
+  return <EventMarkerIcon event={primaryEvent} />;
 }
 
 export function EventMarkers({
@@ -156,49 +202,122 @@ export function EventMarkers({
     () => buildPositionedEvents(events, renderedHistory, visibleLogicalRange),
     [events, renderedHistory, visibleLogicalRange],
   );
+  const clusters = useMemo(() => buildEventClusters(positionedEvents), [positionedEvents]);
 
   return (
     <TooltipProvider>
       <div className="absolute inset-x-0 bottom-[5.5rem] h-12 border-t border-[var(--terminal-border)] bg-[var(--terminal-panel)]/95 sm:bottom-[8rem] sm:h-12">
-        <div className="relative h-full w-full px-4 sm:px-5" onMouseLeave={() => setExpandedClusterId(null)}>
-          {positionedEvents.map((positionedEvent) => {
-            const { event, index, left } = positionedEvent;
-            const isExpanded = expandedClusterId === positionedEvent.clusterId;
-            const offset = clusterOffset(positionedEvent, isExpanded);
-            const zIndex = isExpanded ? 40 + positionedEvent.clusterIndex : selectedEvent?.eventId === event.eventId ? 35 : 20;
+        <div className="relative h-full w-full px-4 sm:px-5">
+          {clusters.map((cluster, index) => {
+            const isExpanded = expandedClusterId === cluster.clusterId;
+            const isSelected = cluster.events.some((item) => item.event.eventId === selectedEvent?.eventId);
+            const singleEvent = cluster.events.length === 1 ? cluster.events[0] : null;
+            const event = singleEvent?.event;
+            const toneEvent = event ?? cluster.events[0]?.event;
+            const zIndex = isExpanded ? 50 : isSelected ? 35 : 20;
 
+            if (singleEvent && event) {
+              return (
+                <div
+                  key={event.eventId}
+                  className="absolute top-1/2 z-20 h-8 w-8 -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${singleEvent.left}%`, zIndex }}
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <motion.button
+                        type="button"
+                        onClick={() => onSelectEvent?.(event.eventId)}
+                        initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                          scale: selectedEvent?.eventId === event.eventId ? 1.08 : 1,
+                        }}
+                        transition={{ duration: 0.18, delay: index * 0.03 }}
+                        whileHover={{ scale: 1.08 }}
+                        className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-full border transition-colors hover:z-30",
+                          eventMarkerTone(event),
+                          selectedEvent?.eventId === event.eventId && "ring-2 ring-white/80",
+                        )}
+                        aria-label={`${event.minuteLabel} ${event.label}`}
+                      >
+                        <EventMarkerIcon event={event} />
+                      </motion.button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="center">
+                      <EventMarkerTooltip event={event} />
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              );
+            }
+
+            if (!toneEvent) return null;
             return (
-              <Tooltip key={event.eventId}>
-                <TooltipTrigger asChild>
-                  <motion.button
-                    type="button"
-                    onClick={() => onSelectEvent?.(event.eventId)}
-                    onFocus={() => setExpandedClusterId(positionedEvent.clusterId)}
-                    onMouseEnter={() => setExpandedClusterId(positionedEvent.clusterId)}
-                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                    animate={{
-                      opacity: 1,
-                      x: offset.x,
-                      y: offset.y,
-                      scale: selectedEvent?.eventId === event.eventId ? 1.08 : 1,
-                    }}
-                    transition={{ duration: 0.18, delay: isExpanded ? 0 : index * 0.03 }}
-                    whileHover={{ scale: 1.08 }}
-                    className={cn(
-                      "absolute top-1/2 z-20 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border transition-colors hover:z-30 sm:h-8 sm:w-8",
-                      eventMarkerTone(event),
-                      selectedEvent?.eventId === event.eventId && "ring-2 ring-white/80",
-                    )}
-                    style={{ left: `${left}%`, zIndex }}
-                    aria-label={`${event.minuteLabel} ${event.label}`}
-                  >
-                    <EventMarkerIcon event={event} />
-                  </motion.button>
-                </TooltipTrigger>
-                <TooltipContent side="top" align="center">
-                  <EventMarkerTooltip event={event} />
-                </TooltipContent>
-              </Tooltip>
+              <div
+                key={cluster.clusterId}
+                className="absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${cluster.left}%`, zIndex, marginLeft: cluster.offsetX }}
+                onMouseEnter={() => setExpandedClusterId(cluster.clusterId)}
+                onMouseLeave={() => setExpandedClusterId(null)}
+                onFocus={() => setExpandedClusterId(cluster.clusterId)}
+              >
+                <motion.button
+                  type="button"
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: isSelected ? 1.08 : 1 }}
+                  transition={{ duration: 0.18, delay: index * 0.03 }}
+                  whileHover={{ scale: 1.08 }}
+                  className={cn(
+                    "relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border shadow-[0_10px_22px_rgba(0,0,0,0.18)] transition-colors hover:z-30",
+                    eventMarkerTone(toneEvent),
+                    isSelected && "ring-2 ring-white/80",
+                  )}
+                  aria-label={`${cluster.events.length} clustered events`}
+                >
+                  <ClusterSummaryIcon cluster={cluster} />
+                  <span className="pointer-events-none absolute -right-1.5 -top-2.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full border border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)] px-1 font-mono text-[0.52rem] font-bold text-[var(--terminal-text-strong)]">
+                    {cluster.events.length}
+                  </span>
+                </motion.button>
+
+                {isExpanded ? (
+                  <>
+                    <div className="absolute bottom-8 left-1/2 h-4 w-24 -translate-x-1/2" />
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                      transition={{ duration: 0.14 }}
+                      className="absolute bottom-[2.75rem] left-1/2 z-50 flex max-w-[min(22rem,80vw)] -translate-x-1/2 gap-2 overflow-x-auto border border-[var(--terminal-border)] bg-[var(--terminal-panel)]/98 p-2 shadow-[0_18px_44px_rgba(0,0,0,0.24)] [scrollbar-width:thin]"
+                    >
+                      {cluster.events.map((positionedEvent) => (
+                        <Tooltip key={positionedEvent.event.eventId}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={() => onSelectEvent?.(positionedEvent.event.eventId)}
+                              className={cn(
+                                "flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border transition-colors hover:scale-105",
+                                eventMarkerTone(positionedEvent.event),
+                                selectedEvent?.eventId === positionedEvent.event.eventId && "ring-2 ring-white/80",
+                              )}
+                              aria-label={`${positionedEvent.event.minuteLabel} ${positionedEvent.event.label}`}
+                            >
+                              <EventMarkerIcon event={positionedEvent.event} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" align="center">
+                            <EventMarkerTooltip event={positionedEvent.event} />
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </motion.div>
+                  </>
+                ) : null}
+              </div>
             );
           })}
         </div>

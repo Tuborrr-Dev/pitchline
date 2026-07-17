@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import type { LiveMatchState, MatchEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { annotationsToTimelineEvents } from "@/services/annotation-mappers";
-import { mergeMatchEvents } from "@/services/pitchline-mappers";
 
 import {
   DesktopDetailsPanel,
@@ -21,6 +20,7 @@ import {
 import type { EventButtonOrientation } from "./match-view/event-button";
 import { MatchScoreHeader } from "./match-view/match-score-header";
 import { MatchToolbar } from "./match-view/match-toolbar";
+import { MobileCommentaryToast } from "./match-view/mobile-commentary-toast";
 import { ProbabilityChart } from "./probability-chart";
 
 export function MatchView({
@@ -39,7 +39,7 @@ export function MatchView({
   const { fixture, currentProbabilities, history, events, annotations, connectionState } = state;
   const timelineEvents =
     annotations.length > 0
-      ? mergeMatchEvents(events, annotationsToTimelineEvents(annotations, fixture))
+      ? annotationsToTimelineEvents(annotations, fixture)
       : events;
   const selectedTimelineEvent =
     timelineEvents.find((event) => event.eventId === selectedEventId) ?? selectedEvent;
@@ -169,12 +169,12 @@ export function MatchView({
                 connectionState={connectionState}
                 analytics={state.analytics}
                 followLatest={followLatest}
+                showFeedStatus={followLatest}
                 onSelectEvent={onSelectEvent}
               />
             </motion.div>
             <DesktopDetailsPanel
               annotations={annotations}
-              events={events}
               open={detailsOpen}
               selectedEventId={selectedEventId}
             />
@@ -184,10 +184,13 @@ export function MatchView({
 
       <MobileDetailsDrawer
         annotations={annotations}
-        events={events}
         onClose={() => setDetailsOpen(false)}
         open={detailsOpen}
         selectedEventId={selectedEventId}
+      />
+      <MobileCommentaryToast
+        annotations={annotations}
+        enabled={fixture.status === "live"}
       />
     </div>
   );

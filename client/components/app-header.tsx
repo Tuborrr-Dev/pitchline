@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
@@ -18,6 +19,90 @@ import { WALLETCONNECT_WALLET_ID } from "@/lib/wallet-session";
 
 import { useQuery } from "@tanstack/react-query";
 import { finishedMarketOverviewQueryOptions, marketOverviewQueryOptions } from "@/queries/market-queries";
+import type { MarketOverviewRow } from "@/schemas/market";
+import { rowHref } from "@/components/market-overview/utils";
+
+type SearchStatus = "live" | "scheduled" | "final";
+
+type IndexedSearchRow = {
+  href: string;
+  id: string;
+  label: string;
+  meta: string;
+  score: string;
+  searchText: string;
+  sortGroup: number;
+  status: SearchStatus;
+  statusLabel: string;
+  timeLabel: string;
+};
+
+function normalizeSearchValue(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function getSearchStatus(row: MarketOverviewRow): SearchStatus {
+  if (row.fixture.status === "finished") return "final";
+  if (row.fixture.status === "upcoming") return "scheduled";
+  return "live";
+}
+
+function getSearchScore(row: MarketOverviewRow) {
+  if (row.fixture.status === "upcoming") return "KICKOFF";
+  return row.scoreLine;
+}
+
+function getSearchStatusLabel(status: SearchStatus, row: MarketOverviewRow) {
+  if (status === "final") return "FINAL";
+  if (status === "scheduled") return "SCHEDULED";
+  return row.statusLabel || "LIVE";
+}
+
+function indexSearchRow(row: MarketOverviewRow): IndexedSearchRow {
+  const status = getSearchStatus(row);
+  const label = `${row.fixture.teamAName || row.fixture.teamACode} VS ${row.fixture.teamBName || row.fixture.teamBCode}`;
+  const statusLabel = getSearchStatusLabel(status, row);
+  const searchableParts = [
+    row.fixture.fixtureId,
+    row.fixture.teamAName,
+    row.fixture.teamACode,
+    row.fixture.teamBName,
+    row.fixture.teamBCode,
+    row.fixture.competition,
+    row.fixture.stage,
+    row.fixture.status,
+    row.fixture.phase,
+    row.eventPair,
+    row.eventSubLabel,
+    row.statusLabel,
+    statusLabel,
+    row.scoreLine,
+    row.timeLabel,
+  ];
+
+  return {
+    href: rowHref(row),
+    id: row.fixture.fixtureId,
+    label,
+    meta: `${row.fixture.competition}${row.fixture.stage ? ` / ${row.fixture.stage}` : ""}`,
+    score: getSearchScore(row),
+    searchText: normalizeSearchValue(searchableParts.filter(Boolean).join(" ")),
+    sortGroup: status === "live" ? 0 : status === "scheduled" ? 1 : 2,
+    status,
+    statusLabel,
+    timeLabel: row.timeLabel || row.fixture.minute || row.fixture.phase || "",
+  };
+}
+
+function scoreSearchResult(item: IndexedSearchRow, query: string) {
+  const normalizedLabel = normalizeSearchValue(item.label);
+  const normalizedId = normalizeSearchValue(item.id);
+  if (normalizedId === query) return 0;
+  if (normalizedLabel.startsWith(query)) return 1;
+  if (item.searchText.split(/\s+/).some((part) => part.startsWith(query))) return 2;
+  if (item.searchText.includes(query)) return 3;
+  return null;
+}
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -25,15 +110,20 @@ export function AppHeader() {
   const searchParams = useSearchParams();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileSearchSettled, setMobileSearchSettled] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchResultsOpen, setSearchResultsOpen] = useState(false);
   const [walletPickerOpen, setWalletPickerOpen] = useState(false);
   const controlsRef = useRef<HTMLDivElement | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const wallet = useWallet();
   const walletConnect = useWalletConnectModal();
   const homeQuery = searchParams.get("q") ?? "";
   const isLanding = pathname === "/";
   const isMarkets = pathname.startsWith("/markets");
+  const isMatchRoute = pathname.startsWith("/match/");
   const [localQuery, setLocalQuery] = useState(homeQuery);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(homeQuery);
+  const debounceRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
 
   useEffect(() => {
     const nextQuery = isMarkets ? homeQuery : "";
@@ -45,26 +135,48 @@ export function AppHeader() {
   }, [homeQuery, isMarkets, localQuery]);
 
   const query = localQuery;
-  const showSearchResults = query.trim().length > 0;
+  const showSearchResults = searchResultsOpen && query.trim().length > 0 && debouncedSearchQuery.trim().length > 0;
   const mobileIconVisibility = mobileSearchSettled ? "opacity-100" : "opacity-0 sm:opacity-100";
 
   const { data: activeRows = [] } = useQuery(marketOverviewQueryOptions());
   const { data: finishedRows = [] } = useQuery(finishedMarketOverviewQueryOptions());
 
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearchQuery(localQuery);
+    }, 180);
+
+    return () => window.clearTimeout(timeout);
+  }, [localQuery]);
+
+  const searchIndex = useMemo(() => {
+    const rowsById = new Map<string, MarketOverviewRow>();
+    for (const row of activeRows) {
+      rowsById.set(row.fixture.fixtureId, row);
+    }
+    for (const row of finishedRows) {
+      if (!rowsById.has(row.fixture.fixtureId)) {
+        rowsById.set(row.fixture.fixtureId, row);
+      }
+    }
+
+    return Array.from(rowsById.values()).map(indexSearchRow);
+  }, [activeRows, finishedRows]);
+
   const searchResults = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalizeSearchValue(debouncedSearchQuery);
     if (!q) return [];
-    const allRows = [...activeRows, ...finishedRows];
-    const filtered = allRows.filter((row) => {
-      const matchText = `${row.fixture.teamAName} ${row.fixture.teamACode} ${row.fixture.teamBName} ${row.fixture.teamBCode} ${row.fixture.competition} ${row.fixture.stage}`.toLowerCase();
-      return matchText.includes(q);
-    });
-    return filtered.slice(0, 8).map((row) => ({
-      id: row.fixture.fixtureId,
-      label: `${row.fixture.teamAName || row.fixture.teamACode} VS ${row.fixture.teamBName || row.fixture.teamBCode}`,
-      meta: `${row.fixture.competition}${row.fixture.stage ? ` / ${row.fixture.stage}` : ""}`,
-    }));
-  }, [query, activeRows, finishedRows]);
+
+    return searchIndex
+      .map((item) => {
+        const score = scoreSearchResult(item, q);
+        return score === null ? null : { item, score };
+      })
+      .filter((result): result is { item: IndexedSearchRow; score: number } => result !== null)
+      .sort((a, b) => a.score - b.score || a.item.sortGroup - b.item.sortGroup || a.item.label.localeCompare(b.item.label))
+      .slice(0, 10)
+      .map(({ item }) => item);
+  }, [debouncedSearchQuery, searchIndex]);
 
   function setMobileSearchOpenAnimated(open: boolean) {
     setMobileSearchSettled(false);
@@ -73,21 +185,28 @@ export function AppHeader() {
   }
 
   useEffect(() => {
-    if (!mobileSearchOpen) return;
+    if (!mobileSearchOpen && !mobileMenuOpen && !searchResultsOpen) return;
 
     function closeSearchOnOutsideClick(event: PointerEvent) {
-      if (!controlsRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideDesktopControls = controlsRef.current?.contains(target);
+      const insideMobileMenu = mobileMenuRef.current?.contains(target);
+
+      if (!insideDesktopControls && !insideMobileMenu) {
         setMobileSearchOpenAnimated(false);
+        setMobileMenuOpen(false);
+        setSearchResultsOpen(false);
         setWalletPickerOpen(false);
       }
     }
 
     document.addEventListener("pointerdown", closeSearchOnOutsideClick);
     return () => document.removeEventListener("pointerdown", closeSearchOnOutsideClick);
-  }, [mobileSearchOpen]);
+  }, [mobileSearchOpen, mobileMenuOpen, searchResultsOpen]);
 
   function updateQuery(nextQuery: string) {
     setLocalQuery(nextQuery);
+    setSearchResultsOpen(nextQuery.trim().length > 0);
 
     if (!isMarkets) return;
 
@@ -112,6 +231,7 @@ export function AppHeader() {
 
   function handleClear() {
     setLocalQuery("");
+    setSearchResultsOpen(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (isMarkets) {
@@ -133,6 +253,7 @@ export function AppHeader() {
 
     const params = new URLSearchParams();
     if (localQuery.trim()) params.set("q", localQuery);
+    setSearchResultsOpen(false);
     router.push(`${isMarkets ? pathname : "/markets"}${params.toString() ? `?${params.toString()}` : ""}`);
   }
 
@@ -191,31 +312,113 @@ export function AppHeader() {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
-      className="shrink-0 border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)]"
+      className="relative shrink-0 border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)]"
     >
       <motion.div
         layout
-        className="flex flex-col gap-2 px-3 py-2 sm:px-4 sm:py-3 lg:flex-row lg:items-center lg:justify-between"
+        className="px-3 py-2 sm:flex sm:flex-col sm:gap-2 sm:px-4 sm:py-3 lg:flex-row lg:items-center lg:justify-between"
       >
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-8">
+        <div ref={mobileMenuRef} className="sm:hidden">
+          <div className="flex items-center justify-between gap-3">
+            <Link
+              href="/"
+              className="w-fit font-display text-[1.55rem] font-extrabold uppercase italic leading-none text-[var(--logo-cream)]"
+            >
+              PITCHLINE
+            </Link>
+            <div className="flex items-center gap-2">
+              <NotificationCenter />
+              <button
+                type="button"
+                onClick={() => {
+                  const nextOpen = !mobileMenuOpen;
+                  setMobileMenuOpen(nextOpen);
+                  setMobileSearchOpenAnimated(nextOpen);
+                }}
+                className="flex h-10 w-10 items-center justify-center border border-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[var(--foreground)] hover:bg-[var(--terminal-panel)]"
+                aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={mobileMenuOpen}
+              >
+                {mobileMenuOpen ? <X className="h-4 w-4" aria-hidden="true" /> : <Menu className="h-4 w-4" aria-hidden="true" />}
+              </button>
+            </div>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {mobileMenuOpen ? (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ duration: 0.16, ease: "easeOut" }}
+                className="absolute left-0 right-0 top-full z-50 border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)] px-3 py-3 shadow-[0_18px_40px_var(--terminal-shadow)]"
+              >
+                <div className="flex flex-col gap-3">
+                  <div onClick={() => setMobileMenuOpen(false)}>
+                    <AppNav isLanding={isLanding} pathname={pathname} />
+                  </div>
+                  {!isLanding ? (
+                    <MarketSearch
+                      mobileIconVisibility={mobileIconVisibility}
+                      mobileSearchOpen
+                      query={query}
+                      onClear={handleClear}
+                      onOpenMobileSearch={() => setMobileSearchOpenAnimated(true)}
+                      onOpenResults={() => setSearchResultsOpen(query.trim().length > 0)}
+                      onResultSelect={(href) => {
+                        setMobileMenuOpen(false);
+                        setMobileSearchOpenAnimated(false);
+                        setSearchResultsOpen(false);
+                        router.push(href);
+                      }}
+                      onSubmit={submitSearch}
+                      onUpdateQuery={updateQuery}
+                      searchResults={searchResults}
+                      showSearchResults={showSearchResults}
+                    />
+                  ) : null}
+                  <div className="grid grid-cols-[2.5rem_1fr] gap-2">
+                    <ThemeToggle />
+                    <WalletControl
+                      fullWidth
+                      isLanding={isLanding}
+                      mobileIconVisibility={mobileIconVisibility}
+                      mobileSearchOpen={false}
+                      onConnect={() => void handleWalletConnect()}
+                      onSelectWallet={(walletId) => void handleWalletSelection(walletId)}
+                      wallet={wallet}
+                      walletPickerOpen={walletPickerOpen}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+
+        <div className={cn(
+          "hidden min-w-0 gap-2 sm:flex lg:flex-row lg:items-center lg:gap-8",
+          isMatchRoute ? "flex-row items-center sm:flex-col sm:items-start lg:flex-row lg:items-center" : "flex-col",
+        )}>
           <Link
             href="/"
-            className="w-fit self-start font-display text-[2rem] font-extrabold uppercase italic leading-none text-[var(--logo-cream)] sm:text-[2.65rem]"
+            className={cn(
+              "w-fit self-start font-display font-extrabold uppercase italic leading-none text-[var(--logo-cream)]",
+              isMatchRoute ? "text-[1.45rem] sm:text-[2.65rem]" : "text-[2rem] sm:text-[2.65rem]",
+            )}
           >
             PITCHLINE
           </Link>
-          <AppNav isLanding={isLanding} pathname={pathname} />
+          <div className={cn(isMatchRoute && "hidden sm:block")}>
+            <AppNav isLanding={isLanding} pathname={pathname} />
+          </div>
         </div>
 
         <div
           ref={controlsRef}
           className={cn(
-            "relative gap-2 sm:flex sm:items-center sm:gap-3",
-            isLanding
-              ? "flex"
-              : mobileSearchOpen
-                ? "grid grid-cols-[1fr_2.5rem]"
-                : "grid grid-cols-[2.5rem_1fr]",
+            "relative hidden gap-2 sm:flex sm:items-center sm:gap-3",
+            isMatchRoute && "shrink-0",
           )}
         >
           {!isLanding ? (
@@ -225,9 +428,11 @@ export function AppHeader() {
               query={query}
               onClear={handleClear}
               onOpenMobileSearch={() => setMobileSearchOpenAnimated(true)}
-              onResultSelect={(fixtureId) => {
+              onOpenResults={() => setSearchResultsOpen(query.trim().length > 0)}
+              onResultSelect={(href) => {
                 setMobileSearchOpenAnimated(false);
-                router.push(`/match/${fixtureId}`);
+                setSearchResultsOpen(false);
+                router.push(href);
               }}
               onSubmit={submitSearch}
               onUpdateQuery={updateQuery}
@@ -242,6 +447,7 @@ export function AppHeader() {
           </motion.div>
 
           <WalletControl
+            compactMobile={isMatchRoute}
             isLanding={isLanding}
             mobileIconVisibility={mobileIconVisibility}
             mobileSearchOpen={mobileSearchOpen}
@@ -255,4 +461,5 @@ export function AppHeader() {
     </motion.header>
   );
 }
+
 

@@ -23,10 +23,6 @@ export function eventDeltaLabel(event: MatchEvent) {
   return `${event.delta > 0 ? "+" : ""}${event.delta.toFixed(1)}% ${side} equity`;
 }
 
-export function eventCommentary(event: MatchEvent) {
-  return event.detailLabel ?? eventDeltaLabel(event);
-}
-
 export function isMatchBreakFixture(fixture: LiveMatchState["fixture"]) {
   const metadata = `${fixture.status} ${fixture.phase} ${fixture.minute}`.toLowerCase();
 

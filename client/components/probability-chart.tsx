@@ -46,6 +46,7 @@ interface ProbabilityChartProps {
   connectionState: ConnectionState;
   analytics?: MarketAnalyticsData;
   followLatest?: boolean;
+  showFeedStatus?: boolean;
   onSelectEvent?: (eventId: string) => void;
 }
 
@@ -58,6 +59,7 @@ export function ProbabilityChart({
   connectionState,
   analytics,
   followLatest = true,
+  showFeedStatus = true,
   onSelectEvent,
 }: ProbabilityChartProps) {
   const { resolvedTheme } = useTheme();
@@ -69,6 +71,7 @@ export function ProbabilityChart({
   const teamBSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const drawSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const historyRef = useRef<ProbabilityPoint[]>(normalizedHistory);
+  const chartMinuteBySecondRef = useRef<Array<{ minute: number; second: number }>>([]);
   const displayedHistoryRef = useRef<ProbabilityPoint[]>([]);
   const animationFrameRef = useRef<number | null>(null);
   const didFitContentRef = useRef(false);
@@ -93,6 +96,10 @@ export function ProbabilityChart({
 
   useEffect(() => {
     historyRef.current = normalizedHistory;
+    chartMinuteBySecondRef.current = normalizedHistory.map((point, index) => ({
+      minute: Number.parseInt(point.minuteLabel.replace(/\D/g, ""), 10) || index,
+      second: Math.floor(new Date(point.timestamp).getTime() / 1000),
+    }));
   }, [normalizedHistory]);
 
   useEffect(() => {
@@ -101,7 +108,9 @@ export function ProbabilityChart({
     const container = containerRef.current;
     const styles = getComputedStyle(document.documentElement);
     const chartTextColor = styles.getPropertyValue("--terminal-text-muted").trim() || "#9fb0bc";
-    const chartGridColor = styles.getPropertyValue("--terminal-grid-strong").trim() || "rgba(127, 174, 202, 0.08)";
+    const chartGridColor = resolvedTheme === "dark"
+      ? "rgba(148, 163, 184, 0.10)"
+      : "rgba(71, 85, 105, 0.10)";
     const chartBorderColor = styles.getPropertyValue("--terminal-border").trim() || "rgba(127, 174, 202, 0.16)";
     const chartCrosshairBg = styles.getPropertyValue("--terminal-active-bg").trim() || "#06120d";
     const chart = createChart(container, {
@@ -136,6 +145,24 @@ export function ProbabilityChart({
         borderColor: chartBorderColor,
         timeVisible: false,
         secondsVisible: false,
+        tickMarkFormatter: (time: Time) => {
+          const second = typeof time === "number" ? time : Number(time);
+          const points = chartMinuteBySecondRef.current;
+          if (!Number.isFinite(second) || points.length === 0) return "";
+
+          let closest = points[0];
+          let closestDistance = Math.abs(second - closest.second);
+          for (const point of points) {
+            const distance = Math.abs(second - point.second);
+            if (distance < closestDistance) {
+              closest = point;
+              closestDistance = distance;
+            }
+          }
+
+          const roundedMinute = Math.max(10, Math.round(closest.minute / 10) * 10);
+          return `${roundedMinute}'`;
+        },
       },
       localization: {
         priceFormatter: (value: number) => `${value.toFixed(0)}%`,
@@ -178,8 +205,19 @@ export function ProbabilityChart({
       );
       setHoveredTimestamp(hoveredPoint?.timestamp ?? null);
     };
+    let visibleRangeFrame: number | null = null;
+    let pendingVisibleRange: LogicalRange | null = null;
     const handleVisibleRangeChange = (range: LogicalRange | null) => {
-      setVisibleLogicalRange(range);
+      pendingVisibleRange = range;
+
+      if (visibleRangeFrame !== null) {
+        return;
+      }
+
+      visibleRangeFrame = window.requestAnimationFrame(() => {
+        visibleRangeFrame = null;
+        setVisibleLogicalRange(pendingVisibleRange);
+      });
     };
 
     chart.subscribeCrosshairMove(handleCrosshairMove);
@@ -203,6 +241,9 @@ export function ProbabilityChart({
     return () => {
       chart.unsubscribeCrosshairMove(handleCrosshairMove);
       chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
+      if (visibleRangeFrame !== null) {
+        window.cancelAnimationFrame(visibleRangeFrame);
+      }
       resizeObserver.disconnect();
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -335,7 +376,7 @@ export function ProbabilityChart({
         teamBDelta={teamBDelta}
       />
 
-      <div className="relative min-h-0 flex-1 overflow-hidden bg-[linear-gradient(90deg,var(--terminal-grid-strong)_1px,transparent_1px),linear-gradient(var(--terminal-grid-strong)_1px,transparent_1px)] bg-[size:32px_32px]">
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-[var(--terminal-panel)]">
         <div ref={containerRef} className="h-[calc(100%-8.5rem)] min-h-[14rem] w-full sm:h-[calc(100%-11rem)] sm:min-h-[19rem]" />
 
         <TimeGrid />
@@ -358,7 +399,7 @@ export function ProbabilityChart({
           visibleLogicalRange={visibleLogicalRange}
         />
         <VixPanel analytics={analytics} connectionState={connectionState} visibleVixPoints={visibleVixPoints} />
-        <FeedStatusBadge connectionState={connectionState} />
+        {showFeedStatus ? <FeedStatusBadge connectionState={connectionState} /> : null}
       </div>
     </motion.section>
   );
