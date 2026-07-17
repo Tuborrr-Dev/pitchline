@@ -1,3 +1,5 @@
+import { FootballActionIcon } from "@/components/match-view/annotation-ui";
+
 const chartPoints = [
   "0,62",
   "12,62",
@@ -55,8 +57,14 @@ export function MiniTerminalChart() {
           <polyline fill="none" stroke="#ff4b6e" strokeWidth="1.6" points={inversePoints.join(" ")} vectorEffect="non-scaling-stroke" />
           <polyline fill="none" stroke="#10a2cc" strokeWidth="1" points="0,86 20,82 40,88 55,70 72,76 100,64" vectorEffect="non-scaling-stroke" />
         </svg>
-        <div className="absolute left-[48%] top-[30%] border border-[var(--terminal-green)] bg-emerald-500/10 px-2 py-1 font-mono text-[0.62rem] font-semibold uppercase text-[var(--terminal-green)]">
-          Goal shock +17.2%
+        <div className="absolute left-[31%] top-[22%] flex h-8 w-8 items-center justify-center rounded-full border border-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-green)] shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+          <FootballActionIcon action="goal" className="h-4 w-4" />
+        </div>
+        <div className="absolute left-[62%] top-[45%] flex h-8 w-8 items-center justify-center rounded-full border border-[var(--terminal-green)] bg-emerald-500/10 text-[var(--terminal-green)] shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+          <FootballActionIcon action="goal" className="h-4 w-4" />
+        </div>
+        <div className="absolute left-[47%] top-[63%] flex h-8 w-8 items-center justify-center rounded-full border border-[#ff4b6e] bg-[#3a1622] text-[#ff8aa2] shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+          <span className="block h-4 w-3 rounded-[1px] border border-current bg-current/90" />
         </div>
         <div className="absolute bottom-3 left-4 right-4 flex justify-between font-mono text-[0.62rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
           <span>Kickoff</span>

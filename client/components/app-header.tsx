@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
-import { connectWallet, selectWallet, useWallet } from "@/lib/wallet-session";
+import { connectWallet, disconnectWallet, selectWallet, useWallet } from "@/lib/wallet-session";
 
 import { AppNav } from "./app-header/app-nav";
 import { MarketSearch } from "./app-header/market-search";
@@ -270,6 +270,15 @@ export function AppHeader() {
     }
   }
 
+  async function handleWalletDisconnect() {
+    if (wallet.selectedWalletId === WALLETCONNECT_WALLET_ID) {
+      await walletConnect.disconnect();
+    }
+
+    disconnectWallet();
+    setWalletPickerOpen(false);
+  }
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -8 }}
@@ -350,6 +359,7 @@ export function AppHeader() {
                       mobileIconVisibility={mobileIconVisibility}
                       mobileSearchOpen={false}
                       onConnect={() => void handleWalletConnect()}
+                      onDisconnect={() => void handleWalletDisconnect()}
                       onSelectWallet={(walletId) => void handleWalletSelection(walletId)}
                       wallet={wallet}
                       walletPickerOpen={walletPickerOpen}
@@ -419,6 +429,7 @@ export function AppHeader() {
             mobileIconVisibility={mobileIconVisibility}
             mobileSearchOpen={mobileSearchOpen}
             onConnect={() => void handleWalletConnect()}
+            onDisconnect={() => void handleWalletDisconnect()}
             onSelectWallet={(walletId) => void handleWalletSelection(walletId)}
             wallet={wallet}
             walletPickerOpen={walletPickerOpen}

@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { createAppKit, useAppKit, useAppKitAccount, useAppKitNetwork, useAppKitState } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { WagmiProvider } from "wagmi";
+import { WagmiProvider, useDisconnect } from "wagmi";
 
 import {
   REOWN_PROJECT_ID,
@@ -21,11 +21,13 @@ import {
 
 type WalletConnectModalContextValue = {
   enabled: boolean;
+  disconnect: () => Promise<void>;
   openConnect: () => Promise<boolean | null>;
 };
 
 const disabledWalletConnectModal: WalletConnectModalContextValue = {
   enabled: false,
+  disconnect: async () => {},
   openConnect: async () => {
     setWalletConnectError("WalletConnect is not configured. Add NEXT_PUBLIC_REOWN_PROJECT_ID.");
     return null;
@@ -65,6 +67,7 @@ function formatAppKitChainId(chainId: string | number | undefined) {
 
 function WalletConnectController({ children }: { children: React.ReactNode }) {
   const { open } = useAppKit();
+  const { disconnectAsync } = useDisconnect();
   const account = useAppKitAccount({ namespace: "eip155" });
   const network = useAppKitNetwork();
   const appKitState = useAppKitState();
@@ -86,6 +89,13 @@ function WalletConnectController({ children }: { children: React.ReactNode }) {
   const value = useMemo<WalletConnectModalContextValue>(
     () => ({
       enabled: true,
+      disconnect: async () => {
+        try {
+          await disconnectAsync();
+        } catch {
+          // Local wallet state is still cleared by the caller.
+        }
+      },
       openConnect: async () => {
         setWalletConnectOpening();
         try {
@@ -98,7 +108,7 @@ function WalletConnectController({ children }: { children: React.ReactNode }) {
         }
       },
     }),
-    [open],
+    [disconnectAsync, open],
   );
 
   return <WalletConnectModalContext.Provider value={value}>{children}</WalletConnectModalContext.Provider>;

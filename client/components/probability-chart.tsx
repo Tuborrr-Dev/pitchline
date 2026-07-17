@@ -163,7 +163,7 @@ export function ProbabilityChart({
             }
           }
 
-          const roundedMinute = Math.max(10, Math.round(closest.minute / 10) * 10);
+          const roundedMinute = Math.max(0, Math.round(closest.minute / 10) * 10);
           return `${roundedMinute}'`;
         },
       },

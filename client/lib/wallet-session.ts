@@ -6,6 +6,7 @@ import { PITCHLINE_REQUIRED_CHAIN_ID, PITCHLINE_REQUIRED_NETWORK_NAME } from "@/
 
 const WALLET_EVENT = "pitchline-wallet-change";
 const WALLET_AUTH_KEY = "pitchline.wallet.authorized";
+const WALLET_AUTH_COOKIE = "pitchline_wallet_authorized";
 const WALLET_PROVIDER_KEY = "pitchline.wallet.provider";
 const WALLET_REQUEST_TIMEOUT_MS = 15000;
 export const WALLETCONNECT_WALLET_ID = "walletconnect";
@@ -129,10 +130,12 @@ function setAuthorizedFlag(authorized: boolean) {
 
   if (authorized) {
     window.localStorage.setItem(WALLET_AUTH_KEY, "true");
+    document.cookie = `${WALLET_AUTH_COOKIE}=true; Path=/; Max-Age=2592000; SameSite=Lax`;
     return;
   }
 
   window.localStorage.removeItem(WALLET_AUTH_KEY);
+  document.cookie = `${WALLET_AUTH_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
 function getSelectedWalletId() {

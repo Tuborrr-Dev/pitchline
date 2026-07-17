@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, ArrowRight, BarChart3, LineChart, LockKeyhole, Wallet } from "lucide-react";
+import { Activity, ArrowDown, ArrowRight, ArrowUp, BarChart3, LineChart, LockKeyhole, Sparkles, Wallet } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
@@ -11,7 +11,7 @@ import { ConnectWalletModal } from "@/components/landing-page/connect-wallet-mod
 import { MiniTerminalChart } from "@/components/landing-page/mini-terminal-chart";
 import { Button } from "@/components/ui/button";
 import { useWalletConnectModal } from "@/components/wallet-connect-provider";
-import { WALLETCONNECT_WALLET_ID, connectWallet, selectWallet, useWallet } from "@/lib/wallet-session";
+import { WALLETCONNECT_WALLET_ID, connectWallet, disconnectWallet, selectWallet, useWallet } from "@/lib/wallet-session";
 
 export function LandingPage() {
   const router = useRouter();
@@ -19,6 +19,7 @@ export function LandingPage() {
   const [walletOpen, setWalletOpen] = useState(false);
   const wallet = useWallet();
   const walletConnect = useWalletConnectModal();
+  const canEnterMarkets = wallet.isConnected && wallet.isSupportedChain;
   const isDarkTheme = resolvedTheme === "dark";
   const heroImage = isDarkTheme
     ? "/images/pitchline-hero-football.png"
@@ -39,6 +40,14 @@ export function LandingPage() {
     }
 
     await connectWallet();
+  }
+
+  async function handleDisconnect() {
+    if (wallet.selectedWalletId === WALLETCONNECT_WALLET_ID) {
+      await walletConnect.disconnect();
+    }
+
+    disconnectWallet();
   }
 
   async function handleWalletSelection(walletId: string) {
@@ -72,16 +81,16 @@ export function LandingPage() {
                 Football markets in chart form.
               </h1>
               <p className="mt-5 max-w-2xl text-[1.15rem] leading-8 text-[var(--terminal-text)]">
-                Pitchline turns live match momentum, probability shifts, liquidity depth, and volatility shocks into a trading-style terminal for people who understand charts faster than commentary.
+                Pitchline turns live match momentum, probability shifts, and volatility shocks into a trading-style terminal for people who understand charts faster than commentary.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button
                   type="button"
-                  onClick={() => setWalletOpen(true)}
+                  onClick={canEnterMarkets ? enterApp : () => setWalletOpen(true)}
                   className="h-12 cursor-pointer rounded-none border border-[var(--terminal-green)] bg-[var(--terminal-green)] px-5 font-mono text-[0.78rem] font-semibold uppercase text-[var(--terminal-inverse-fg)] shadow-none hover:bg-[var(--terminal-green)]"
                 >
-                  <Wallet className="h-4 w-4" />
-                  Connect Wallet
+                  {canEnterMarkets ? <ArrowRight className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
+                  {canEnterMarkets ? "Enter Markets" : "Connect Wallet"}
                 </Button>
                 <Button
                   type="button"
@@ -103,10 +112,27 @@ export function LandingPage() {
         <section id="how-it-works" className="border-b border-[var(--terminal-border)] bg-[var(--terminal-bg)] px-4 py-14 lg:px-8">
           <div className="grid gap-4 lg:grid-cols-3">
             {[
-              ["Live Probability", "Every goal, card, penalty, and phase change becomes an equity move for each side."],
-              ["Volatility Shock", "High-impact moments are tracked like market shocks, making momentum swings easy to scan."],
-              ["Liquidity View", "Matches are framed as orderbooks, so users can read depth and pressure without waiting for narration."],
-            ].map(([title, copy], index) => (
+              {
+                title: "Live Probability",
+                copy: "Every goal, card, penalty, and phase change becomes an equity move for each side.",
+                icon: <LineChart className="h-5 w-5 text-[var(--terminal-green)]" />,
+              },
+              {
+                title: "Volatility Shock",
+                copy: "High-impact moments are tracked like market shocks, making momentum swings easy to scan.",
+                icon: (
+                  <span className="flex items-center gap-0.5 text-[var(--terminal-green)]">
+                    <ArrowUp className="h-4 w-4" />
+                    <ArrowDown className="h-4 w-4 text-[#ff4b6e]" />
+                  </span>
+                ),
+              },
+              {
+                title: "AI Powered Annotation",
+                copy: "Matches are annotated with AI so users can read depth and pressure without waiting.",
+                icon: <Sparkles className="h-5 w-5 text-[var(--terminal-green)]" />,
+              },
+            ].map(({ title, copy, icon }, index) => (
               <motion.div
                 key={title}
                 initial={{ opacity: 0, y: 16 }}
@@ -115,7 +141,7 @@ export function LandingPage() {
                 transition={{ duration: 0.22, delay: index * 0.05 }}
                 className="border border-[var(--terminal-border)] bg-[var(--terminal-panel)] p-5"
               >
-                <LineChart className="mb-5 h-5 w-5 text-[var(--terminal-green)]" />
+                <div className="mb-5 flex h-5 items-center">{icon}</div>
                 <p className="font-display text-[1.8rem] font-bold uppercase text-[var(--terminal-text-strong)]">{title}</p>
                 <p className="mt-3 leading-7 text-[var(--terminal-text-muted)]">{copy}</p>
               </motion.div>
@@ -135,7 +161,11 @@ export function LandingPage() {
               The app keeps football context, but replaces scattered stats with a visual model: probability lines, event annotations, draw parity, and a VIX-style shock index.
             </p>
             <div className="mt-6 grid gap-3 font-mono text-[0.74rem] font-semibold uppercase text-[var(--terminal-text)]">
-              <span className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-[var(--terminal-blue)]" /> TradingView-style interaction model</span>
+              <span className="flex items-center gap-2">
+                <Image src="/images/TXline.jpeg" alt="" width={16} height={16} className="h-4 w-4 object-contain" />
+                Powered by TXline ultrafast statistical data
+              </span>
+              <span className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-[var(--terminal-blue)]" /> Financial markets-style interaction model</span>
               <span className="flex items-center gap-2"><LockKeyhole className="h-4 w-4 text-[var(--terminal-green)]" /> Wallet-gated terminal access</span>
               <span className="flex items-center gap-2"><Activity className="h-4 w-4 text-[#ff4b6e]" /> Event-driven match replay and alerts</span>
             </div>
@@ -150,16 +180,16 @@ export function LandingPage() {
                 Access protocol
               </p>
               <h2 className="mt-2 font-display text-[2.6rem] font-bold uppercase leading-none text-[var(--terminal-text-strong)]">
-                Connect wallet to enter the main app.
+                {canEnterMarkets ? "Wallet connected. Enter the main app." : "Connect wallet to enter the main app."}
               </h2>
             </div>
             <Button
               type="button"
-              onClick={() => setWalletOpen(true)}
+              onClick={canEnterMarkets ? enterApp : () => setWalletOpen(true)}
               className="h-12 cursor-pointer rounded-none border border-[var(--terminal-green)] bg-[var(--terminal-green)] px-5 font-mono text-[0.78rem] font-semibold uppercase text-[var(--terminal-inverse-fg)] shadow-none hover:bg-[var(--terminal-green)]"
             >
-              <Wallet className="h-4 w-4" />
-              Connect Wallet
+              {canEnterMarkets ? <ArrowRight className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
+              {canEnterMarkets ? "Enter Markets" : "Connect Wallet"}
             </Button>
           </div>
         </section>
@@ -168,6 +198,7 @@ export function LandingPage() {
       <ConnectWalletModal
         open={walletOpen}
         connected={wallet.isConnected && wallet.isSupportedChain}
+        canDisconnect={wallet.isConnected}
         wrongNetwork={wallet.isWrongNetwork}
         addressLabel={wallet.addressLabel}
         error={wallet.error}
@@ -177,6 +208,7 @@ export function LandingPage() {
         selectedWalletId={wallet.selectedWalletId}
         onClose={() => setWalletOpen(false)}
         onConnect={handleConnect}
+        onDisconnect={handleDisconnect}
         onSelectWallet={handleWalletSelection}
         onEnterApp={enterApp}
       />

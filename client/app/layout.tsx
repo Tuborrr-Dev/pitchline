@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/app-header";
 import { QueryProvider } from "@/components/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { WalletConnectProvider } from "@/components/wallet-connect-provider";
+import { WalletRouteGuard } from "@/components/wallet-route-guard";
 import { NotificationToasts } from "@/components/notifications/notification-toasts";
 import { NotificationProvider } from "@/context/notification-provider";
 import "./globals.css";
@@ -56,7 +57,9 @@ export default function RootLayout({
                   <Suspense fallback={<div className="h-[5.125rem] shrink-0 border-b border-[var(--terminal-border)] bg-[var(--terminal-bg-strong)]" />}>
                     <AppHeader />
                   </Suspense>
-                  <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+                  <div className="min-h-0 flex-1 overflow-hidden">
+                    <WalletRouteGuard>{children}</WalletRouteGuard>
+                  </div>
                 </div>
                 <NotificationToasts />
               </NotificationProvider>
