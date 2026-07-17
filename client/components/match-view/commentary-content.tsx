@@ -86,7 +86,7 @@ export function CommentaryContent({
                       {item.action ? item.action.replace(/_/g, " ") : "UPDATE"}
                     </p>
                     <p className="mt-1 text-[0.62rem] text-[var(--terminal-blue)]">
-                      {item.minute !== undefined && item.minute !== null ? `${item.minute}'` : "--'"} / {item.team ?? "market"}
+                      {item.minute !== undefined && item.minute !== null ? `${item.minute}'` : "--'"}{item.team ? " / " + item.team : ""}
                     </p>
                   </div>
                 </div>
@@ -101,3 +101,4 @@ export function CommentaryContent({
     </section>
   );
 }
+
