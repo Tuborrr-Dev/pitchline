@@ -37,11 +37,13 @@ export function MobileDetailsDrawer({
   annotations,
   onClose,
   open,
+  prioritizeSelected = false,
   selectedEventId,
 }: {
   annotations?: Annotation[];
   onClose: () => void;
   open: boolean;
+  prioritizeSelected?: boolean;
   selectedEventId: string | null;
 }) {
   return (
@@ -77,7 +79,7 @@ export function MobileDetailsDrawer({
                 Close
               </Button>
             </div>
-            <CommentaryContent annotations={annotations} selectedEventId={selectedEventId} />
+            <CommentaryContent annotations={annotations} prioritizeSelected={prioritizeSelected} selectedEventId={selectedEventId} />
           </motion.aside>
         </>
       ) : null}

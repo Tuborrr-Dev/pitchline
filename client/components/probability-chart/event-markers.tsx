@@ -87,6 +87,11 @@ function minuteValue(value: string) {
   return Number.parseInt(value.replace(/\D/g, ""), 10) || 0;
 }
 
+function timestampMs(value: string) {
+  const parsed = new Date(value).getTime();
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 function eventPriority(event: MatchEvent) {
   const metadata = [
     event.type,
@@ -148,12 +153,42 @@ function primaryClusterEvent(cluster: EventCluster) {
 }
 
 function buildEventIndexes(events: MatchEvent[], renderedHistory: ProbabilityPoint[]) {
+  const timestampIndexes = renderedHistory
+    .map((point, index) => ({
+      index,
+      timestamp: timestampMs(point.timestamp),
+    }))
+    .filter((point): point is { index: number; timestamp: number } => point.timestamp !== null)
+    .sort((left, right) => left.timestamp - right.timestamp);
+
   const minuteIndexes = renderedHistory.map((point, index) => ({
     index,
     minute: minuteValue(point.minuteLabel),
   }));
 
   return events.map((event) => {
+    const eventTimestamp = timestampMs(event.timestamp);
+
+    if (eventTimestamp !== null && timestampIndexes.length > 0) {
+      const first = timestampIndexes[0];
+      const last = timestampIndexes[timestampIndexes.length - 1];
+
+      if (eventTimestamp <= first.timestamp) return first.index;
+      if (eventTimestamp >= last.timestamp) return last.index;
+
+      for (let index = 1; index < timestampIndexes.length; index += 1) {
+        const previous = timestampIndexes[index - 1];
+        const next = timestampIndexes[index];
+        if (eventTimestamp > next.timestamp) continue;
+
+        const span = next.timestamp - previous.timestamp;
+        if (span <= 0) return previous.index;
+
+        const progress = (eventTimestamp - previous.timestamp) / span;
+        return previous.index + (next.index - previous.index) * progress;
+      }
+    }
+
     const eventMinute = minuteValue(event.minuteLabel);
     let pointIndex = 0;
 

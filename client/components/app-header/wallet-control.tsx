@@ -1,9 +1,10 @@
 "use client";
 
-import { Wallet } from "lucide-react";
+import { LogOut, Wallet } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
+import { WalletDisconnectConfirmation } from "@/components/wallet-disconnect-confirmation";
 import { cn } from "@/lib/utils";
 import type { useWallet } from "@/lib/wallet-session";
 
@@ -16,6 +17,7 @@ export function WalletControl({
   mobileIconVisibility,
   mobileSearchOpen,
   onConnect,
+  onDisconnect,
   onSelectWallet,
   wallet,
   walletPickerOpen,
@@ -26,6 +28,7 @@ export function WalletControl({
   mobileIconVisibility: string;
   mobileSearchOpen: boolean;
   onConnect: () => void;
+  onDisconnect: () => void;
   onSelectWallet: (walletId: string) => void;
   wallet: WalletState;
   walletPickerOpen: boolean;
@@ -34,7 +37,7 @@ export function WalletControl({
   const hasConnectionError = wallet.status === "error" && !isWrongNetwork && Boolean(wallet.error);
 
   return (
-    <motion.div layout>
+    <motion.div layout className={cn("flex items-center gap-2", fullWidth && "w-full flex-col items-stretch")}>
       <Button
         type="button"
         onClick={onConnect}
@@ -85,6 +88,20 @@ export function WalletControl({
           </motion.span>
         </AnimatePresence>
       </Button>
+      {wallet.isConnected ? (
+        <WalletDisconnectConfirmation
+          className={cn(
+            "h-10 cursor-pointer rounded-none border border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-3 font-mono text-[0.68rem] font-semibold uppercase text-[var(--terminal-text)] shadow-none hover:bg-[var(--terminal-hover)] sm:h-11 sm:px-4 sm:text-[0.78rem]",
+            fullWidth && "w-full justify-center",
+          )}
+          onConfirm={onDisconnect}
+        >
+          <LogOut className="h-4 w-4" aria-hidden="true" />
+          <span className={cn((mobileSearchOpen || compactMobile) && !isLanding ? "hidden sm:inline" : "inline")}>
+            Disconnect
+          </span>
+        </WalletDisconnectConfirmation>
+      ) : null}
       {!wallet.isConnected && walletPickerOpen && wallet.availableWallets.length > 1 ? (
         <div className="absolute right-0 top-[calc(100%+0.45rem)] z-50 min-w-64 border border-[var(--terminal-border)] bg-[var(--terminal-panel)] shadow-[0_18px_40px_var(--terminal-shadow)]">
           <p className="border-b border-[var(--terminal-border)] px-3 py-2 font-mono text-[0.58rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
