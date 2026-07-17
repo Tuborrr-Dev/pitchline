@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertTriangle, SearchX, Settings } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AlertTriangle, SearchX } from "lucide-react";
+import { motion } from "motion/react";
 
 import { TerminalState } from "@/components/terminal-state";
 
@@ -28,30 +28,24 @@ export function MarketPanel({
   return (
     <section className="px-3 py-5 sm:px-4">
       <div className="overflow-hidden border border-[var(--terminal-border)] bg-[var(--terminal-panel)]">
-        <AnimatePresence mode="wait">
-          {activeTab === "settings" ? (
-            <SettingsPanel />
-          ) : isError ? (
-            <ErrorPanel />
-          ) : isInitialLoading ? (
-            <LoadingRows />
-          ) : rows.length === 0 ? (
-            <EmptyPanel activeTab={activeTab} hasSearchQuery={hasSearchQuery} />
-          ) : effectiveViewMode === "grid" ? (
-            <motion.div key="grid" {...panelMotion}>
-              <MarketGrid rows={rows} />
-            </motion.div>
-          ) : (
-            <motion.div key="list" {...panelMotion}>
-              <div className="xl:hidden">
-                <MarketCompactList rows={rows} />
-              </div>
-              <div className="hidden xl:block">
-                <MarketTable rows={rows} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {isError ? (
+          <ErrorPanel />
+        ) : isInitialLoading ? (
+          <LoadingRows />
+        ) : rows.length === 0 ? (
+          <EmptyPanel activeTab={activeTab} hasSearchQuery={hasSearchQuery} />
+        ) : effectiveViewMode === "grid" ? (
+          <MarketGrid rows={rows} />
+        ) : (
+          <>
+            <div className="xl:hidden">
+              <MarketCompactList rows={rows} />
+            </div>
+            <div className="hidden xl:block">
+              <MarketTable rows={rows} />
+            </div>
+          </>
+        )}
 
       </div>
     </section>
@@ -73,26 +67,6 @@ function EmptyPanel({
         description={hasSearchQuery ? "Adjust the search term or clear the filter to return to the full market list." : activeTab === "history" ? "Completed fixtures will appear here after markets settle." : "Live fixtures will appear here as soon as the market feed returns active rows."}
         className="mx-auto min-h-[12rem] max-w-2xl border-0 bg-transparent"
       />
-    </motion.div>
-  );
-}
-
-function SettingsPanel() {
-  return (
-    <motion.div key="settings" {...panelMotion} className="grid gap-3 p-4 md:grid-cols-3">
-      {["Compact rows", "Live animation", "Wallet gate"].map((setting, index) => (
-        <motion.button
-          key={setting}
-          type="button"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.16, delay: index * 0.04 }}
-          className="flex cursor-pointer items-center gap-3 border border-[var(--terminal-border)] bg-[var(--terminal-surface)] px-4 py-5 text-left font-mono text-[0.76rem] font-semibold uppercase text-[var(--terminal-text-strong)] hover:border-[var(--terminal-green)]"
-        >
-          <Settings className="h-4 w-4" aria-hidden="true" />
-          {setting}: On
-        </motion.button>
-      ))}
     </motion.div>
   );
 }

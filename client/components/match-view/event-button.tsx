@@ -34,7 +34,7 @@ export function EventButton({
   const isAnnotationEvent = Boolean(event.annotationColor || event.annotationIcon || event.annotationType);
   const tone = event.annotationColor ? annotationTone(event.annotationColor) : eventTone(event);
   const secondaryLabel = isAnnotationEvent
-    ? `${event.annotationType === "annotation" ? "AI" : "LIVE"} / ${event.teamCode ?? "market"}`
+    ? event.teamCode ?? "market"
     : eventDeltaLabel(event);
   const hasAnnotationIcon = event.annotationIcon === undefined
     ? Boolean(event.annotationAction)

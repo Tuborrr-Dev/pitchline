@@ -11,11 +11,8 @@ import { getJson } from "@/services/pitchline-http";
 import { annotationsToMatchEvents } from "@/services/annotation-mappers";
 import {
   createFixtureFromDto,
-  createInitialEvents,
   formatMinuteLabel,
-  historyToMatchEvents,
   historyToProbabilityPoints,
-  mergeMatchEvents,
 } from "@/services/pitchline-mappers";
 
 export async function fetchInitialLiveMatchState(fixtureId: string): Promise<LiveMatchState | null> {
@@ -79,12 +76,7 @@ export async function fetchInitialLiveMatchState(fixtureId: string): Promise<Liv
   const lastTimestamp =
     initialHistory[initialHistory.length - 1]?.timestamp ?? new Date().toISOString();
   const initialAnnotations = await fetchAnnotationHistory(fixtureId);
-  const be1Events = historyToMatchEvents(history, displayFixture);
-  const be2Events = annotationsToMatchEvents(initialAnnotations, displayFixture);
-  const initialEvents =
-    be1Events.length > 0 || be2Events.length > 0
-      ? mergeMatchEvents(be1Events, be2Events)
-      : createInitialEvents(displayFixture);
+  const initialEvents = annotationsToMatchEvents(initialAnnotations, displayFixture);
 
   return {
     fixture: displayFixture,
@@ -114,25 +106,5 @@ export async function fetchAnnotationHistory(fixtureId: string): Promise<Annotat
   } catch {
     // Annotation service is optional — silently return empty when offline
     return [];
-  }
-}
-
-export async function startAnnotationStream(fixtureId: string): Promise<void> {
-  try {
-    await fetch(`${ANNOTATION_API_BASE_URL}/streams/${fixtureId}`, {
-      method: "POST",
-    });
-  } catch {
-    // Annotation service is optional — silently skip when offline
-  }
-}
-
-export async function stopAnnotationStream(fixtureId: string): Promise<void> {
-  try {
-    await fetch(`${ANNOTATION_API_BASE_URL}/streams/${fixtureId}`, {
-      method: "DELETE",
-    });
-  } catch {
-    // Annotation service is optional — silently skip when offline
   }
 }

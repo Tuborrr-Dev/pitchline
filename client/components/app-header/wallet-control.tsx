@@ -10,6 +10,8 @@ import type { useWallet } from "@/lib/wallet-session";
 type WalletState = ReturnType<typeof useWallet>;
 
 export function WalletControl({
+  compactMobile = false,
+  fullWidth = false,
   isLanding,
   mobileIconVisibility,
   mobileSearchOpen,
@@ -18,6 +20,8 @@ export function WalletControl({
   wallet,
   walletPickerOpen,
 }: {
+  compactMobile?: boolean;
+  fullWidth?: boolean;
   isLanding: boolean;
   mobileIconVisibility: string;
   mobileSearchOpen: boolean;
@@ -38,6 +42,8 @@ export function WalletControl({
         disabled={wallet.status === "checking" || wallet.status === "connecting"}
         className={cn(
           "h-10 min-w-0 cursor-pointer rounded-none border px-3 font-mono text-[0.68rem] font-semibold uppercase shadow-none sm:h-11 sm:px-4 sm:text-[0.78rem]",
+          fullWidth && "w-full justify-center",
+          compactMobile && !isLanding && "w-10 px-0 sm:w-auto sm:px-4",
           mobileSearchOpen && !isLanding && "w-10 px-0 sm:w-auto sm:px-4",
           isWrongNetwork
             ? "border-[#ff4b6e] bg-red-500/10 text-[#ff4b6e] hover:bg-red-500/15"
@@ -59,7 +65,7 @@ export function WalletControl({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.14 }}
-            className={cn(mobileSearchOpen && !isLanding ? "hidden sm:inline" : "inline")}
+            className={cn((mobileSearchOpen || compactMobile) && !isLanding ? "hidden sm:inline" : "inline")}
           >
             {isWrongNetwork
               ? "Wrong Network"

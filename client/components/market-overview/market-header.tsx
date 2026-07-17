@@ -4,6 +4,7 @@ import { Activity, Grid3X3, List } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 
+import { LatencyReadout } from "@/components/latency-readout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -48,14 +49,10 @@ export function MarketHeader({
                 transition={{ duration: 0.16 }}
                 className="font-display text-[2rem] font-bold uppercase leading-none text-[var(--terminal-text-strong)] sm:text-[2.45rem] lg:text-[2.75rem]"
               >
-                {activeTab === "markets" && "World Cup: Market Overview (F-07)"}
+                {activeTab === "markets" && "World Cup: Market Overview"}
                 {activeTab === "history" && "Market History"}
-                {activeTab === "settings" && "Terminal Settings"}
               </motion.h1>
             </AnimatePresence>
-            <span className="inline-flex h-6 items-center bg-[var(--danger)] px-2 font-mono text-[0.68rem] font-semibold uppercase text-white">
-              High Vol
-            </span>
           </div>
           <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
             <span>{activeTab === "history" ? "Settled markets" : "Active markets"}: {filteredCount}</span>
@@ -70,9 +67,9 @@ export function MarketHeader({
               <Activity className="h-4 w-4" aria-hidden="true" />
               System Live
             </p>
-            <p className="font-mono text-[0.68rem] uppercase text-[var(--terminal-text-muted)]">Latency: 12ms</p>
+            <LatencyReadout />
           </div>
-          {!isMobile && activeTab !== "settings" ? (
+          {!isMobile ? (
             <ViewModeToggle
               effectiveViewMode={effectiveViewMode}
               setViewMode={setViewMode}
@@ -89,12 +86,11 @@ function MarketTabs({ activeTab }: { activeTab: MarketTab }) {
   const tabHref: Record<MarketTab, string> = {
     markets: "/markets",
     history: "/markets/history",
-    settings: "/markets/settings",
   };
 
   return (
     <div className="mb-4 flex flex-wrap gap-2">
-      {(["markets", "history", "settings"] as const).map((tab) => (
+      {(["markets", "history"] as const).map((tab) => (
         <Button
           key={tab}
           asChild
@@ -161,3 +157,4 @@ function ViewModeToggle({
     </div>
   );
 }
+

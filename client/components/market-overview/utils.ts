@@ -1,6 +1,10 @@
 import type { MarketOverviewRow } from "./types";
 
 export function rowHref(row: MarketOverviewRow) {
+  if (row.fixture.status === "finished") {
+    return `/markets/history/${row.fixture.fixtureId}`;
+  }
+
   return `/match/${row.fixture.fixtureId}`;
 }
 

@@ -2,14 +2,19 @@
 
 import { Search, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
 import { cn } from "@/lib/utils";
 
 export interface SearchResultItem {
+  href: string;
   id: string;
   label: string;
   meta: string;
+  score: string;
+  status: "live" | "scheduled" | "final";
+  statusLabel: string;
+  timeLabel: string;
 }
 
 export function MarketSearch({
@@ -18,6 +23,7 @@ export function MarketSearch({
   query,
   onClear,
   onOpenMobileSearch,
+  onOpenResults,
   onResultSelect,
   onSubmit,
   onUpdateQuery,
@@ -29,13 +35,15 @@ export function MarketSearch({
   query: string;
   onClear: () => void;
   onOpenMobileSearch: () => void;
-  onResultSelect: (fixtureId: string) => void;
+  onOpenResults: () => void;
+  onResultSelect: (href: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onUpdateQuery: (query: string) => void;
   searchResults?: SearchResultItem[];
   showSearchResults: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     if (mobileSearchOpen) {
@@ -43,13 +51,46 @@ export function MarketSearch({
     }
   }, [mobileSearchOpen]);
 
+  const activeResultIndex = Math.min(activeIndex, Math.max(searchResults.length - 1, 0));
+
+  function selectResult(href: string) {
+    onResultSelect(href);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (!showSearchResults || searchResults.length === 0) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((current) => Math.min(current + 1, searchResults.length - 1));
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((current) => Math.max(current - 1, 0));
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      selectResult(searchResults[activeResultIndex]?.href ?? searchResults[0].href);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClear();
+    }
+  }
+
   return (
     <motion.form
       layout
       onSubmit={onSubmit}
       className={cn(
         "relative flex h-10 min-w-0 items-center gap-2 border border-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[var(--terminal-text-muted)] sm:h-11 sm:min-w-[18rem] sm:justify-start sm:px-3 lg:min-w-[22rem]",
-        mobileSearchOpen ? "justify-start px-3" : "justify-center px-0",
+        mobileSearchOpen ? "w-full justify-start px-3" : "w-10 justify-center px-0 sm:w-auto",
       )}
       aria-label="Search markets"
     >
@@ -69,7 +110,12 @@ export function MarketSearch({
       <input
         ref={inputRef}
         value={query}
-        onChange={(event) => onUpdateQuery(event.target.value)}
+        onChange={(event) => {
+          setActiveIndex(0);
+          onUpdateQuery(event.target.value);
+        }}
+        onFocus={onOpenResults}
+        onKeyDown={handleKeyDown}
         placeholder="SEARCH MARKETS..."
         className={cn(
           "w-full bg-transparent font-mono text-[0.72rem] uppercase text-[var(--terminal-text-strong)] outline-none placeholder:text-[var(--terminal-text-muted)] sm:text-[0.78rem]",
@@ -105,24 +151,50 @@ export function MarketSearch({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
-            className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-50 max-h-[22rem] overflow-y-auto border border-[var(--terminal-border)] bg-[var(--terminal-panel)] shadow-[0_18px_40px_var(--terminal-shadow)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-50 max-h-[min(24rem,70vh)] min-w-[min(92vw,30rem)] overflow-y-auto border border-[var(--terminal-border)] bg-[var(--terminal-panel)] shadow-[0_18px_40px_var(--terminal-shadow)] [scrollbar-width:none] [-ms-overflow-style:none] sm:left-auto sm:w-[30rem] [&::-webkit-scrollbar]:hidden"
           >
             <p className="border-b border-[var(--terminal-border)] px-3 py-2 font-mono text-[0.58rem] font-semibold uppercase text-[var(--terminal-text-muted)]">
               Search results {searchResults.length > 0 ? `(${searchResults.length})` : ""}
             </p>
             {searchResults.length > 0 ? (
-              searchResults.map((result) => (
+              searchResults.map((result, index) => (
                 <button
                   key={result.id}
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onResultSelect(result.id);
+                    selectResult(result.href);
                   }}
-                  className="block w-full cursor-pointer border-b border-[var(--terminal-line)] px-3 py-2.5 text-left font-mono uppercase transition-colors hover:bg-[var(--terminal-hover)]"
+                  onMouseEnter={() => setActiveIndex(index)}
+                  className={cn(
+                    "grid w-full cursor-pointer grid-cols-[1fr_auto] gap-3 border-b border-[var(--terminal-line)] px-3 py-2.5 text-left font-mono uppercase transition-colors hover:bg-[var(--terminal-hover)]",
+                    activeResultIndex === index && "bg-[var(--terminal-hover)]",
+                  )}
                 >
-                  <span className="block text-[0.74rem] font-bold text-[var(--terminal-text-strong)]">{result.label}</span>
-                  <span className="mt-1 block text-[0.60rem] font-semibold text-[var(--terminal-text-muted)]">{result.meta}</span>
+                  <span className="min-w-0">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="truncate text-[0.74rem] font-bold text-[var(--terminal-text-strong)]">{result.label}</span>
+                      <span
+                        className={cn(
+                          "inline-flex h-5 items-center border px-1.5 text-[0.56rem] font-bold leading-none",
+                          result.status === "live"
+                            ? "border-[#135238] bg-[var(--prob-home)] text-[#041009]"
+                            : result.status === "final"
+                              ? "border-[var(--terminal-border)] bg-[var(--terminal-surface)] text-[var(--terminal-text-strong)]"
+                              : "border-[var(--terminal-blue)] bg-[var(--terminal-surface)] text-[var(--terminal-blue)]",
+                        )}
+                      >
+                        {result.statusLabel}
+                      </span>
+                    </span>
+                    <span className="mt-1 block truncate text-[0.60rem] font-semibold text-[var(--terminal-text-muted)]">{result.meta}</span>
+                  </span>
+                  <span className="text-right">
+                    <span className="block text-[0.82rem] font-bold text-[var(--terminal-text-strong)]">{result.score}</span>
+                    {result.timeLabel ? (
+                      <span className="mt-1 block text-[0.58rem] font-semibold text-[var(--terminal-text-muted)]">{result.timeLabel}</span>
+                    ) : null}
+                  </span>
                 </button>
               ))
             ) : (

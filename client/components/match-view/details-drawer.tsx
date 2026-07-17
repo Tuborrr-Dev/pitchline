@@ -3,18 +3,16 @@
 import { AnimatePresence, motion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
-import type { Annotation, MatchEvent } from "@/lib/types";
+import type { Annotation } from "@/lib/types";
 
 import { CommentaryContent } from "./commentary-content";
 
 export function DesktopDetailsPanel({
   annotations,
-  events,
   open,
   selectedEventId,
 }: {
   annotations?: Annotation[];
-  events: MatchEvent[];
   open: boolean;
   selectedEventId: string | null;
 }) {
@@ -28,7 +26,7 @@ export function DesktopDetailsPanel({
           transition={{ duration: 0.18 }}
           className="hidden overflow-y-auto border-t border-[var(--terminal-border)] bg-[var(--terminal-bg)] p-4 xl:block xl:min-h-0 xl:border-l xl:border-t-0"
         >
-          <CommentaryContent annotations={annotations} events={events} selectedEventId={selectedEventId} />
+          <CommentaryContent annotations={annotations} selectedEventId={selectedEventId} />
         </motion.aside>
       ) : null}
     </AnimatePresence>
@@ -37,13 +35,11 @@ export function DesktopDetailsPanel({
 
 export function MobileDetailsDrawer({
   annotations,
-  events,
   onClose,
   open,
   selectedEventId,
 }: {
   annotations?: Annotation[];
-  events: MatchEvent[];
   onClose: () => void;
   open: boolean;
   selectedEventId: string | null;
@@ -81,7 +77,7 @@ export function MobileDetailsDrawer({
                 Close
               </Button>
             </div>
-            <CommentaryContent annotations={annotations} events={events} selectedEventId={selectedEventId} />
+            <CommentaryContent annotations={annotations} selectedEventId={selectedEventId} />
           </motion.aside>
         </>
       ) : null}

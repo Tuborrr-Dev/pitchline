@@ -57,7 +57,7 @@ export function DesktopEventRail({
           <motion.div variants={marketDepthItemVariants} className="flex items-center justify-between border-b border-[var(--terminal-border)] px-3 py-3">
             <div>
               <p className="font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-text-strong)]">
-                Market Depth
+                Annotations
               </p>
               <p className="mt-1 font-mono text-[0.66rem] uppercase text-[var(--terminal-text-muted)]">
                 {fixture.phase} / {fixture.teamACode} vs {fixture.teamBCode}
@@ -130,18 +130,17 @@ export function MobileEventRail({
       exit="exit"
       className="border-b border-[var(--terminal-border)] bg-[var(--terminal-panel)] xl:hidden"
     >
-      <motion.div variants={marketDepthHorizontalItemVariants} className="flex items-center justify-between gap-3 border-b border-[var(--terminal-border)] px-3 py-2">
-        <MatchBackButton />
-      </motion.div>
-
-      <motion.div variants={marketDepthHorizontalItemVariants} className="flex items-center justify-between gap-3 px-3 py-2">
-        <div>
-          <p className="font-mono text-[0.7rem] font-semibold uppercase text-[var(--terminal-text-strong)]">
-            Market Depth
-          </p>
-          <p className="font-mono text-[0.62rem] uppercase text-[var(--terminal-text-muted)]">
-            {fixture.phase} / {fixture.teamACode} vs {fixture.teamBCode}
-          </p>
+      <motion.div variants={marketDepthHorizontalItemVariants} className="flex items-center justify-between gap-2 px-2 py-1.5">
+        <div className="flex min-w-0 items-center gap-2">
+          <MatchBackButton compact />
+          <div className="min-w-0">
+            <p className="font-mono text-[0.7rem] font-semibold uppercase text-[var(--terminal-text-strong)]">
+              Annotations
+            </p>
+            <p className="truncate font-mono text-[0.62rem] uppercase text-[var(--terminal-text-muted)]">
+              {fixture.phase} / {fixture.teamACode} vs {fixture.teamBCode}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <span className="border border-[var(--terminal-blue)] bg-sky-500/10 px-2 py-1 font-mono text-[0.62rem] font-semibold uppercase text-[var(--terminal-blue)]">
@@ -169,10 +168,11 @@ export function MobileEventRail({
             ) : (
               <motion.div key="empty-events" variants={marketDepthHorizontalItemVariants} className="w-screen p-3">
                 <TerminalState
+                  compact
                   icon={Inbox}
                   title="No market events"
                   description="Event depth will populate when the live feed emits annotations or match-state calls."
-                  className="min-h-[8rem]"
+                  className="min-h-[5.5rem]"
                 />
               </motion.div>
             )}

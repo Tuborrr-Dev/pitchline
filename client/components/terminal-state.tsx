@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 export function TerminalState({
   action,
   className,
+  compact = false,
   description,
   icon: Icon,
   title,
@@ -13,6 +14,7 @@ export function TerminalState({
 }: {
   action?: ReactNode;
   className?: string;
+  compact?: boolean;
   description: string;
   icon: LucideIcon;
   title: string;
@@ -30,18 +32,19 @@ export function TerminalState({
   return (
     <div
       className={cn(
-        "flex min-h-[14rem] flex-col items-center justify-center gap-3 border border-dashed px-4 py-10 text-center font-mono uppercase",
+        compact
+          ? "flex min-h-[6.5rem] flex-col items-center justify-center gap-2 border border-dashed px-3 py-4 text-center font-mono uppercase"
+          : "flex min-h-[14rem] flex-col items-center justify-center gap-3 border border-dashed px-4 py-10 text-center font-mono uppercase",
         toneClass,
         className,
       )}
     >
-      <Icon className="h-6 w-6" aria-hidden="true" />
+      <Icon className={compact ? "h-4 w-4" : "h-6 w-6"} aria-hidden="true" />
       <div>
-        <p className="text-[0.82rem] font-semibold text-[var(--terminal-text-strong)]">{title}</p>
-        <p className="mt-2 max-w-md text-[0.68rem] leading-5 text-[var(--terminal-text-muted)]">{description}</p>
+        <p className={compact ? "text-[0.72rem] font-semibold text-[var(--terminal-text-strong)]" : "text-[0.82rem] font-semibold text-[var(--terminal-text-strong)]"}>{title}</p>
+        <p className={compact ? "mt-1 max-w-xs text-[0.58rem] leading-4 text-[var(--terminal-text-muted)]" : "mt-2 max-w-md text-[0.68rem] leading-5 text-[var(--terminal-text-muted)]"}>{description}</p>
       </div>
       {action ? <div className="mt-1">{action}</div> : null}
     </div>
   );
 }
-
