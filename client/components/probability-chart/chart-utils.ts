@@ -131,7 +131,7 @@ export function canAnimateLatestPoint(fromHistory: ProbabilityPoint[], toHistory
 export function toSeriesData(animatedHistory: ProbabilityPoint[]) {
   return {
     teamA: animatedHistory.map(
-      (point) => ({ time: toTime(point.timestamp), value: point.teamA }) satisfies AreaData,
+      (point) => ({ time: toTime(point.timestamp), value: point.teamA }) satisfies LineData,
     ),
     teamB: animatedHistory.map(
       (point) => ({ time: toTime(point.timestamp), value: point.teamB }) satisfies LineData,
@@ -139,6 +139,47 @@ export function toSeriesData(animatedHistory: ProbabilityPoint[]) {
     draw: animatedHistory.map(
       (point) => ({ time: toTime(point.timestamp), value: point.draw }) satisfies LineData,
     ),
+    dominantFill: animatedHistory.map(toDominantAreaData),
+  };
+}
+
+function toDominantAreaData(point: ProbabilityPoint): AreaData {
+  const dominantOutcome = getDominantOutcome(point);
+  const colors = getDominantFillColors(dominantOutcome);
+
+  return {
+    time: toTime(point.timestamp),
+    value: point[dominantOutcome],
+    lineColor: "rgba(0, 0, 0, 0)",
+    topColor: colors.top,
+    bottomColor: colors.bottom,
+  };
+}
+
+function getDominantOutcome(point: ProbabilityPoint): "teamA" | "teamB" | "draw" {
+  if (point.teamA >= point.teamB && point.teamA >= point.draw) return "teamA";
+  if (point.teamB >= point.teamA && point.teamB >= point.draw) return "teamB";
+  return "draw";
+}
+
+function getDominantFillColors(outcome: "teamA" | "teamB" | "draw") {
+  if (outcome === "teamA") {
+    return {
+      top: "rgba(0, 255, 135, 0.27)",
+      bottom: "rgba(0, 255, 135, 0.02)",
+    };
+  }
+
+  if (outcome === "teamB") {
+    return {
+      top: "rgba(255, 75, 110, 0.24)",
+      bottom: "rgba(255, 75, 110, 0.02)",
+    };
+  }
+
+  return {
+    top: "rgba(154, 167, 178, 0.24)",
+    bottom: "rgba(154, 167, 178, 0.02)",
   };
 }
 
