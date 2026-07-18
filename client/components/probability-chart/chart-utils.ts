@@ -2,8 +2,14 @@ import type { AreaData, LineData, LogicalRange, Time } from "lightweight-charts"
 
 import type { MatchEvent, ProbabilityPoint } from "@/lib/types";
 
+const CHART_CLOCK_EPOCH_SECONDS = 946684800;
+
 export function toTime(timestamp: string): Time {
   return Math.floor(new Date(timestamp).getTime() / 1000) as Time;
+}
+
+export function toChartTime(second: number): Time {
+  return (CHART_CLOCK_EPOCH_SECONDS + second) as Time;
 }
 
 export function normalizeChartHistory(history: ProbabilityPoint[]) {
@@ -31,7 +37,10 @@ export function normalizeChartHistory(history: ProbabilityPoint[]) {
 }
 
 export function parseMinuteLabel(minuteLabel: string) {
-  return Number.parseInt(minuteLabel.replace(/\D/g, ""), 10) || 0;
+  const match = minuteLabel.match(/(\d+)(?:\s*\+\s*(\d+))?/);
+  if (!match) return 0;
+
+  return Number.parseInt(match[1], 10) + Number.parseInt(match[2] ?? "0", 10);
 }
 
 export function formatTimestamp(timestamp: string) {
@@ -129,26 +138,50 @@ export function canAnimateLatestPoint(fromHistory: ProbabilityPoint[], toHistory
 }
 
 export function toSeriesData(animatedHistory: ProbabilityPoint[]) {
+  const chartPoints = toChartPoints(animatedHistory);
+
   return {
-    teamA: animatedHistory.map(
-      (point) => ({ time: toTime(point.timestamp), value: point.teamA }) satisfies LineData,
+    teamA: chartPoints.map(
+      ({ point, time }) => ({ time, value: point.teamA }) satisfies LineData,
     ),
-    teamB: animatedHistory.map(
-      (point) => ({ time: toTime(point.timestamp), value: point.teamB }) satisfies LineData,
+    teamB: chartPoints.map(
+      ({ point, time }) => ({ time, value: point.teamB }) satisfies LineData,
     ),
-    draw: animatedHistory.map(
-      (point) => ({ time: toTime(point.timestamp), value: point.draw }) satisfies LineData,
+    draw: chartPoints.map(
+      ({ point, time }) => ({ time, value: point.draw }) satisfies LineData,
     ),
-    dominantFill: animatedHistory.map(toDominantAreaData),
+    dominantFill: chartPoints.map(({ point, time }) => toDominantAreaData(point, time)),
   };
 }
 
-function toDominantAreaData(point: ProbabilityPoint): AreaData {
+export function toChartPoints(history: ProbabilityPoint[]) {
+  const seenByMinute = new Map<number, number>();
+  let previousSecond = -1;
+
+  return history.map((point, index) => {
+    const minute = parseMinuteLabel(point.minuteLabel);
+    const duplicateOffset = seenByMinute.get(minute) ?? 0;
+    seenByMinute.set(minute, duplicateOffset + 1);
+    const rawSecond = minute * 60 + duplicateOffset;
+    const second = rawSecond > previousSecond ? rawSecond : previousSecond + 1;
+    previousSecond = second;
+
+    return {
+      point,
+      index,
+      minute,
+      second,
+      time: toChartTime(second),
+    };
+  });
+}
+
+function toDominantAreaData(point: ProbabilityPoint, time: Time): AreaData {
   const dominantOutcome = getDominantOutcome(point);
   const colors = getDominantFillColors(dominantOutcome);
 
   return {
-    time: toTime(point.timestamp),
+    time,
     value: point[dominantOutcome],
     lineColor: "rgba(0, 0, 0, 0)",
     topColor: colors.top,

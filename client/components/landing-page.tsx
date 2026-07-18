@@ -3,7 +3,6 @@
 import { Activity, ArrowDown, ArrowRight, ArrowUp, BarChart3, LineChart, LockKeyhole, Sparkles, Wallet } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
-import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -15,19 +14,10 @@ import { WALLETCONNECT_WALLET_ID, connectWallet, disconnectWallet, selectWallet,
 
 export function LandingPage() {
   const router = useRouter();
-  const { resolvedTheme } = useTheme();
   const [walletOpen, setWalletOpen] = useState(false);
   const wallet = useWallet();
   const walletConnect = useWalletConnectModal();
   const canEnterMarkets = wallet.isConnected && wallet.isSupportedChain;
-  const isDarkTheme = resolvedTheme === "dark";
-  const heroImage = isDarkTheme
-    ? "/images/pitchline-hero-football.png"
-    : "/images/pitchline-hero-football-light.png";
-  const heroImageClass = isDarkTheme ? "object-cover opacity-55" : "object-cover opacity-95";
-  const heroOverlayClass = isDarkTheme
-    ? "absolute inset-0 bg-[linear-gradient(90deg,#05080c_0%,rgba(5,8,12,0.86)_34%,rgba(5,8,12,0.42)_66%,#05080c_100%)]"
-    : "absolute inset-0 bg-[linear-gradient(90deg,rgba(248,250,252,0.94)_0%,rgba(248,250,252,0.68)_36%,rgba(248,250,252,0.18)_72%,rgba(248,250,252,0.46)_100%)]";
 
   function enterApp() {
     router.push("/markets");
@@ -63,14 +53,21 @@ export function LandingPage() {
       <main className="bg-[linear-gradient(90deg,var(--terminal-grid)_1px,transparent_1px),linear-gradient(var(--terminal-grid)_1px,transparent_1px)] bg-[size:28px_28px]">
         <section className="relative min-h-[calc(100vh-5.125rem)] overflow-hidden border-b border-[var(--terminal-border)]">
           <Image
-            key={heroImage}
-            src={heroImage}
+            src="/images/pitchline-hero-football-light.png"
             alt="Footballer shooting while a goalkeeper dives through a data-rich stadium scene"
             fill
             priority
-            className={heroImageClass}
+            className="object-cover opacity-95 dark:opacity-0"
           />
-          <div className={heroOverlayClass} />
+          <Image
+            src="/images/pitchline-hero-football.png"
+            alt=""
+            fill
+            priority
+            aria-hidden="true"
+            className="object-cover opacity-0 dark:opacity-55"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(248,250,252,0.94)_0%,rgba(248,250,252,0.68)_36%,rgba(248,250,252,0.18)_72%,rgba(248,250,252,0.46)_100%)] dark:bg-[linear-gradient(90deg,#05080c_0%,rgba(5,8,12,0.86)_34%,rgba(5,8,12,0.42)_66%,#05080c_100%)]" />
           <div className="relative z-10 grid min-h-[calc(100vh-5.125rem)] items-center gap-8 px-4 py-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(28rem,0.75fr)] lg:px-8">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
               <div className="mb-5 inline-flex items-center gap-2 border border-[var(--terminal-green)] bg-emerald-500/10 px-3 py-2 font-mono text-[0.72rem] font-semibold uppercase text-[var(--terminal-green)]">

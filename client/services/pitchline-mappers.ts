@@ -9,7 +9,9 @@ import type {
   BackendFixtureDto,
   BackendMatchDto,
   BackendMatchHistoryDto,
+  ClockAnchor,
 } from "@/schemas/pitchline";
+import { toMatchMinute } from "@/lib/clock-anchors";
 
 const teamCodeOverrides: Record<string, string> = {
   Argentina: "ARG",
@@ -119,6 +121,27 @@ export function formatMinuteLabel(
   }
 
   return cleanMinute.includes("'") ? cleanMinute : `${cleanMinute}'`;
+}
+
+function formatHistoryMinuteLabel(minute: string | null | undefined, fallbackMinute: number) {
+  const cleanMinute = (minute ?? "").trim();
+  if (!cleanMinute) return `${Math.max(0, Math.round(fallbackMinute))}'`;
+  return cleanMinute.includes("'") ? cleanMinute : `${cleanMinute}'`;
+}
+
+function resolveHistoryMinuteLabel(
+  timestamp: string,
+  minute: string | null | undefined,
+  fallbackMinute: number,
+  clockAnchors: readonly ClockAnchor[],
+) {
+  const anchoredMinute = clockAnchors.length > 0 ? toMatchMinute(timestamp, clockAnchors) : null;
+
+  if (anchoredMinute !== null) {
+    return formatHistoryMinuteLabel(null, anchoredMinute);
+  }
+
+  return formatHistoryMinuteLabel(minute, fallbackMinute);
 }
 
 function buildFixtureMeta(status: MatchStatus, kickoffUtc: string) {
@@ -263,6 +286,7 @@ export function historyToProbabilityPoints(
   history: BackendMatchHistoryDto | null,
   fixture: Fixture,
   fallbackProbabilities: LiveMatchState["currentProbabilities"],
+  clockAnchors: readonly ClockAnchor[] = [],
 ) {
   const oddsHistory = history?.oddsHistory ?? [];
 
@@ -288,7 +312,12 @@ export function historyToProbabilityPoints(
 
       return {
         timestamp: point.timestamp,
-        minuteLabel: `${elapsedMinutes}'`,
+        minuteLabel: resolveHistoryMinuteLabel(
+          point.timestamp,
+          point.minute,
+          elapsedMinutes,
+          clockAnchors,
+        ),
         teamA: point.homePct,
         draw: point.drawPct,
         teamB: point.awayPct,

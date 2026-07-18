@@ -40,7 +40,19 @@ export const oddsSnapshotSchema = z.object({
   drawPct: z.number(),
   awayPct: z.number(),
   timestamp: z.string(),
+  minute: z.string().nullable().optional(),
 });
+
+export const clockAnchorSchema = z.object({
+  phase: z.string(),
+  status_id: z.number(),
+  utc_start: z.string(),
+  minute_start: z.number(),
+  seconds_start: z.number(),
+  running: z.boolean(),
+});
+
+export const clockAnchorsResponseSchema = z.array(clockAnchorSchema);
 
 export const scoreEventSchema = z.object({
   eventType: z.string(),
@@ -62,3 +74,4 @@ export const matchHistoryResponseSchema = z.object({
 export type BackendFixtureDto = z.infer<typeof fixtureDtoSchema>;
 export type BackendMatchDto = z.infer<typeof matchResponseSchema>;
 export type BackendMatchHistoryDto = z.infer<typeof matchHistoryResponseSchema>;
+export type ClockAnchor = z.infer<typeof clockAnchorSchema>;
