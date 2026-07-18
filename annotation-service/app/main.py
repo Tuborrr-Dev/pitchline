@@ -6,15 +6,17 @@ logging.basicConfig(
 )
 
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from sqlalchemy import select
 
-from app.db.database import Base, engine
+from app.db.database import Base, engine, AsyncSessionLocal
 from app.services.annotation_service import AnnotationService
 from app.ingestion.stream_manager import StreamManager
 from app.api.routes import router as api_router
 from app.api.sse import router as sse_router
 from app.api.clock_anchors import router as clock_anchors_router
 
+logger = logging.getLogger(__name__)
 app = FastAPI(title="Pitchline BE2 -- Annotation Service")
 
 
@@ -32,6 +34,17 @@ async def startup():
 @app.get("/")
 async def root():
     return {"status": "running"}
+
+
+@app.get("/health")
+async def health():
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.execute(select(1))
+        return {"status": "ok", "db": "connected"}
+    except Exception:
+        logger.exception("health check failed")
+        raise HTTPException(status_code=503, detail="unhealthy")
 
 
 app.include_router(api_router)
