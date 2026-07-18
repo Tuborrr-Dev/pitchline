@@ -1,3 +1,22 @@
+"""
+build_clock_anchors.py
+
+One-time (or re-run-as-needed) backfill of clock_anchors for historic
+fixtures. Reuses TxLineClient exactly as-is -- no new fetch logic. Since
+consume_scores() always starts at Ts=0 and returns as soon as it hits
+game_finalised, calling it against an already-finished fixture just replays
+the whole match and exits naturally.
+
+fixture_kickoffs.json is only used here as the list of fixture IDs to loop
+over -- the actual anchor timestamps come from the real Ts values in the
+replayed events, not from this file.
+
+Usage:
+    railway run python build_clock_anchors.py --fixture-id 18175918          # dry run
+    railway run python build_clock_anchors.py --fixture-id 18175918 --write
+    railway run python build_clock_anchors.py --all --write                  # every fixture in fixture_kickoffs.json
+"""
+
 import argparse
 import asyncio
 import json

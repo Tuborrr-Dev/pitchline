@@ -1,9 +1,15 @@
 # ORM models for the annotations table in the database.
 # This file defines the structure of the Annotation model
-from sqlalchemy import Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import BigInteger, Integer, String, DateTime, Boolean, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import (
+    BigInteger,
+    Integer,
+    String,
+    Text,
+    DateTime,
+    Boolean,
+    UniqueConstraint,
+)
 from datetime import datetime
 from app.db.database import Base
 
@@ -36,3 +42,21 @@ class FixtureLineup(Base):
     fixture_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     team_names: Mapped[dict] = mapped_column(JSON, default=dict)
     player_names: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class ClockAnchor(Base):
+    __tablename__ = "clock_anchors"
+    __table_args__ = (
+        UniqueConstraint(
+            "fixture_id", "status_id", name="uq_clock_anchor_fixture_status"
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fixture_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    phase: Mapped[str] = mapped_column(String)
+    status_id: Mapped[int] = mapped_column(Integer)
+    utc_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    minute_start: Mapped[int] = mapped_column(Integer)
+    seconds_start: Mapped[int] = mapped_column(Integer)
+    running: Mapped[bool] = mapped_column(Boolean)
