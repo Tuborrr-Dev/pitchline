@@ -2,7 +2,9 @@
 # This file defines the structure of the Annotation model
 from sqlalchemy import Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
-
+from sqlalchemy import BigInteger, Integer, String, DateTime, Boolean, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column
+from datetime import datetime
 from app.db.database import Base
 
 from sqlalchemy import JSON  # add to your existing sqlalchemy import line

@@ -13,6 +13,7 @@ from app.services.annotation_service import AnnotationService
 from app.ingestion.stream_manager import StreamManager
 from app.api.routes import router as api_router
 from app.api.sse import router as sse_router
+from app.api.clock_anchors import router as clock_anchors_router
 
 app = FastAPI(title="Pitchline BE2 -- Annotation Service")
 
@@ -35,3 +36,4 @@ async def root():
 
 app.include_router(api_router)
 app.include_router(sse_router)
+app.include_router(clock_anchors_router)

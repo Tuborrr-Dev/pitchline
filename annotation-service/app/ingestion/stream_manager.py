@@ -12,17 +12,49 @@ import time
 from app.ingestion.txline_client import TxLineClient
 import logging
 from datetime import datetime, timezone
+from app.services.clock_anchor_service import LiveAnchorTracker, save_anchor
+from app.db.database import AsyncSessionLocal
+from app.api.sse import publish
 
 logger = logging.getLogger(__name__)
 
 
 class StreamManager:
     def __init__(self, annotation_service):
-        self.client = TxLineClient(on_event=annotation_service.process_event)
         self.annotation_service = annotation_service
+        self.anchor_trackers: dict[int, LiveAnchorTracker] = {}
+        self.client = TxLineClient(on_event=self._on_event)
         self.tasks = {}
         self.watch_started_at = {}
         self.finished_fixtures: set[int] = set()
+
+    async def _on_event(self, event: dict):
+        await self.annotation_service.process_event(event)
+
+        fixture_id = event.get("FixtureId")
+        if fixture_id is None:
+            return
+        tracker = self.anchor_trackers.setdefault(
+            fixture_id, LiveAnchorTracker(fixture_id)
+        )
+        anchor = tracker.process_event(event)
+        if anchor:
+            async with AsyncSessionLocal() as session:
+                await save_anchor(session, anchor)
+            await publish(
+                fixture_id,
+                {
+                    "type": "clock_anchor",
+                    "phase": anchor["phase"],
+                    "status_id": anchor["status_id"],
+                    "utc_start": anchor[
+                        "utc_start"
+                    ].isoformat(),  # datetime -> str, json.dumps can't serialize datetime directly
+                    "minute_start": anchor["minute_start"],
+                    "seconds_start": anchor["seconds_start"],
+                    "running": anchor["running"],
+                },
+            )
 
     async def start_stream(self, fixture_id: int):
         if fixture_id in self.tasks:

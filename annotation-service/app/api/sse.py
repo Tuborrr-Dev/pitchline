@@ -4,6 +4,8 @@ import itertools
 from collections import defaultdict
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
+from app.services.clock_anchor_service import get_anchors
+from app.db.database import AsyncSessionLocal
 
 router = APIRouter()
 
@@ -39,12 +41,6 @@ async def stream(fixture_id: int, request: Request):
     async def event_generator():
         try:
             yield ": connected\n\n"
-
-            # Replay current DB state on EVERY connect, not just first
-            # load -- Railway hard-closes SSE at 15 minutes regardless of
-            # heartbeats. A reconnecting EventSource gets a brand new,
-            # empty queue with no memory of what it missed. Re-sending
-            # full current state here makes every reconnect self-healing.
             history_service = HistoryService()
             rows = await history_service.history(fixture_id)
             for row in rows:
@@ -65,6 +61,20 @@ async def stream(fixture_id: int, request: Request):
                         "fixture_id": row.fixture_id,
                         "source_action": row.source_action,
                         "source_id": row.source_id,
+                    }
+                )
+            async with AsyncSessionLocal() as session:
+                anchors = await get_anchors(session, fixture_id)
+            for a in anchors:
+                yield _format(
+                    {
+                        "type": "clock_anchor",
+                        "phase": a.phase,
+                        "status_id": a.status_id,
+                        "utc_start": a.utc_start.isoformat(),
+                        "minute_start": a.minute_start,
+                        "seconds_start": a.seconds_start,
+                        "running": a.running,
                     }
                 )
 
