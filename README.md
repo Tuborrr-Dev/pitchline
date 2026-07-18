@@ -94,7 +94,7 @@ Built against the TxLINE World Cup Hackathon's official rubric, point by point:
 | **Fan Accessibility & UX** | Zero betting vocabulary anywhere in the product. Dedicated mobile interaction design: a commentary drawer, tap-to-prioritize annotations, a dominant-color area fill so whoever's leading is legible at a glance not just readable in the numbers. |
 | **Real-Time Responsiveness** | A dual-channel realtime architecture: SignalR broadcasts score and odds the instant TxLINE fires them, on a completely separate channel from annotations — so a slow AI call can never block the live chart. Update latency is actively instrumented by a dedicated latency-tracking service in the frontend, not just assumed. |
 | **Originality & Value Creation** | A pure domain layer computes momentum, VIX-style volatility, market-freeze detection and peak-swing tracking on every match, the same class of analysis a real trading desk runs, applied to a football match. Paired with a dual-tier annotation engine, this isn't available in any mainstream fan product today. |
-| **Commercial & Monetization Path** | A working freemium model — see [Business Model](#business-model). TxLINE's own catalogue of 1000+ post-World-Cup leagues is the direct scaling path, with no new data partnership required. |
+| **Commercial & Monetization Path** | A working freemium model, see [Business Model](#business-model). TxLINE's own catalogue of 1000+ post-World-Cup leagues is the direct scaling path, with no new data partnership required. |
 | **Completeness & Execution** | Fully deployed, fully functional, tested end-to-end against a real live match. The Match Engine ships dedicated historical-replay endpoints purpose-built for exactly the "no live match during review". |
 
 ## Key Features
