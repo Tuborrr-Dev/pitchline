@@ -110,6 +110,7 @@ export interface LiveMatchState {
   history: ProbabilityPoint[];
   events: MatchEvent[];
   annotations: Annotation[];
+  clockAnchors: import("@/schemas/pitchline").ClockAnchor[];
   activeNarrative?: NarrativeMoment;
   selectedTimestamp?: string;
   connectionState: ConnectionState;

@@ -557,6 +557,7 @@ export function useWallet() {
 
   return {
     ...wallet,
+    hasAuthorizedSession: getAuthorizedFlag(),
     isWrongNetwork: wallet.isConnected && !wallet.isSupportedChain,
     requiredChainId: PITCHLINE_REQUIRED_CHAIN_ID,
     requiredNetworkName: PITCHLINE_REQUIRED_NETWORK_NAME,
@@ -700,6 +701,18 @@ export function setWalletConnectAvailability(available: boolean) {
   walletConnectAvailable = available;
   selectDefaultWalletIfNeeded();
   refreshWalletCatalog();
+
+  if (available && getSelectedWalletId() === WALLETCONNECT_WALLET_ID && getAuthorizedFlag()) {
+    setSnapshot({
+      ...snapshot,
+      source: "walletconnect",
+      hasProvider: true,
+      status: "checking",
+      error: null,
+      availableWallets: getAvailableWallets(),
+      selectedWalletId: WALLETCONNECT_WALLET_ID,
+    });
+  }
 }
 
 export function setWalletConnectOpening() {
@@ -768,6 +781,19 @@ export function syncWalletConnectState({
     return;
   }
 
+  if (getAuthorizedFlag()) {
+    setSnapshot({
+      ...snapshot,
+      source: "walletconnect",
+      hasProvider: true,
+      status: "checking",
+      error: null,
+      availableWallets: getAvailableWallets(),
+      selectedWalletId: WALLETCONNECT_WALLET_ID,
+    });
+    return;
+  }
+
   setAuthorizedFlag(false);
   setSnapshot({
     ...getDisconnectedSnapshot(discoveredProviders.size > 0 || walletConnectAvailable),
@@ -777,6 +803,7 @@ export function syncWalletConnectState({
 }
 export function resetWalletConnectIfConnecting() {
   if (snapshot.selectedWalletId !== WALLETCONNECT_WALLET_ID || snapshot.status !== "connecting") return;
+  if (getAuthorizedFlag()) return;
 
   setAuthorizedFlag(false);
   setSnapshot({
