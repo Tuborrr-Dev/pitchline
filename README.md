@@ -81,7 +81,7 @@ We never say "odds." We never say "betting." We say **probability**, **market**,
 
 **Live deployment:** https://pitchline-five.vercel.app/
 
-**Match Engine API (for judges to test directly):** https://pitchline.onrender.com/swagger/index.html
+**Match Engine API:** https://pitchline.onrender.com/swagger/index.html
 
 **Annotation Service API:** https://annotation-service-production.up.railway.app/docs
 
