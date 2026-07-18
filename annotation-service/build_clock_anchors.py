@@ -17,30 +17,120 @@ Usage:
     railway run python build_clock_anchors.py --all --write                  # every fixture in fixture_kickoffs.json
 """
 
+"""
+build_clock_anchors.py
+...
+"""
+
 import argparse
 import asyncio
 import json
+from datetime import datetime, timedelta, date
+
+import httpx
 
 from app.db.database import AsyncSessionLocal
-from app.ingestion.txline_client import TxLineClient
+from app.core.config import settings
 from app.services.clock_anchor_service import (
     extract_anchors_from_events,
     save_anchor,
     get_anchors,
 )
 
+BASE_URL = (
+    "https://txline.txodds.com/api/scores/updates/{epochDay}/{hourOfDay}/{interval}"
+)
+HEADERS = {
+    "Authorization": f"Bearer {settings.TXLINE_JWT_TOKEN}",
+    "X-Api-Token": settings.TXLINE_API_KEY,
+    "Accept-Encoding": "gzip",
+}
+MAX_INTERVALS = 70
+END_ACTIONS = {"game_finalised"}
+EPOCH = date(1970, 1, 1)
 
-async def fetch_events(fixture_id: int) -> list[dict]:
-    events: list[dict] = []
 
-    async def collect(event: dict):
-        events.append(event)
+def dt_to_slot(dt: datetime):
+    epoch_day = (dt.date() - EPOCH).days
+    hour_of_day = dt.hour
+    interval = dt.minute // 5
+    return epoch_day, hour_of_day, interval
 
-    client = TxLineClient(on_event=collect)
-    await client.consume_scores(
-        fixture_id
-    )  # returns on its own once game_finalised arrives
-    return events
+
+def next_slot(epoch_day, hour_of_day, interval):
+    interval += 1
+    if interval > 11:
+        interval = 0
+        hour_of_day += 1
+        if hour_of_day > 23:
+            hour_of_day = 0
+            epoch_day += 1
+    return epoch_day, hour_of_day, interval
+
+
+def normalize_event(raw: dict) -> dict:
+    def pick(*keys, default=None):
+        for k in keys:
+            if k in raw and raw[k] is not None:
+                return raw[k]
+        return default
+
+    data = pick("Data", "dataSoccer", "data", default={}) or {}
+    clock_raw = pick("Clock", "clock", default=None)
+    clock = None
+    if clock_raw:
+        clock = {
+            "Running": clock_raw.get("Running", clock_raw.get("running")),
+            "Seconds": clock_raw.get("Seconds", clock_raw.get("seconds")),
+        }
+    return {
+        "FixtureId": pick("FixtureId", "fixtureId"),
+        "Action": pick("Action", "action"),
+        "Id": pick("Id", "id"),
+        "Ts": pick("Ts", "ts"),
+        "Seq": pick("Seq", "seq"),
+        "StatusId": pick("StatusId", "statusId", "statusSoccerId"),
+        "Clock": clock,
+        "Data": data,
+    }
+
+
+async def fetch_events(
+    client: httpx.AsyncClient, fixture_id: int, kickoff_str: str
+) -> list[dict]:
+    kickoff_dt = datetime.fromisoformat(kickoff_str.replace("+00", "+00:00"))
+    start_dt = kickoff_dt - timedelta(hours=2)
+    day, hour, itv = dt_to_slot(start_dt)
+
+    all_events = []
+    seen_end = False
+
+    for _ in range(MAX_INTERVALS):
+        url = BASE_URL.format(epochDay=day, hourOfDay=hour, interval=itv)
+        resp = await client.get(
+            url, headers=HEADERS, params={"fixtureId": fixture_id}, timeout=30
+        )
+
+        if resp.status_code == 401:
+            print(f"[{fixture_id}] JWT expired -- stopping")
+            return all_events
+        if resp.status_code != 200:
+            day, hour, itv = next_slot(day, hour, itv)
+            continue
+
+        for raw in resp.json():
+            event = normalize_event(raw)
+            if event.get("Action") in END_ACTIONS:
+                seen_end = True
+            all_events.append(event)
+
+        if seen_end:
+            break
+        day, hour, itv = next_slot(day, hour, itv)
+        await asyncio.sleep(0.2)
+
+    all_events.sort(key=lambda e: (e.get("Ts") or 0, e.get("Seq") or 0))
+    return all_events
 
 
 def diff(new_anchors: list[dict], existing_rows) -> None:
@@ -61,9 +151,11 @@ def diff(new_anchors: list[dict], existing_rows) -> None:
         )
 
 
-async def process_fixture(fixture_id: int, write: bool) -> None:
+async def process_fixture(
+    client: httpx.AsyncClient, fixture_id: int, kickoff_str: str, write: bool
+) -> None:
     print(f"\n=== Fixture {fixture_id} ===")
-    events = await fetch_events(fixture_id)
+    events = await fetch_events(client, fixture_id, kickoff_str)
     if not events:
         print("  No events returned -- check fixture_id / feed availability.")
         return
@@ -88,21 +180,28 @@ async def process_fixture(fixture_id: int, write: bool) -> None:
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixture-id", type=int)
-    parser.add_argument(
-        "--all", action="store_true", help="Every fixture ID in fixture_kickoffs.json"
-    )
+    parser.add_argument("--all", action="store_true")
     parser.add_argument("--write", action="store_true")
     args = parser.parse_args()
 
-    if args.fixture_id:
-        await process_fixture(args.fixture_id, args.write)
-    elif args.all:
-        with open("fixture_kickoffs.json") as f:
-            fixture_ids = [int(fid) for fid in json.load(f).keys()]
-        for fixture_id in fixture_ids:
-            await process_fixture(fixture_id, args.write)
-    else:
-        parser.error("Pass --fixture-id or --all")
+    with open("fixture_kickoffs.json") as f:
+        kickoffs = json.load(f)
+
+    async with httpx.AsyncClient() as client:
+        if args.fixture_id:
+            kickoff_str = kickoffs.get(str(args.fixture_id))
+            if kickoff_str is None:
+                parser.error(
+                    f"fixture-id {args.fixture_id} not found in fixture_kickoffs.json"
+                )
+            await process_fixture(client, args.fixture_id, kickoff_str, args.write)
+        elif args.all:
+            for fixture_id_str, kickoff_str in kickoffs.items():
+                await process_fixture(
+                    client, int(fixture_id_str), kickoff_str, args.write
+                )
+        else:
+            parser.error("Pass --fixture-id or --all")
 
 
 if __name__ == "__main__":
