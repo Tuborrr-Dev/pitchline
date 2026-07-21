@@ -21,7 +21,7 @@
 
 <p align="center">
   <a href="https://pitchline-five.vercel.app/"><strong>Live App</strong></a> ·
-  <a href="#"><strong>Demo Video</strong></a> ·
+  <a href="https://youtu.be/bHFsi7fsPJs?si=pUWwtZdxgwucmhkV"><strong>Demo Video</strong></a> ·
   <a href="#getting-started"><strong>Getting Started</strong></a> ·
   <a href="#txline-integration"><strong>TxLINE Integration</strong></a>
 </p>
@@ -73,7 +73,7 @@ We never say "odds." We never say "betting." We say **probability**, **market**,
 ## See It In Action
 
 <p align="center">
-  <a href="#"><strong>▶ Watch the demo</strong></a>
+  <a href="https://youtu.be/bHFsi7fsPJs?si=pUWwtZdxgwucmhkV"><strong>▶ Watch the demo</strong></a>
 </p>
 <p align="center">
   <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExajAxcXh3YzFoamF5bXk0c3NscHQwOTBiODlrdmJ6Y2JoOHVheno4NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/aOSLxKTUlnzz4Q20Ki/giphy.gif" alt="PITCHLINE live match terminal demo" width="800"/>
