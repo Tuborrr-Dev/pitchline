@@ -20,3 +20,6 @@ annotation-service/confirm_persisted.py
 annotation-service/stream_BE_SSE.py
 annotation-service/stream_live.py
 annotation-service/ backfill_intervals.py
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat

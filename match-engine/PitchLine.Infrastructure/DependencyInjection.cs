@@ -103,7 +103,6 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<IMatchEventBus, SignalREventBus>();
-        services.AddHostedService<TxLineStreamService>();
 
         return services;
     }

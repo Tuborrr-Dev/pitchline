@@ -95,10 +95,9 @@ public class TxLineStreamService(
             catch (HttpRequestException ex) when
                 ((int)(ex.StatusCode ?? 0) == 401)
             {
-                // Token expired — you'll need to re-activate here.
-                // For the hackathon, crash loud so you know immediately.
-                _logger.LogCritical("[{Path}] 401 Unauthorized — apiToken is expired or invalid. Re-activate via /api/token/activate", path);
-                throw;
+                _logger.LogWarning("[{Path}] 401 Unauthorized — token expired, retrying in 60s", path);
+                await Task.Delay(TimeSpan.FromSeconds(60), ct);
+                continue;
             }
             catch (Exception ex)
             {
