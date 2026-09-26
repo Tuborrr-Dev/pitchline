@@ -36,7 +36,7 @@ export function MatchToolbar({
           className="h-8 cursor-pointer rounded-none border border-[var(--terminal-border)] bg-transparent px-2 font-mono text-[0.62rem] uppercase text-[var(--terminal-text-muted)] shadow-none hover:bg-[var(--terminal-hover)] sm:px-3 sm:text-[0.7rem]"
         >
           <PanelRightOpen className="h-4 w-4" />
-          {detailsOpen ? "Hide Details" : "Show Details"}
+          {detailsOpen ? "Hide Commentary" : "Show Commentary"}
         </Button>
       </div>
     </section>

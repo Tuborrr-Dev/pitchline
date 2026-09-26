@@ -9,6 +9,7 @@ type ReplayOddsPoint = {
   drawPct: number;
   awayPct: number;
   timestamp: string;
+  minute?: string | null;
 };
 
 type ReplayEvent = {
@@ -56,6 +57,12 @@ function minutesFromStart(timestamp: string, startTimestamp: string) {
   }
 
   return Math.max(0, Math.round((timestampMs - startMs) / 60_000));
+}
+
+function formatMinuteLabel(minute: string | null | undefined, fallbackMinute: number) {
+  const cleanMinute = (minute ?? "").trim();
+  if (!cleanMinute) return `${fallbackMinute}'`;
+  return cleanMinute.includes("'") ? cleanMinute : `${cleanMinute}'`;
 }
 
 function mapEventType(eventType: string): MatchEvent["type"] {
@@ -161,7 +168,7 @@ export async function getLiveReplayMatchState(fixtureId: string): Promise<LiveMa
 
     return {
       timestamp: new Date(point.timestamp).toISOString(),
-      minuteLabel: `${minute}'`,
+      minuteLabel: formatMinuteLabel(point.minute, minute),
       teamA: point.homePct,
       draw: point.drawPct,
       teamB: point.awayPct,
@@ -195,6 +202,7 @@ export async function getLiveReplayMatchState(fixtureId: string): Promise<LiveMa
     history,
     events,
     annotations: [],
+    clockAnchors: [],
     connectionState: "connecting",
     lastUpdatedAt: kickoffUtc,
   };

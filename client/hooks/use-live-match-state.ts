@@ -6,12 +6,19 @@ import { startTransition, useEffect, useEffectEvent, useMemo, useState } from "r
 import { ANNOTATION_API_BASE_URL, getApiBaseUrl } from "@/config/api";
 import type { Annotation, LiveMatchState, MatchEvent, MatchStatus } from "@/lib/types";
 import {
+  formatMatchMinuteLabel,
+  mergeClockAnchors,
+  toMatchMinute,
+  upsertClockAnchor,
+} from "@/lib/clock-anchors";
+import { clockAnchorSchema, type ClockAnchor } from "@/schemas/pitchline";
+import {
   annotationEventId,
   annotationToMatchEvent,
   annotationsToMatchEvents,
   isMarketDepthAnnotation,
 } from "@/services/annotation-mappers";
-import { fetchAnnotationHistory } from "@/services/match-service";
+import { fetchAnnotationHistory, fetchClockAnchors } from "@/services/match-service";
 import { deriveTeamCode, mergeMatchEvents } from "@/services/pitchline-mappers";
 
 type ScoreUpdatePayload = {
@@ -33,6 +40,7 @@ type OddsUpdatePayload = {
   homePct: number;
   drawPct: number;
   awayPct: number;
+  minute?: string | null;
   probabilityDelta?: number;
   timestamp?: number | string;
   momentum?: { slope: number; direction: string };
@@ -56,6 +64,34 @@ function toDisplayMinute(minute?: string | null) {
   const cleanMinute = (minute ?? "").trim();
   if (!cleanMinute) return "0'";
   return cleanMinute.includes("'") ? cleanMinute : `${cleanMinute}'`;
+}
+
+function parseClockAnchorPayload(data: string) {
+  const parsed = JSON.parse(data) as unknown;
+  const candidate =
+    parsed &&
+    typeof parsed === "object" &&
+    "type" in parsed &&
+    (parsed as { type?: unknown }).type === "clock_anchor" &&
+    "data" in parsed
+      ? (parsed as { data?: unknown }).data
+      : parsed;
+
+  return clockAnchorSchema.parse(candidate);
+}
+
+function oddsMinuteLabel(
+  timestamp: string,
+  anchors: readonly ClockAnchor[],
+  payloadMinute: string | null | undefined,
+  fallbackMinute: string,
+) {
+  const matchMinute = toMatchMinute(timestamp, anchors);
+  if (matchMinute !== null) return formatMatchMinuteLabel(matchMinute);
+
+  if (payloadMinute?.trim()) return toDisplayMinute(payloadMinute);
+
+  return toDisplayMinute(fallbackMinute);
 }
 
 function statusFromGameState(gameState?: string | null): MatchStatus {
@@ -189,7 +225,9 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
     startTransition(() => {
       setState((current) => {
         const timestamp = toIsoTimestamp(payload.timestamp);
-        const minuteLabel = current.fixture.status === "live" ? current.fixture.minute : "PRE";
+        const minuteLabel = current.fixture.status === "live"
+          ? oddsMinuteLabel(timestamp, current.clockAnchors, payload.minute, current.fixture.minute)
+          : "PRE";
         const nextPoint = {
           timestamp,
           minuteLabel,
@@ -214,6 +252,7 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
             teamACode: deriveTeamCode(homeName),
             teamBName: awayName,
             teamBCode: deriveTeamCode(awayName),
+            minute: minuteLabel,
             leadProbability: Math.max(payload.homePct, payload.awayPct),
           },
           currentProbabilities: {
@@ -244,7 +283,10 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
 
     async function initStream() {
       try {
-        const history = await fetchAnnotationHistory(fixtureId);
+        const [history, clockAnchors] = await Promise.all([
+          fetchAnnotationHistory(fixtureId),
+          fetchClockAnchors(fixtureId),
+        ]);
         if (isDisposed) return;
         setState((current) => {
           const annotations = mergeAnnotationHistory(current.annotations, history);
@@ -252,6 +294,7 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
           return {
             ...current,
             annotations,
+            clockAnchors: mergeClockAnchors(current.clockAnchors, clockAnchors),
             events: mergeMatchEvents(current.events, annotationsToMatchEvents(annotations, current.fixture)),
           };
         });
@@ -295,6 +338,32 @@ export function useLiveMatchState(initialState: LiveMatchState, enabled = true) 
             }));
           } catch (error) {
             console.error("Failed to parse update SSE payload", error);
+          }
+        });
+
+        eventSource.addEventListener("clock_anchor", (event) => {
+          if (isDisposed) return;
+          try {
+            const payload = parseClockAnchorPayload(event.data);
+            setState((current) => ({
+              ...current,
+              clockAnchors: upsertClockAnchor(current.clockAnchors, payload),
+            }));
+          } catch (error) {
+            console.error("Failed to parse clock anchor SSE payload", error);
+          }
+        });
+
+        eventSource.addEventListener("message", (event) => {
+          if (isDisposed) return;
+          try {
+            const payload = parseClockAnchorPayload(event.data);
+            setState((current) => ({
+              ...current,
+              clockAnchors: upsertClockAnchor(current.clockAnchors, payload),
+            }));
+          } catch {
+            // Ignore non-clock-anchor generic SSE messages.
           }
         });
 

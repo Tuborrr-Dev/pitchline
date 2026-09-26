@@ -1,10 +1,12 @@
 import { ANNOTATION_API_BASE_URL } from "@/config/api";
 import type { Annotation, ConnectionState, LiveMatchState } from "@/lib/types";
 import {
+  clockAnchorsResponseSchema,
   matchHistoryResponseSchema,
   matchResponseSchema,
   type BackendMatchDto,
   type BackendMatchHistoryDto,
+  type ClockAnchor,
 } from "@/schemas/pitchline";
 import { fetchFinishedFixtureIndex, fetchFixtureIndex } from "@/services/fixture-service";
 import { getJson } from "@/services/pitchline-http";
@@ -42,6 +44,8 @@ export async function fetchInitialLiveMatchState(fixtureId: string): Promise<Liv
     history = null;
   }
 
+  const clockAnchors = await fetchClockAnchors(fixtureId);
+
   const baseFixture = createFixtureFromDto(match ?? fixtureMeta);
   const currentProbabilities = {
     teamA: match?.homePct ?? fixtureMeta.homePct ?? 0,
@@ -60,7 +64,12 @@ export async function fetchInitialLiveMatchState(fixtureId: string): Promise<Liv
       }
     : baseFixture;
 
-  const initialHistory = historyToProbabilityPoints(history, resolvedFixture, currentProbabilities);
+  const initialHistory = historyToProbabilityPoints(
+    history,
+    resolvedFixture,
+    currentProbabilities,
+    clockAnchors,
+  );
   const latestHistoryPoint = initialHistory[initialHistory.length - 1];
   const displayProbabilities = latestHistoryPoint
     ? {
@@ -84,6 +93,7 @@ export async function fetchInitialLiveMatchState(fixtureId: string): Promise<Liv
     history: initialHistory,
     events: initialEvents,
     annotations: initialAnnotations,
+    clockAnchors,
     activeNarrative: undefined,
     connectionState:
       resolvedFixture.status !== "finished"
@@ -91,6 +101,21 @@ export async function fetchInitialLiveMatchState(fixtureId: string): Promise<Liv
         : ("stale" satisfies ConnectionState),
     lastUpdatedAt: lastTimestamp,
   };
+}
+
+export async function fetchClockAnchors(fixtureId: string): Promise<ClockAnchor[]> {
+  try {
+    const response = await fetch(`${ANNOTATION_API_BASE_URL}/fixtures/${fixtureId}/clock-anchors`, {
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+    if (!response.ok) return [];
+    return clockAnchorsResponseSchema.parse(await response.json());
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchAnnotationHistory(fixtureId: string): Promise<Annotation[]> {

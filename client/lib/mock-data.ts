@@ -440,6 +440,7 @@ export function getLiveMatchState(fixtureId: string): LiveMatchState | undefined
     history,
     events: events[fixtureId] ?? [],
     annotations: [],
+    clockAnchors: [],
     activeNarrative: narratives[fixtureId],
     connectionState: fixture.status === "live" ? "live" : "connecting",
     lastUpdatedAt: history[history.length - 1]?.timestamp ?? fixture.kickoffUtc,

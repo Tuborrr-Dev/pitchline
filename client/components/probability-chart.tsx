@@ -30,8 +30,8 @@ import {
   interpolatePoint,
   interpolatePointTime,
   normalizeChartHistory,
+  toChartPoints,
   toSeriesData,
-  toTime,
 } from "./probability-chart/chart-utils";
 import { EventMarkers } from "./probability-chart/event-markers";
 import { FeedStatusBadge } from "./probability-chart/feed-status-badge";
@@ -100,9 +100,9 @@ export function ProbabilityChart({
 
   useEffect(() => {
     historyRef.current = normalizedHistory;
-    chartMinuteBySecondRef.current = normalizedHistory.map((point, index) => ({
-      minute: Number.parseInt(point.minuteLabel.replace(/\D/g, ""), 10) || index,
-      second: Math.floor(new Date(point.timestamp).getTime() / 1000),
+    chartMinuteBySecondRef.current = toChartPoints(normalizedHistory).map((point) => ({
+      minute: point.minute,
+      second: Number(point.time),
     }));
   }, [normalizedHistory]);
 
@@ -211,10 +211,8 @@ export function ProbabilityChart({
         return;
       }
 
-      const hoveredPoint = historyRef.current.find(
-        (point) => toTime(point.timestamp) === param.time,
-      );
-      setHoveredTimestamp(hoveredPoint?.timestamp ?? null);
+      const chartPoint = toChartPoints(historyRef.current).find((point) => point.time === param.time);
+      setHoveredTimestamp(chartPoint?.point.timestamp ?? null);
     };
     let visibleRangeFrame: number | null = null;
     let pendingVisibleRange: LogicalRange | null = null;

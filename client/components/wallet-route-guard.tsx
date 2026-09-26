@@ -15,8 +15,14 @@ export function WalletRouteGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const wallet = useWallet();
   const [readyPathname, setReadyPathname] = useState<string | null>(null);
+  const [restoreTimedOutPathname, setRestoreTimedOutPathname] = useState<string | null>(null);
   const protectedPath = useMemo(() => isProtectedPath(pathname), [pathname]);
   const canAccess = wallet.isConnected && wallet.isSupportedChain;
+  const isRestoringSavedWallet =
+    wallet.hasAuthorizedSession &&
+    !canAccess &&
+    (wallet.status === "idle" || wallet.status === "checking" || wallet.status === "connecting");
+  const restoreTimedOut = restoreTimedOutPathname === pathname;
 
   const canEvaluateWallet = readyPathname === pathname;
 
@@ -26,12 +32,20 @@ export function WalletRouteGuard({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
+    if (!protectedPath || !isRestoringSavedWallet || canAccess) return;
+
+    const timeout = window.setTimeout(() => setRestoreTimedOutPathname(pathname), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [canAccess, isRestoringSavedWallet, protectedPath, pathname]);
+
+  useEffect(() => {
     if (!protectedPath || !canEvaluateWallet) return;
     if (wallet.status === "checking" || wallet.status === "connecting") return;
+    if (isRestoringSavedWallet && !restoreTimedOut) return;
     if (canAccess) return;
 
     router.replace("/");
-  }, [canAccess, canEvaluateWallet, protectedPath, router, wallet.status]);
+  }, [canAccess, canEvaluateWallet, isRestoringSavedWallet, protectedPath, restoreTimedOut, router, wallet.status]);
 
   if (!protectedPath || canAccess) {
     return <>{children}</>;
