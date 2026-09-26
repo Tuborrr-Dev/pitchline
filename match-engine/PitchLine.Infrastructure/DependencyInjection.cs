@@ -56,18 +56,8 @@ public static class DependencyInjection
             c.DefaultRequestHeaders.Add("User-Agent", "Pitchline/1.0");
         });
 
-        services.AddHttpClient<FixtureMetadataService>(c =>
-        {
-            c.BaseAddress = new Uri("https://txline.txodds.com");
-            c.DefaultRequestHeaders.Add("User-Agent", "Pitchline/1.0");
-        });
-
-        services.AddHttpClient<TxLineSnapshotService>(c =>
-        {
-            c.BaseAddress = new Uri("https://txline.txodds.com");
-            c.Timeout = TimeSpan.FromSeconds(10);
-            c.DefaultRequestHeaders.Add("User-Agent", "Pitchline/1.0");
-        });
+        services.AddSingleton<FixtureMetadataService>();
+        services.AddSingleton<TxLineSnapshotService>();
 
         services.AddHttpClient<AnnotationWebhookClient>(c =>
         {
